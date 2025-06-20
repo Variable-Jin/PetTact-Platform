@@ -1,13 +1,19 @@
 package com.pettact.api.pet.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.pettact.api.pet.dto.PetFacilityWrapper;
+import com.pettact.api.pet.dto.PetShelterDto;
+import com.pettact.api.pet.dto.wrapper.PetFacilityWrapper;
+import com.pettact.api.pet.dto.wrapper.PetShelterWrapper;
 import com.pettact.api.pet.entity.PetFacilityEntity;
+import com.pettact.api.pet.entity.PetShelterEntity;
 import com.pettact.api.pet.repository.PetFacilityRepository;
+import com.pettact.api.pet.repository.PetShelterRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,16 +24,24 @@ public class PetService {
     private final RestTemplate restTemplate;
     
     private final PetFacilityRepository petFacilityRepository;
+    private final PetShelterRepository petShelterRepository;
 
     @Value("${pet.api.service-key-decoded}")
     private String apiKey;
     
-    //https://www.data.go.kr/iim/api/selectAPIAcountView.do
-    @Value("${pet.facility.api-url}")
+   // https://www.data.go.kr/tcs/dss/selectFileDataDetailView.do?publicDataPk=15111389
+    @Value("${pet-facility-api-url}")
     private String petFacilityApiUrl;
+    //https://www.data.go.kr/tcs/dss/selectApiDataDetailView.do?publicDataPk=15098915
+    @Value("${pet-shelter-api-url}")
+    private String petShelterApiUrl;
+    // 
+    
+    
     // 각각 api 호출 
     public void fetchAllApi() {
-        fetchPetFacility();
+       // fetchPetFacility();
+        fetchPetShelter();
     }
     
     public void fetchPetFacility() {
@@ -99,6 +113,91 @@ public class PetService {
             }
         }
     }
+    
+    public void fetchPetShelter() {
+        int numOfRows = 100;
+        int pageNo = 1;
 
+        String initialUrl = petShelterApiUrl
+                + "?serviceKey=" + apiKey
+                + "&numOfRows=" + numOfRows
+                + "&pageNo=" + pageNo
+                + "&_type=json";
+
+        ResponseEntity<PetShelterWrapper> initialResponse =
+                restTemplate.getForEntity(initialUrl, PetShelterWrapper.class);
+
+        PetShelterWrapper initialWrapper = initialResponse.getBody();
+        if (initialWrapper == null || initialWrapper.getResponse() == null || initialWrapper.getResponse().getBody() == null) {
+            return;
+        }
+
+        int totalCount = initialWrapper.getResponse().getBody().getTotalCount();
+        int totalPages = (int) Math.ceil((double) totalCount / numOfRows);
+
+        for (int i = 1; i <= totalPages; i++) {
+            String url = petShelterApiUrl
+                    + "?serviceKey=" + apiKey
+                    + "&numOfRows=" + numOfRows
+                    + "&pageNo=" + i
+                    + "&_type=json";
+
+            try {
+                ResponseEntity<PetShelterWrapper> response =
+                        restTemplate.getForEntity(url, PetShelterWrapper.class);
+
+                PetShelterWrapper wrapper = response.getBody();
+                if (wrapper == null || wrapper.getResponse() == null || wrapper.getResponse().getBody() == null) {
+                    continue;
+                }
+
+                List<PetShelterDto> list = wrapper.getResponse().getBody().getItems().getItem();
+                if (list == null || list.isEmpty()) {
+                    continue;
+                }
+
+                for (PetShelterDto dto : list) {
+                    PetShelterEntity entity = PetShelterEntity.builder()
+                            .careNm(dto.getCareNm())
+                            .careRegNo(dto.getCareRegNo())
+                            .orgNm(dto.getOrgNm())
+                            .divisionNm(dto.getDivisionNm())
+                            .saveTrgtAnimal(dto.getSaveTrgtAnimal())
+                            .careAddr(dto.getCareAddr())
+                            .jibunAddr(dto.getJibunAddr())
+                            .lat(dto.getLat())
+                            .lng(dto.getLng())
+                            .dsignationDate(dto.getDsignationDate())
+                            .weekOprStime(dto.getWeekOprStime())
+                            .weekOprEtime(dto.getWeekOprEtime())
+                            .weekCellStime(dto.getWeekCellStime())
+                            .weekCellEtime(dto.getWeekCellEtime())
+                            .weekendOprStime(dto.getWeekendOprStime())
+                            .weekendOprEtime(dto.getWeekendOprEtime())
+                            .weekendCellStime(dto.getWeekendCellStime())
+                            .weekendCellEtime(dto.getWeekendCellEtime())
+                            .closeDay(dto.getCloseDay())
+                            .vetPersonCnt(dto.getVetPersonCnt())
+                            .specsPersonCnt(dto.getSpecsPersonCnt())
+                            .medicalCnt(dto.getMedicalCnt())
+                            .breedCnt(dto.getBreedCnt())
+                            .quarabtineCnt(dto.getQuarabtineCnt())
+                            .feedCnt(dto.getFeedCnt())
+                            .transCarCnt(dto.getTransCarCnt())  // 추가 필드 대응
+                            .careTel(dto.getCareTel())
+                            .dataStdDt(dto.getDataStdDt())
+                            .build();
+
+                    petShelterRepository.save(entity);
+                }
+
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+
+    
 
 }
