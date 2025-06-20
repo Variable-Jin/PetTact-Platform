@@ -3,6 +3,8 @@ package com.pettact.api.user.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.ColumnDefault;
+
 import com.pettact.api.code.entity.CommonCode;
 
 import jakarta.persistence.*;
@@ -25,9 +27,8 @@ public class Users {
     @Column(name = "user_email", nullable = false, unique = true)
     private String userEmail;
 
-    @Builder.Default
-    @Column(name = "user_email_checked", nullable = false)
-    private Boolean userEmailChecked = false;
+    @Column(name = "user_password", nullable = false)
+    private String userPassword;
 
     @Column(name = "user_name", nullable = false)
     private String userName;
@@ -35,8 +36,6 @@ public class Users {
     @Column(name = "user_nickname", nullable = false)
     private String userNickname;
 
-    @Column(name = "user_password", nullable = false)
-    private String userPassword;
 
     @Column(name = "user_tel", nullable = false)
     private String userTel;
@@ -56,6 +55,12 @@ public class Users {
     @Column(name = "user_has_pet", nullable = false)
     private Boolean userHasPet;
 
+    @Column(name = "user_email_checked", nullable = false)
+    private Boolean userEmailChecked;
+
+    @Column(name = "user_blacklist", nullable = false)
+    private Boolean userBlacklist;
+
     @Column(name = "user_created_at", nullable = false)
     private LocalDateTime userCreatedAt;
 
@@ -65,9 +70,6 @@ public class Users {
     @Column(name = "user_deleted_at")
     private LocalDateTime userDeletedAt;
 
-    @Column(name = "user_blacklist", nullable = false)
-    private Boolean userBlacklist;
-    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_code", nullable = false)
     private CommonCode roleCode;
