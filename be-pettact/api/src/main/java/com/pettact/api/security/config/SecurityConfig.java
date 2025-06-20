@@ -15,6 +15,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +26,10 @@ import com.pettact.api.security.filter.LoginFilter;
 import com.pettact.api.security.filter.RefreshTokenFilter;
 import com.pettact.api.security.filter.TokenCheckFilter;
 import com.pettact.api.security.util.JwtTokenProvider;
+import com.pettact.api.security.vo.CustomOAuth2User;
+import com.pettact.api.security.vo.CustomOAuth2UserService;
 import com.pettact.api.security.vo.CustomUserDetailsService;
+import com.pettact.api.user.entity.Users;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -36,6 +43,7 @@ public class SecurityConfig {
 	private final ObjectMapper objectMapper;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final CustomUserDetailsService CustomUserDetailsService;
+	private final CustomOAuth2UserService customOAuth2UserService;
 	
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -103,6 +111,36 @@ public class SecurityConfig {
 //				.hasAnyAuthority("ROLE_ADMIN") //반드시 해당 권한만 허가  
 //				.anyRequest().permitAll() // /home url은 비회원이 사용할 수 있음 
 			);
+
+		// 소셜로그인
+        http.oauth2Login(oauth2 -> oauth2
+            .userInfoEndpoint(userInfo -> userInfo
+                .userService(customOAuth2UserService)
+            )
+            .successHandler((request, response, authentication) -> {
+                CustomOAuth2User oAuthUser = (CustomOAuth2User) authentication.getPrincipal();
+                Users user = oAuthUser.getUser();
+
+                // JWT claim 설정
+                Map<String, Object> claims = Map.of(
+                    "uid", user.getUserEmail(),
+                    "userNo", user.getUserNo(),
+                    "nickname", user.getUserNickname(),
+                    "role", user.getRoleCode().getCodeId()
+                );
+
+                String accessToken = jwtTokenProvider.generateToken(claims, 1);
+                String refreshToken = jwtTokenProvider.generateToken(claims, 5);
+
+    			Map<String, String> keyMap = Map.of("accessToken", jwtTokenProvider.generateToken(claims, 1), //Access Token 유효기간 1일로 생성
+						"refreshToken", jwtTokenProvider.generateToken(claims, 5)); //Refresh Token 유효기간 10일로 생성
+
+
+                new ObjectMapper().writeValue(response.getWriter(), keyMap);
+                // TODO: 프론트로 리디렉션
+                // response.sendRedirect("http://localhost:5173/oauth2/success?token=" + jwt);
+            })
+        );
 
         
         return http.build();
