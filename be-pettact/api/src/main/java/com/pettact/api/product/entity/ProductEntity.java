@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,31 +24,36 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProductEntity {
 	
-	@Id
+    @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "products_no")
-    private Long id; // 상품 번호
+    @Column
+    private Long productsNo; // 상품 번호
 
-    @Column(name = "products_name", nullable = false, length = 100)
-    private String name; // 상품 이름
+    @Column(nullable = false, length = 100)
+    private String productsName; // 상품 이름
 
-    @Column(name = "products_description", columnDefinition = "TEXT")
-    private String description; // 상품 설명
+    @Column(columnDefinition = "TEXT")
+    private String productsDescription; // 상품 설명
 
-    @Column(name = "products_price", nullable = false)
-    private Integer price; // 상품 가격
+    @Column(nullable = false)
+    private Integer productsPrice; // 상품 가격
 
-    @Column(name = "products_stock", nullable = false)
-    private Integer quantity; // 상품 수량
+    @Column(nullable = false)
+    private Integer productsStock; // 상품 수량
 
-    @Column(name = "products_created_at", nullable = false)
-    private LocalDateTime createdAt; // 상품 등록시간
+    @Column(nullable = false)
+    private LocalDateTime productsCreatedAt; // 상품 등록시간
 
-    @Column(name = "products_category", length = 50)
-    private String category; // 상품 카테고리
-    
-    @Column(name = "products_status", nullable = false)
-    private boolean status; // true: 판매중, false: 비활성/품절
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "products_category") // FK 컬럼명 그대로 사용
+    private ProductCategoryEntity productsCategory;// 상품 카테고리
+
+    @Column(nullable = false)
+    private boolean productsStatus; //  (1)true: 판매중, (0)false: 판매완료
+
+    @Column(nullable = false)
+    private boolean productsDeleted; // 삭제 여부 ((1)true: 삭제완료 , (0)false: 미삭제 )
+
     
 }
 
