@@ -1,7 +1,8 @@
-package com.pettact.api.security.vo;
+package com.pettact.api.security.service;
 
 import com.pettact.api.code.entity.CommonCode;
 import com.pettact.api.code.repository.CommonCodeRepository;
+import com.pettact.api.security.vo.CustomOAuth2User;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

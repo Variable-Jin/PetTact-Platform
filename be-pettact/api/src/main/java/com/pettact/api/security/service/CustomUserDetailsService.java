@@ -1,4 +1,4 @@
-package com.pettact.api.security.vo;
+package com.pettact.api.security.service;
 
 import java.util.Optional;
 
@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.pettact.api.security.vo.CustomUserDetails;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 

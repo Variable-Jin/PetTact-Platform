@@ -25,10 +25,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettact.api.security.filter.LoginFilter;
 import com.pettact.api.security.filter.RefreshTokenFilter;
 import com.pettact.api.security.filter.TokenCheckFilter;
+import com.pettact.api.security.service.CustomOAuth2UserService;
+import com.pettact.api.security.service.CustomUserDetailsService;
 import com.pettact.api.security.util.JwtTokenProvider;
 import com.pettact.api.security.vo.CustomOAuth2User;
-import com.pettact.api.security.vo.CustomOAuth2UserService;
-import com.pettact.api.security.vo.CustomUserDetailsService;
 import com.pettact.api.user.entity.Users;
 
 import lombok.RequiredArgsConstructor;
@@ -52,18 +52,14 @@ public class SecurityConfig {
 	
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-
         log.info("------------web configure-------------------");
-
         return (web) -> web.ignoring()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 	
     @Bean
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
-
         log.info("------------configure-------------------");
-
         //인증관리자 빌더 객체 얻기  
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         
@@ -86,22 +82,22 @@ public class SecurityConfig {
         http.addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class);
 
         //UsernamePasswordAuthenticationFilter 필더 객체 실행 전에 동작할 TokenCheckFilter 객체를 생성하여 설정한다
-        //해당 소스 작성후 : 브라우저에서 /api/sample/test URL을 실행한다
         http.addFilterBefore(new TokenCheckFilter(jwtTokenProvider, CustomUserDetailsService), UsernamePasswordAuthenticationFilter.class);
         
         //TokenCheckFilter 필더 객체 실행 전에 동작할 RefreshTokenFilter 객체를 생성하여 설정한다
         //해당 소스 작성후 : 브라우저에서 /refreshToken URL을 실행한다
         http.addFilterBefore(new RefreshTokenFilter("/refreshToken", objectMapper, jwtTokenProvider), TokenCheckFilter.class);
 
-        //csrf 비활성화 
         http.csrf(csrf -> csrf.disable());
-        //세션을 사용하지 않음  
+        //세션을 사용하지 않음
         http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
 		http.authorizeHttpRequests(authroize -> 
 			authroize
 				.requestMatchers("/v1/user/login",
 							"/v1/user/join",
+							"/v1/user/email/send",
+							"/v1/user/email/verify",
 							"/refreshToken",
 							"/oauth2/**",
 							"/login/oauth2/**",
@@ -109,8 +105,6 @@ public class SecurityConfig {
 				.anyRequest().authenticated()
 	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨
 //				requestMatchers("/")
-//				.hasAnyAuthority("ROLE_NORMAL", "ROLE_SELLER", "ROLE_ADMIN") //여러개의 권한 중 하나라도 있으면 성공 
-//				.requestMatchers("/v1/user/**")
 //				.hasAnyAuthority("ROLE_NORMAL", "ROLE_SELLER", "ROLE_ADMIN") //여러개의 권한 중 하나라도 있으면 성공 
 //				.requestMatchers("/api/v1/admin/**")
 //				.hasAnyAuthority("ROLE_ADMIN") //반드시 해당 권한만 허가  
@@ -146,7 +140,6 @@ public class SecurityConfig {
                 // response.sendRedirect("http://localhost:5173/oauth2/success?token=" + jwt);
             })
         );
-
         
         return http.build();
 	}

@@ -9,8 +9,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.pettact.api.security.service.CustomUserDetailsService;
 import com.pettact.api.security.util.JwtTokenProvider;
-import com.pettact.api.security.vo.CustomUserDetailsService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,6 +29,8 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     private static final List<String> EXCLUDED_PATHS = List.of(
     	    "/v1/user/login",
     	    "/v1/user/join",
+    	    "/v1/user/email/send",
+    	    "/v1/user/email/verify",
     	    "/refreshToken",
     	    "/login",
     	    "/oauth2/",
