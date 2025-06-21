@@ -1,6 +1,7 @@
 package com.pettact.api.security.filter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,25 +26,33 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
 
+    private static final List<String> EXCLUDED_PATHS = List.of(
+    	    "/v1/user/login",
+    	    "/v1/user/join",
+    	    "/refreshToken",
+    	    "/login",
+    	    "/oauth2/",
+    	    "/login/oauth2/",
+    	    "/favicon.ico",
+    	    "/default-ui.css"
+    	);
+    
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String path = request.getRequestURI();
-        
+        String path = request.getRequestURI();
+
         log.info("요청 URI: {}", path);
-        log.info("Authorization Header: {}", request.getHeader("Authorization"));
-        
-        // TODO: 검사 안 할 경로만 예외 처리하고 나머지는 토큰 검사
-//        if (path.equals("/v1/user/login") || path.equals("/v1/user/join") || path.equals("/refreshToken")) {
-    	if (path.contains("/v1/user/login") || path.contains("/v1/user/join") || path.contains("/refreshToken")) {
+
+        // 예외 경로는 통과
+        if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
+            log.info("TokenCheckFilter skip: {}", path);
             filterChain.doFilter(request, response);
             return;
         }
-
-        log.info("JWT 토큰 검증 시작");
 
         try {
             setAuthentication(request);

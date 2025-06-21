@@ -100,7 +100,12 @@ public class SecurityConfig {
 
 		http.authorizeHttpRequests(authroize -> 
 			authroize
-				.requestMatchers("/v1/user/login", "/v1/user/join", "/refreshToken").permitAll()
+				.requestMatchers("/v1/user/login",
+							"/v1/user/join",
+							"/refreshToken",
+							"/oauth2/**",
+							"/login/oauth2/**",
+							"/v1/user/oauth2/**" ).permitAll()
 				.anyRequest().authenticated()
 	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨
 //				requestMatchers("/")
@@ -137,7 +142,7 @@ public class SecurityConfig {
 
 
                 new ObjectMapper().writeValue(response.getWriter(), keyMap);
-                // TODO: 프론트로 리디렉션
+                // TODO: 프론트로 리디렉션 url은 설정하면됨
                 // response.sendRedirect("http://localhost:5173/oauth2/success?token=" + jwt);
             })
         );

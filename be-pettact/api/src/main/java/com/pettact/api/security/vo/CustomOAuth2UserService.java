@@ -5,15 +5,20 @@ import com.pettact.api.code.repository.CommonCodeRepository;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -41,26 +46,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         CommonCode status = commonCodeRepository.findById("STATUS_ACTIVE")
             .orElseThrow(() -> new IllegalStateException("기본 상태 코드 없음"));
         
-        // 이메일 + providerId 기준으로 사용자 조회
-        Users user = userRepository.findByUserEmail(email)
-                .orElseGet(() -> {
-                	Users newUser = Users.builder()
-                		    .userEmail(email)
-                		    .provider(provider)
-                		    .providerId(providerId)
-                		    .userName(extractName(provider, attributes))           // 이름
-                		    .userNickname(generateUniqueNickname(email))           // 임시 닉네임 생성
-                		    .userEmailChecked(true)
-                		    .userHasPet(false)
-                		    .userBlacklist(false)
-                		    .userCreatedAt(LocalDateTime.now())
-                		    .roleCode(role)                            // 기본 권한
-                		    .statusCode(status)                        // 기본 상태
-                		    .build();
-                    return userRepository.save(newUser);
-                });
+        Optional<Users> existing = userRepository.findByUserEmail(email);
+        
+        if (existing.isPresent()) {
+            Users existingUser = existing.get();
+            
+            if (!provider.equals(existingUser.getProvider())) {
+            	log.error("이미 이메일입니다. provider [{}], email [{}]", provider, email);
+                throw new OAuth2AuthenticationException("이미 다른 플랫폼으로 가입된 이메일입니다.");
+            }
 
-        return new CustomOAuth2User(user, attributes);
+            return new CustomOAuth2User(existingUser, attributes);
+        }
+        
+        Users newUser = Users.builder()
+                .userEmail(email)
+                .provider(provider)
+                .providerId(providerId)
+                .userName(extractName(provider, attributes))
+                .userNickname(generateUniqueNickname(email))
+                .userEmailChecked(true)
+                .userHasPet(false)
+                .userBlacklist(false)
+                .userCreatedAt(LocalDateTime.now())
+                .roleCode(role)
+                .statusCode(status)
+                .build();
+
+        Users saved = userRepository.save(newUser);
+        return new CustomOAuth2User(saved, attributes);
     }
 
     private String extractEmail(String provider, Map<String, Object> attributes) {
