@@ -25,23 +25,40 @@ public class PetService {
     
     private final PetFacilityRepository petFacilityRepository;
     private final PetShelterRepository petShelterRepository;
-
+    
+    // api 인증키
     @Value("${pet.api.service-key-decoded}")
     private String apiKey;
-    
-   // https://www.data.go.kr/tcs/dss/selectFileDataDetailView.do?publicDataPk=15111389
+   
+	//반려동물 동반가능 업장 api url
     @Value("${pet-facility-api-url}")
     private String petFacilityApiUrl;
-    //https://www.data.go.kr/tcs/dss/selectApiDataDetailView.do?publicDataPk=15098915
+    
+    //동물 보호소 정보 api url
     @Value("${pet-shelter-api-url}")
     private String petShelterApiUrl;
-    // 
+    
+    // 시군구 정보 url
+    @Value("${sigungu-api-url}")
+    private String sigunguApiUrl;
+    
+    // 시도 정보 url
+    @Value("${sido-api-url}")
+    private String sidoApiUrl;
+    
+    // 동물품종 정보 url
+    @Value("${kind-api-url}")
+    private String kindApiUrl;
+    
+    // 유기동물 조회  url
+    @Value("${abandonment-public-api-url}")
+    private String abandonmentPublicApiurl;
     
     
     // 각각 api 호출 
     public void fetchAllApi() {
        // fetchPetFacility();
-        fetchPetShelter();
+       // fetchPetShelter();
     }
     
     public void fetchPetFacility() {
