@@ -7,26 +7,40 @@ import org.springframework.stereotype.Service;
 
 import com.pettact.api.code.entity.CommonCode;
 import com.pettact.api.code.repository.CommonCodeRepository;
+import com.pettact.api.security.util.VerificationCodeStore;
 import com.pettact.api.user.dto.UserJoinDTO;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 	private final UserRepository userRepository;
 	private final CommonCodeRepository commonCodeRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final VerificationCodeStore verificationCodeStore;
 	
     public void join(UserJoinDTO dto) {
         
-    	if (isEmailDuplicated(dto.getEmail())) {
+    	if (isEmailDuplicated(dto.getUserEmail())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
         
-        if (isNicknameDuplicated(dto.getNickname())) {
+        String verifiedKey = "verified:" + dto.getUserEmail();
+        boolean verified = verificationCodeStore.verifyCode(verifiedKey, "true");
+
+        if (!verified) {
+        	log.warn("이메일 인증 안된 사용자 가입 시도: {}", dto.getUserEmail());	// TODO: 통계 때문에 넣어둔거임
+            throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
+        }
+
+        verificationCodeStore.remove(verifiedKey); // 인증 한 번만 사용하도록 제거
+        
+        if (isNicknameDuplicated(dto.getUserNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
         
@@ -39,17 +53,17 @@ public class UserService {
             .orElseThrow(() -> new IllegalStateException("기본 상태 코드 없음"));
     	
         Users user = Users.builder()
-                .userEmail(dto.getEmail())
-                .userPassword(passwordEncoder.encode(dto.getPassword()))
-                .userName(dto.getName())
-                .userNickname(dto.getNickname())
-                .userTel(dto.getTel())
-                .userBirth(dto.getBirth())
-                .userZipcode(dto.getZipcode())
-                .userStreet1(dto.getStreet1())
-                .userDetailAddress(dto.getDetailAddress())
+                .userEmail(dto.getUserEmail())
+                .userPassword(passwordEncoder.encode(dto.getUserPassword()))
+                .userName(dto.getUserName())
+                .userNickname(dto.getUserNickname())
+                .userTel(dto.getUserTel())
+                .userBirth(dto.getUserBirth())
+                .userZipcode(dto.getUserZipcode())
+                .userStreet1(dto.getUserStreet1())
+                .userDetailAddress(dto.getUserDetailAddress())
                 .userHasPet(false)
-                .userEmailChecked(dto.getEmailChecked())
+                .userEmailChecked(dto.getUserEmailChecked())
                 .userBlacklist(false)
                 .userCreatedAt(LocalDateTime.now())
                 .roleCode(role)
