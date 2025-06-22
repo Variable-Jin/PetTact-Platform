@@ -1,12 +1,14 @@
 package com.pettact.api.user.service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.pettact.api.code.entity.CommonCode;
 import com.pettact.api.code.repository.CommonCodeRepository;
+import com.pettact.api.security.service.EmailService;
 import com.pettact.api.security.util.VerificationCodeStore;
 import com.pettact.api.user.dto.UserJoinDTO;
 import com.pettact.api.user.entity.Users;
@@ -23,6 +25,7 @@ public class UserService {
 	private final CommonCodeRepository commonCodeRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final VerificationCodeStore verificationCodeStore;
+	private final EmailService emailService;
 	
     public void join(UserJoinDTO dto) {
         
@@ -74,12 +77,39 @@ public class UserService {
     }
     
     // 중복확인
-    public boolean isEmailDuplicated(String email) {
-    	return userRepository.existsByUserEmail(email);
+    public boolean isEmailDuplicated(String userEmail) {
+    	return userRepository.existsByUserEmail(userEmail);
     }
 
     // 중복확인
-    public boolean isNicknameDuplicated(String nickname) {
-    	return userRepository.existsByUserNickname(nickname);
+    public boolean isNicknameDuplicated(String userNickname) {
+    	return userRepository.existsByUserNickname(userNickname);
+    }
+    
+    // 이메일 찾기
+    public String findEmailByNameAndTel(String userName, String userTel) {
+        Users user = userRepository.findByUserNameAndUserTel(userName, userTel)
+            .orElseThrow(() -> new IllegalArgumentException("일치하는 정보가 없습니다."));
+        
+        return user.getUserEmail();
+    }
+    
+    // 비밀번호 재설정 메일 전송
+    public void sendPasswordResetMail(String userEmail) {
+        Users user = userRepository.findByUserEmail(userEmail)
+            .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
+
+        String token = UUID.randomUUID().toString();
+        verificationCodeStore.saveCode("password-reset-token:" + token, userEmail);
+
+        emailService.sendPasswordResetLink(userEmail, token);
+    }
+
+    public void updatePassword(String userEmail, String newPassword) {
+        Users user = userRepository.findByUserEmail(userEmail)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        user.setUserPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

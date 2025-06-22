@@ -4,12 +4,15 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.pettact.api.code.entity.CommonCode;
 import com.pettact.api.user.entity.Users;
 
 public interface UserRepository extends JpaRepository<Users, Long> {
-	Optional<Users> findByUserEmail(String email);
+	Optional<Users> findByUserEmail(String userEmail);
 	
-	boolean existsByUserEmail(String email);
+	boolean existsByUserEmail(String userEmail);
 	
-	boolean existsByUserNickname(String nickname);
+	boolean existsByUserNickname(String userNickname);
+
+	Optional<Users> findByUserNameAndUserTel(String userName, String userTel);
 }

@@ -1,8 +1,10 @@
 package com.pettact.api.user.controller;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,7 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pettact.api.security.service.EmailService;
 import com.pettact.api.security.util.VerificationCodeStore;
+import com.pettact.api.security.vo.CustomUserDetails;
+import com.pettact.api.user.dto.EmailFindRequestDTO;
+import com.pettact.api.user.dto.EmailFindResponseDTO;
+import com.pettact.api.user.dto.PasswordResetDTO;
 import com.pettact.api.user.dto.UserJoinDTO;
+import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.service.UserService;
 
 import jakarta.validation.Valid;
@@ -33,7 +40,7 @@ public class UserController {
     		userService.join(dto);
     		return ResponseEntity.ok().build();
 		} catch (IllegalArgumentException e) {
-	        return ResponseEntity.badRequest().body(e.getMessage()); // Service
+	        return ResponseEntity.badRequest().body(e.getMessage());
 	    } catch (Exception e) {
 			return ResponseEntity.status(500).body("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.");
 		}
@@ -60,5 +67,74 @@ public class UserController {
         verificationCodeStore.saveCode("verified:" + email, "true");
         verificationCodeStore.remove("email-token:" + token);
         return ResponseEntity.ok("이메일 인증이 완료되었습니다.");
+    }
+    
+    // 현재 로그인된 사용자 정보 조회(이건 AccessToken 사용)
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails){
+    	if(userDetails == null) {
+    		return ResponseEntity.status(401).body("로그인이 필요합니다.");
+    	}
+    	
+    	Users user = userDetails.getUserEntity();
+    	
+        Map<String, Object> result = Map.of(
+            "userEmail", user.getUserEmail(),
+            "userNo", user.getUserNo(),
+            "userNickname", user.getUserNickname(),
+            "userRole", user.getRoleCode().getCodeId()
+        );
+        
+        return ResponseEntity.ok(result);
+    }
+    
+    // 이메일 찾기
+    @PostMapping("/email/find")
+    public ResponseEntity<?> findEmail(@RequestBody EmailFindRequestDTO dto) {
+        try {
+            String userEmail = userService.findEmailByNameAndTel(dto.getUserName(), dto.getUserTel());
+            return ResponseEntity.ok(new EmailFindResponseDTO(userEmail));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    // 비밀번호 재설정 메일 전송
+    @PostMapping("/password/send")
+    public ResponseEntity<?> sendPasswordResetMail(@RequestParam("userEmail") String userEmail){
+    	userService.sendPasswordResetMail(userEmail);
+    	return ResponseEntity.ok("비밀번호 재설정 링크를 이메일로 전송했습니다.");
+    }
+    
+    // 비밀번호 재설정 링크 클릭시 토큰 확인
+    @GetMapping("/password/verify")
+    public ResponseEntity<?> verifyPasswordResetToken(@RequestParam("token") String token) {    	
+    	String email = verificationCodeStore.getCode("password-reset-token:" + token);
+
+        if (email == null) {
+            return ResponseEntity.badRequest().body("유효하지 않거나 만료된 링크입니다.");
+        }
+
+        verificationCodeStore.saveCode("verified:" + email, "true");
+        verificationCodeStore.remove("password-reset-token:" + token);
+        
+        // 프론트에서 이걸 가지고 비밀번호 재설정 페이지로 연결되게
+        return ResponseEntity.ok(Map.of("email", email, "message", "인증 성공"));
+    }
+    
+    // 비밀번호 재설정
+    @PostMapping("/password/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetDTO resetDTO) {
+    	String email = verificationCodeStore.getCode("verified:" + resetDTO.getUserEmail());
+
+    	if (email == null) {
+    		return ResponseEntity.badRequest().body("유효하지 않거나 만료된 링크입니다.");
+    	}
+    	
+    	userService.updatePassword(resetDTO.getUserEmail(), resetDTO.getNewPassword());
+    	
+    	verificationCodeStore.remove(email);
+    	
+    	return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 }
