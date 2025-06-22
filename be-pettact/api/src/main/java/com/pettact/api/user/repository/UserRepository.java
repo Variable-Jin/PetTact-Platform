@@ -1,5 +1,6 @@
 package com.pettact.api.user.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,6 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 	boolean existsByUserNickname(String userNickname);
 
 	Optional<Users> findByUserNameAndUserTel(String userName, String userTel);
+	
+	List<Users> findByIsDeletedFalse();
 }

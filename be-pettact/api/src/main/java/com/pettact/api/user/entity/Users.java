@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.ColumnDefault;
 
 import com.pettact.api.code.entity.CommonCode;
+import com.pettact.api.core.base.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,7 +18,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "users")
-public class Users {
+public class Users extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,15 +69,6 @@ public class Users {
     @Column(name = "user_blacklist", nullable = false)
     @ColumnDefault("false")
     private Boolean userBlacklist;
-
-    @Column(name = "user_created_at", nullable = false)
-    private LocalDateTime userCreatedAt;
-
-    @Column(name = "user_updated_at")
-    private LocalDateTime userUpdatedAt;
-
-    @Column(name = "user_deleted_at")
-    private LocalDateTime userDeletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_code", nullable = false)

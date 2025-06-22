@@ -69,7 +69,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .userEmailChecked(true)
                 .userHasPet(false)
                 .userBlacklist(false)
-                .userCreatedAt(LocalDateTime.now())
                 .roleCode(role)
                 .statusCode(status)
                 .build();

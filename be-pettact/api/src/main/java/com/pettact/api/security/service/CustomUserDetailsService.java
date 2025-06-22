@@ -25,11 +25,15 @@ public class CustomUserDetailsService implements UserDetailsService{
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		log.info("로그인 시도 이메일: {}", email);
 
-		Optional<Users> optional = userRepository.findByUserEmail(email);
-		Users users = optional.orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+		Users user = userRepository.findByUserEmail(email)
+			.orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
 
-		log.info("사용자 정보 로드 완료: {}", users.getUserNickname());
+		if (user.isDeleted()) {
+			throw new UsernameNotFoundException("이미 탈퇴한 사용자입니다: " + email);
+		}
 
-		return new CustomUserDetails(users);
+		log.info("사용자 정보 로드 완료: {}", user.getUserNickname());
+
+		return new CustomUserDetails(user);
 	}
 }
