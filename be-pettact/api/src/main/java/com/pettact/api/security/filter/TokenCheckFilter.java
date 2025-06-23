@@ -41,7 +41,8 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     	    "/oauth2/",
     	    "/login/oauth2/",
     	    "/favicon.ico",
-    	    "/default-ui.css"
+    	    "/default-ui.css",
+    	    "/api/fetch"
 	);
     
     @Override
