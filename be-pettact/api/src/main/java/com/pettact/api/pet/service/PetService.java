@@ -1,5 +1,6 @@
 package com.pettact.api.pet.service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -7,27 +8,35 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.pettact.api.pet.dto.PetKindDto;
 import com.pettact.api.pet.dto.PetShelterDto;
 import com.pettact.api.pet.dto.wrapper.PetFacilityWrapper;
+import com.pettact.api.pet.dto.wrapper.PetKindWrapper;
 import com.pettact.api.pet.dto.wrapper.PetShelterWrapper;
 import com.pettact.api.pet.entity.PetFacilityEntity;
+import com.pettact.api.pet.entity.PetKindEntity;
 import com.pettact.api.pet.entity.PetShelterEntity;
 import com.pettact.api.pet.repository.PetFacilityRepository;
+import com.pettact.api.pet.repository.PetKindRepository;
 import com.pettact.api.pet.repository.PetShelterRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PetService {
 
     private final RestTemplate restTemplate;
     
     private final PetFacilityRepository petFacilityRepository;
     private final PetShelterRepository petShelterRepository;
+    private final PetKindRepository petKindRepository;
     
     // api 인증키
-    @Value("${pet.api.service-key-decoded}")
+    @Value("${pet-api-service-key-decoded}")
     private String apiKey;
    
 	//반려동물 동반가능 업장 api url
@@ -57,8 +66,9 @@ public class PetService {
     
     // 각각 api 호출 
     public void fetchAllApi() {
-       // fetchPetFacility();
-       // fetchPetShelter();
+         // fetchPetFacility(); // 반려동물 동반가능 업장 - 중복 제거 x
+         // fetchPetShelter(); // 동물 보호소 - 중복제거 x
+    	fetchPetKind(); // 동물품종 
     }
     
     public void fetchPetFacility() {
@@ -200,7 +210,7 @@ public class PetService {
                             .breedCnt(dto.getBreedCnt())
                             .quarabtineCnt(dto.getQuarabtineCnt())
                             .feedCnt(dto.getFeedCnt())
-                            .transCarCnt(dto.getTransCarCnt())  // 추가 필드 대응
+                            .transCarCnt(dto.getTransCarCnt())  
                             .careTel(dto.getCareTel())
                             .dataStdDt(dto.getDataStdDt())
                             .build();
@@ -209,12 +219,64 @@ public class PetService {
                 }
 
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+            	log.error(e.getMessage());
             }
         }
     }
-
-
     
+    @Transactional
+    public void fetchPetKind() {
+        for (String upKindCd : Arrays.asList("417000", "422400", "429900")) {
+            int pageNo = 1;
+            int numOfRows = 100;
+
+            while (true) {
+                String url = kindApiUrl
+                        + "?serviceKey=" + apiKey
+                        + "&up_kind_cd=" + upKindCd
+                        + "&_type=json"
+                        + "&numOfRows=" + numOfRows
+                        + "&pageNo=" + pageNo;
+
+                try {
+                    ResponseEntity<PetKindWrapper> response =
+                            restTemplate.getForEntity(url, PetKindWrapper.class);
+
+                    PetKindWrapper wrapper = response.getBody();
+                    if (wrapper == null || wrapper.getResponse() == null || wrapper.getResponse().getBody() == null
+                    	    || wrapper.getResponse().getBody().getItems() == null) {
+                    	    break;
+                    	}
+
+
+                    List<PetKindDto> kindList = wrapper.getResponse().getBody().getItems().getItem();
+                    if (kindList == null || kindList.isEmpty()) {
+                        break;
+                    }
+
+                    for (PetKindDto dto : kindList) {
+                        boolean exists = petKindRepository.existsByKindCd(dto.getKindCd());
+
+                        if (!exists) {
+                            PetKindEntity entity = PetKindEntity.builder()
+                                    .kindCd(dto.getKindCd())
+                                    .kindNm(dto.getKindNm())
+                                    .upKindCd(upKindCd)
+                                    .build();
+                            petKindRepository.save(entity);
+                            log.info("저장 : {}", dto.getKindCd());
+                        } else {
+                            log.info("중복 : {}", dto.getKindCd());
+                        }
+                    }
+                    pageNo++;
+
+                } catch (Exception e) {
+                    log.error("upKindCd={} 페이지 {} 실패: {}", upKindCd, pageNo, e.getMessage());
+                    break;
+                }
+            }
+        }
+    }
 
 }

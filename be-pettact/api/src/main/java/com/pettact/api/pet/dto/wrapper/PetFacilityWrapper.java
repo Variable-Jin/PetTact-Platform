@@ -1,11 +1,10 @@
 package com.pettact.api.pet.dto.wrapper;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+
 import com.pettact.api.pet.dto.PetFacilityDto;
 
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 public class PetFacilityWrapper {
