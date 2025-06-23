@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductController {
 	
 	private final ProductService productService;
-	
+	//단일 상품 조회, 페이징 처리
 	 //상품 목록
 	@GetMapping("/list")
 	public ResponseEntity<List<ProductDTO>> getAllProducts(){
@@ -50,7 +50,7 @@ public class ProductController {
     }
     
     //상품 등록
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<String> createProduct(@RequestBody @Valid ProductCreateDTO dto) {
         productService.createProduct(dto);
         return ResponseEntity.ok("상품이 등록되었습니다.");
