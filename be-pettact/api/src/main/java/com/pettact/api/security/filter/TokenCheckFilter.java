@@ -26,18 +26,23 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
 
+    // 토큰 검사 제외할 url
     private static final List<String> EXCLUDED_PATHS = List.of(
     	    "/v1/user/login",
     	    "/v1/user/join",
     	    "/v1/user/email/send",
     	    "/v1/user/email/verify",
+    	    "/v1/user/email/find",
+		    "/v1/user/password/send",
+		    "/v1/user/password/verify",
+		    "/v1/user/password/reset",
     	    "/refreshToken",
     	    "/login",
     	    "/oauth2/",
     	    "/login/oauth2/",
     	    "/favicon.ico",
     	    "/default-ui.css"
-    	);
+	);
     
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -75,7 +80,7 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         String token = header.substring(7); // "Bearer " 제거
 
         Map<String, Object> claims = jwtTokenProvider.validateToken(token);
-        String email = (String) claims.get("uid");
+        String email = (String) claims.get("userEmail");
 
         log.info("인증된 이메일: {}", email);
 

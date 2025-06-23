@@ -45,8 +45,8 @@ public class JwtTokenProvider {
         Map<String, Object> payloads = new HashMap<>();
         payloads.putAll(valueMap);
 
-        //테스트 시에는 짧은 유효 기간
-        int time = (1) * days; //테스트는 분단위로 나중에 60*24 (일)단위변경
+        // TODO: 테스트용으로 토큰 7일/10일으로 변경
+        int time = (1) * days;
 
         //10분 단위로 조정
         //int time = (10) * days; //테스트는 분단위로 나중에 60*24 (일)단위변경
@@ -56,8 +56,8 @@ public class JwtTokenProvider {
 	                .header().add(valueMap) //헤더 부분
 	                .and().claims(payloads) //payload 부분 설정
 	                .issuedAt(Date.from(ZonedDateTime.now().toInstant())) //JWT 발급시간 설정 
-	                .expiration(Date.from(ZonedDateTime.now().plusMinutes(time).toInstant())) //만료기간 설정 
-//	                .expiration(Date.from(ZonedDateTime.now().plusDays(time).toInstant())) //만료기간 설정
+//	                .expiration(Date.from(ZonedDateTime.now().plusMinutes(time).toInstant())) //만료기간 설정 
+	                .expiration(Date.from(ZonedDateTime.now().plusDays(time).toInstant())) //만료기간 설정
 	                .signWith(Keys.hmacShaKeyFor(getSecretKey()), Jwts.SIG.HS256)
 	                .compact();
 		

@@ -45,16 +45,22 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
 			
 			//JWT에 추가할 정보로 아이디가 있는 Map 객체를 생성한다
 		    Map<String, Object> claims = Map.of(
-		            "uid", user.getUserEmail(),                       // 로그인 ID를 uid로 한거임
-		            "userNo", user.getUserNo(),                       // PK
-		            "nickname", user.getUserNickname(),               // 닉네임
-		            "role", user.getRoleCode().getCodeId()            // 권한 코드 (USER_ROLE)
+		            "userEmail", user.getUserEmail(),
+		            "userNo", user.getUserNo(),
+		            "userNickname", user.getUserNickname(),
+		            "userRole", user.getRoleCode().getCodeId()
 		        );
-			
-			Map<String, String> keyMap = Map.of("accessToken", jwtTokenProvider.generateToken(claims, 1), //Access Token 유효기간 1일로 생성
-												"refreshToken", jwtTokenProvider.generateToken(claims, 5)); //Refresh Token 유효기간 10일로 생성
 
-			
+			Map<String, Object> keyMap = Map.of(
+				    "accessToken", jwtTokenProvider.generateToken(claims, 7),	//Access Token 유효기간 1일
+				    "refreshToken", jwtTokenProvider.generateToken(claims, 10),	//Refresh Token 유효기간 10일
+				    "user", Map.of(
+				    		"userEmail", user.getUserEmail(),
+				        "userNo", user.getUserNo(),
+				        "userNickname", user.getUserNickname(),
+				        "userRole", user.getRoleCode().getCodeId()
+				    )
+				);
 			//json 객체로 응답 스트림에 keyMap 객체를 출력 한다 
 			objectMapper.writeValue(response.getWriter(), keyMap);
 		});

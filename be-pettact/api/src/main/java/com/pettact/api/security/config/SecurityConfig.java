@@ -63,7 +63,7 @@ public class SecurityConfig {
         //인증관리자 빌더 객체 얻기  
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         
-        //인증관리자에 userDetailsService와 비밀번호 암호화 객체를 설정한다   
+        //인증관리자에 userDetailsService와 비밀번호 암호화 객체를 설정한다
         authenticationManagerBuilder
         	.userDetailsService(CustomUserDetailsService)
         	.passwordEncoder(passwordEncoder());
@@ -94,21 +94,16 @@ public class SecurityConfig {
 
 		http.authorizeHttpRequests(authroize -> 
 			authroize
-				.requestMatchers("/v1/user/login",
-							"/v1/user/join",
-							"/v1/user/email/send",
-							"/v1/user/email/verify",
-							"/refreshToken",
-							"/oauth2/**",
-							"/login/oauth2/**",
-							"/v1/user/oauth2/**" ).permitAll()
-				.anyRequest().authenticated()
-	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨
-//				requestMatchers("/")
-//				.hasAnyAuthority("ROLE_NORMAL", "ROLE_SELLER", "ROLE_ADMIN") //여러개의 권한 중 하나라도 있으면 성공 
-//				.requestMatchers("/api/v1/admin/**")
+            	.requestMatchers(
+                    "/v1/user/me",
+                    "/v1/user/me/detail",
+                    "/v1/user/update",
+                    "/v1/user/withdraw"
+                ).authenticated()
+	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨 - 아래는 권한 설정하는 예시
+//				.requestMatchers("/v1/admin/**")
 //				.hasAnyAuthority("ROLE_ADMIN") //반드시 해당 권한만 허가  
-//				.anyRequest().permitAll() // /home url은 비회원이 사용할 수 있음 
+				.anyRequest().permitAll() // 나머지는 비로그인 상태에서도 접근 가능
 			);
 
 		// 소셜로그인
@@ -122,17 +117,17 @@ public class SecurityConfig {
 
                 // JWT claim 설정
                 Map<String, Object> claims = Map.of(
-                    "uid", user.getUserEmail(),
+                    "userEmail", user.getUserEmail(),
                     "userNo", user.getUserNo(),
-                    "nickname", user.getUserNickname(),
-                    "role", user.getRoleCode().getCodeId()
+                    "userNickname", user.getUserNickname(),
+                    "userRole", user.getRoleCode().getCodeId()
                 );
 
-                String accessToken = jwtTokenProvider.generateToken(claims, 1);
-                String refreshToken = jwtTokenProvider.generateToken(claims, 5);
+                String accessToken = jwtTokenProvider.generateToken(claims, 7);
+                String refreshToken = jwtTokenProvider.generateToken(claims, 10);
 
-    			Map<String, String> keyMap = Map.of("accessToken", jwtTokenProvider.generateToken(claims, 1), //Access Token 유효기간 1일로 생성
-						"refreshToken", jwtTokenProvider.generateToken(claims, 5)); //Refresh Token 유효기간 10일로 생성
+    			Map<String, String> keyMap = Map.of("accessToken", jwtTokenProvider.generateToken(claims, 7), //Access Token 유효기간 1일로 생성
+						"refreshToken", jwtTokenProvider.generateToken(claims, 10)); //Refresh Token 유효기간 10일로 생성
 
 
                 new ObjectMapper().writeValue(response.getWriter(), keyMap);
