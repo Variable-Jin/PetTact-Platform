@@ -1,6 +1,5 @@
 package com.pettact.api.board.Category;
 
-import com.pettact.api.board.Category.dto.CategoryRepository;
 import com.pettact.api.board.Category.dto.CreateDto;
 import com.pettact.api.board.Category.dto.ResponseDto;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +39,7 @@ public class CategoryService {
     }
 
     // 수정 예정
-    public ResponseDto getCategoryById(Long boardCategoryNo) {
+    public ResponseDto getCategoryByNo(Long boardCategoryNo) {
         BoardCategory category = categoryRepository.findById(boardCategoryNo)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다. No: " + boardCategoryNo));
         return ResponseDto.fromEntity(category);
@@ -50,11 +49,7 @@ public class CategoryService {
         BoardCategory category = categoryRepository.findById(boardCategoryNo)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다. No: " + boardCategoryNo));
 
-        if (!category.getBoardCategoryTitle().equals(createDto.getBoardCategoryTitle()) &&
-                categoryRepository.existsByBoardCategoryTitle(createDto.getBoardCategoryTitle())) {
-            throw new IllegalArgumentException("이미 존재하는 카테고리입니다");
-        }
-        category.updateCategoryFiled(createDto);
+        category.patchCategoryField(createDto);
         BoardCategory updated = categoryRepository.save(category);
 
         return ResponseDto.fromEntity(updated);
