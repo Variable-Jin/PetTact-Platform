@@ -1,6 +1,7 @@
 package com.pettact.api.board.Category;
 
 
+import com.pettact.api.board.Board.Board;
 import com.pettact.api.board.Category.dto.CreateDto;
 import com.pettact.api.core.base.BaseEntity;
 import jakarta.persistence.*;
@@ -8,6 +9,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -20,6 +24,10 @@ public class BoardCategory extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "board_category_no")
     private Long boardCategoryNo;
+
+    // Board와 1:N 관계 - category 삭제 시 "remove" 게시글 모두 삭제
+    @OneToMany(mappedBy = "boardCategory", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private List<Board> boards = new ArrayList<>();
 
     @Column(name = "boaard_category_title", nullable = false, length = 255)
     private String boardCategoryTitle;
@@ -67,15 +75,36 @@ public class BoardCategory extends BaseEntity {
         this.editorType = editorType;
     }
 
-    public void updateCategoryFiled(CreateDto createDto) {
-        this.boardCategoryTitle = createDto.getBoardCategoryTitle();
-        this.boardCategoryDescription = createDto.getBoardCategoryDescription();
-        this.boardAllowImage = createDto.getBoardAllowImage();
-        this.boardAllowAttachment = createDto.getBoardAllowAttachment();
-        this.boardMaxFileSize = createDto.getBoardMaxFileSize();
-        this.boardAllowReply = createDto.getBoardAllowReply();
-        this.boardMaxImageCount = createDto.getBoardMaxImageCount();
-        this.editorType = createDto.getEditorType();
-        this.boardAllowRecommend = createDto.getBoardAllowRecommend();
+    public void patchCategoryField(CreateDto createDto) {
+       if (createDto.getBoardCategoryTitle() != null) {
+           this.boardCategoryTitle = createDto.getBoardCategoryTitle();
+       }
+       if (createDto.getBoardCategoryDescription() != null) {
+           this.boardCategoryDescription = createDto.getBoardCategoryDescription();
+       }
+       if (createDto.getBoardAllowedRole() != null) {
+           this.boardAllowedRole = createDto.getBoardAllowedRole();
+       }
+       if (createDto.getBoardAllowImage() != null) {
+           this.boardAllowImage = createDto.getBoardAllowImage();
+       }
+       if (createDto.getBoardAllowAttachment() != null) {
+           this.boardAllowAttachment = createDto.getBoardAllowAttachment();
+       }
+       if (createDto.getBoardMaxFileSize() != null) {
+           this.boardMaxFileSize = createDto.getBoardMaxFileSize();
+       }
+       if (createDto.getBoardMaxImageCount() != null) {
+           this.boardMaxImageCount = createDto.getBoardMaxImageCount();
+       }
+       if (createDto.getBoardAllowReply() != null) {
+           this.boardAllowReply = createDto.getBoardAllowReply();
+       }
+      if (createDto.getEditorType() != null) {
+          this.editorType = createDto.getEditorType();
+      }
+      if (createDto.getBoardAllowRecommend() != null) {
+          this.boardAllowRecommend = createDto.getBoardAllowRecommend();
+      }
     }
 }

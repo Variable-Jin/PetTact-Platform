@@ -3,6 +3,7 @@ package com.pettact.api.board.Category;
 import com.pettact.api.board.Category.dto.CreateDto;
 import com.pettact.api.board.Category.dto.ResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +24,8 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<ResponseDto> createCategory(@RequestBody CreateDto createDto) {
         ResponseDto responseDto = categoryService.createCategory(createDto);
-        return ResponseEntity.ok(responseDto);
+        // return ResponseEntity.ok(responseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
     /*
@@ -44,15 +46,16 @@ public class CategoryController {
 
     @GetMapping("/{boardCategoryNo}")
     public ResponseEntity<ResponseDto> getCategoryByNo(@PathVariable Long boardCategoryNo) {
-        return ResponseEntity.ok(categoryService.getCategoryById(boardCategoryNo));
+        ResponseDto responseDto = categoryService.getCategoryByNo(boardCategoryNo);
+        return ResponseEntity.ok(responseDto);
     }
 
     /*
-     * PUT v1/board-categories/{boardCategoryNo}
+     * PATCH v1/board-categories/{boardCategoryNo}
      * 게시판 카테고리 정보 수정
      */
 
-    @PutMapping("/{boardCategoryNo}")
+    @PatchMapping("/{boardCategoryNo}")
     public ResponseEntity<ResponseDto> updatedCategory(@PathVariable Long boardCategoryNo,
                                                        @RequestBody CreateDto createDto) {
         ResponseDto responseDto = categoryService.updateCategory(boardCategoryNo, createDto);
