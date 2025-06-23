@@ -1,7 +1,6 @@
 package com.pettact.api.product.service;
 
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +29,7 @@ public class ProductService {
 		
 		List<ProductEntity> productList = productRepository.findAll()
 		        .stream()
-		        .filter(product -> !product.isProductsDeleted()) // 삭제되지 않은 상품만 목록에 가져옴
+		        .filter(product -> !product.isDeleted()) // 삭제되지 않은 상품만 목록에 가져옴
 		        .collect(Collectors.toList());
 		
 		System.out.println("조회된 상품 수: " + productList.size()); // 로그 찍기
@@ -40,7 +39,7 @@ public class ProductService {
 			            .description(entity.getProductsDescription())
 			            .price(entity.getProductsPrice())
 			            .quantity(entity.getProductsStock())
-			            .createdAt(entity.getProductsCreatedAt())
+			            .createdAt(entity.getCreatedAt())
 			            .categoryId(entity.getProductsCategory().getCategoryId())
 			            .categoryName(entity.getProductsCategory().getCategoryName())
 			            .status(entity.isProductsStatus())
@@ -53,7 +52,7 @@ public class ProductService {
 	    ProductEntity product = productRepository.findById(id)
 	        .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
 	    
-	    product.setProductsDeleted(true); // 논리 삭제
+	    product.softDelete(); // 논리 삭제 및 삭제 시간 등록
 	    productRepository.save(product);
 	}
 	
@@ -70,6 +69,7 @@ public class ProductService {
 		product.setProductsPrice(dto.getProductsPrice());
 		product.setProductsStock(dto.getProductsStock());
 		product.setProductsCategory(category);
+		product.prePersist();
 		product.setProductsStatus(dto.isProductsStatus());
 		
 		productRepository.save(product); // 레포지토리에 저장
@@ -88,7 +88,6 @@ public class ProductService {
 				.productsStock(dto.getProductsStock())
 				.productsCategory(category) 
 				.productsStatus(dto.isProductsStatus())
-				.productsCreatedAt(LocalDateTime.now())
 				.build();
 		
 		productRepository.save(product);

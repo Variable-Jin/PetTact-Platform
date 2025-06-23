@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pettact.api.product.dto.*;
+import com.pettact.api.product.dto.ProductCreateDTO;
+import com.pettact.api.product.dto.ProductDTO;
+import com.pettact.api.product.dto.ProductUpdateDTO;
 import com.pettact.api.product.service.ProductService;
 
 import jakarta.validation.Valid;

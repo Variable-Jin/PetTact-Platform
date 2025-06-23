@@ -1,6 +1,6 @@
 package com.pettact.api.product.entity;
 
-import java.time.LocalDateTime;
+import com.pettact.api.core.base.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductEntity {
+public class ProductEntity extends BaseEntity {
 	
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,9 +41,6 @@ public class ProductEntity {
     @Column(nullable = false)
     private Integer productsStock; // 상품 수량
 
-    @Column(nullable = false)
-    private LocalDateTime productsCreatedAt; // 상품 등록시간
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "products_category") // FK 컬럼명 그대로 사용
     private ProductCategoryEntity productsCategory;// 상품 카테고리
@@ -51,8 +48,8 @@ public class ProductEntity {
     @Column(nullable = false)
     private boolean productsStatus; //  (1)true: 판매중, (0)false: 판매완료
 
-    @Column(nullable = false)
-    private boolean productsDeleted; // 삭제 여부 ((1)true: 삭제완료 , (0)false: 미삭제 )
+//    @Column(nullable = false)
+//    private boolean productsDeleted; // 삭제 여부 ((1)true: 삭제완료 , (0)false: 미삭제 )
 
     
 }
