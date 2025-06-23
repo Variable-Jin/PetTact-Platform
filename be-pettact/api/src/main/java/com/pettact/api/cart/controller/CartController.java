@@ -48,7 +48,7 @@ public class CartController {
     }
     
     //장바구니 상품 추가 ( 동일 상품 등록 시에 수량 증가 )
-    @PostMapping("/add")
+    @PostMapping
     public ResponseEntity<String> addToCart(@RequestBody CartAddDTO dto) {
         cartService.addToCart(dto.getProductId(), dto.getQuantity());
         return ResponseEntity.ok("장바구니에 추가되었습니다.");
