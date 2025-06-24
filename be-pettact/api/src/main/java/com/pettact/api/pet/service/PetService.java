@@ -10,15 +10,19 @@ import org.springframework.web.client.RestTemplate;
 
 import com.pettact.api.pet.dto.PetKindDto;
 import com.pettact.api.pet.dto.PetShelterDto;
+import com.pettact.api.pet.dto.PetSidoDto;
 import com.pettact.api.pet.dto.wrapper.PetFacilityWrapper;
 import com.pettact.api.pet.dto.wrapper.PetKindWrapper;
 import com.pettact.api.pet.dto.wrapper.PetShelterWrapper;
+import com.pettact.api.pet.dto.wrapper.PetSidoWrapper;
 import com.pettact.api.pet.entity.PetFacilityEntity;
 import com.pettact.api.pet.entity.PetKindEntity;
 import com.pettact.api.pet.entity.PetShelterEntity;
+import com.pettact.api.pet.entity.PetSidoEntity;
 import com.pettact.api.pet.repository.PetFacilityRepository;
 import com.pettact.api.pet.repository.PetKindRepository;
 import com.pettact.api.pet.repository.PetShelterRepository;
+import com.pettact.api.pet.repository.PetSidoRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ public class PetService {
     private final PetFacilityRepository petFacilityRepository;
     private final PetShelterRepository petShelterRepository;
     private final PetKindRepository petKindRepository;
+    private final PetSidoRepository petSidoRepository;
     
     // api 인증키
     @Value("${pet-api-service-key-decoded}")
@@ -66,9 +71,10 @@ public class PetService {
     
     // 각각 api 호출 
     public void fetchAllApi() {
-         // fetchPetFacility(); // 반려동물 동반가능 업장 - 중복 제거 x
-         // fetchPetShelter(); // 동물 보호소 - 중복제거 x
-    	fetchPetKind(); // 동물품종 
+    	//fetchPetFacility(); // 반려동물 동반가능 업장 - 중복 제거 x
+        //fetchPetShelter(); // 동물 보호소 - 중복제거 x
+        //fetchPetKind(); // 동물품종 
+    	fetchPetSido();
     }
     
     public void fetchPetFacility() {
@@ -278,5 +284,47 @@ public class PetService {
             }
         }
     }
+    
+    @Transactional
+    public void fetchPetSido() {
+        String url = sidoApiUrl
+                + "?serviceKey=" + apiKey
+                + "&numOfRows=50" 
+                + "&_type=json";
+        try {
+            ResponseEntity<PetSidoWrapper> response =
+                    restTemplate.getForEntity(url, PetSidoWrapper.class);
+            PetSidoWrapper wrapper = response.getBody();
+            if (wrapper == null || wrapper.getResponse() == null || wrapper.getResponse().getBody() == null 
+                || wrapper.getResponse().getBody().getItems() == null 
+                || wrapper.getResponse().getBody().getItems().getItem() == null) {
+                log.warn("시도 데이터 응답이 없습니다.");
+                return;
+            }
+            List<PetSidoDto> sidoList = wrapper.getResponse().getBody().getItems().getItem();
+            if (sidoList.isEmpty()) {
+                log.warn("시도 데이터가 비어 있습니다.");
+                return;
+            }
+            for (PetSidoDto dto : sidoList) {
+                boolean exists = petSidoRepository.existsByOrgCd(dto.getOrgCd());
+
+                if (!exists) {
+                    PetSidoEntity entity = PetSidoEntity.builder()
+                            .orgCd(dto.getOrgCd())
+                            .orgdownNm(dto.getOrgdownNm())
+                            .build();
+
+                    petSidoRepository.save(entity);
+                    log.info("시도 저장 완료: {} {}", dto.getOrgCd(), dto.getOrgdownNm());
+                } else {
+                    log.info("중복된 시도 데이터로 인해 저장하지 않음: {} {}", dto.getOrgCd(), dto.getOrgdownNm());
+                }
+            }
+        } catch (Exception e) {
+            log.error("시도 API 호출 실패: {}", e.getMessage());
+        }
+    }
+
 
 }
