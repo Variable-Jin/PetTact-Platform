@@ -14,7 +14,7 @@ public class CreateDto {
 
     private String boardCategoryTitle;
     private String boardCategoryDescription;
-    private String boardAllowedRole;
+  //  private String boardAllowedRole;
     private Boolean boardAllowAttachment;
     private Boolean boardAllowImage;
     private Boolean boardAllowReply;
@@ -27,7 +27,7 @@ public class CreateDto {
         return new BoardCategory(
                 boardCategoryTitle,
                 boardCategoryDescription,
-                boardAllowedRole,
+               // boardAllowedRole,
                 boardAllowAttachment,
                 boardAllowImage,
                 boardAllowReply,

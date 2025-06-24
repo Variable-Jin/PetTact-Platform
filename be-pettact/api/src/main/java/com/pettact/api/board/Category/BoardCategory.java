@@ -35,9 +35,9 @@ public class BoardCategory extends BaseEntity {
     @Column(name = "board_category_description", columnDefinition = "TEXT")
     private String boardCategoryDescription;
 
-    // enum 변경 예정 Boolean -> String
-    @Column(name = "board_allow_role", nullable = false)
-    private String boardAllowedRole;
+//    // enum 변경 예정 Boolean -> String
+//    @Column(name = "board_allow_role", nullable = false)
+//    private String boardAllowedRole;
 
     @Column(name = "board_allow_image", nullable = false)
     private Boolean boardAllowImage;
@@ -60,12 +60,12 @@ public class BoardCategory extends BaseEntity {
     @Column(name = "board_allow_recommend", nullable = false)
     private Boolean boardAllowRecommend;
 
-    public BoardCategory(String boardCategoryTitle, String boardCategoryDescription, String boardAllowedRole, Boolean boardAllowAttachment,
+    public BoardCategory(String boardCategoryTitle, String boardCategoryDescription, Boolean boardAllowAttachment,
                          Boolean boardAllowImage, Boolean boardAllowReply, Boolean boardAllowRecommend, Integer boardMaxFileSize, Integer boardMaxImageCount, String editorType) {
         super();
         this.boardCategoryTitle = boardCategoryTitle;
         this.boardCategoryDescription = boardCategoryDescription;
-        this.boardAllowedRole = boardAllowedRole;
+    //    this.boardAllowedRole = boardAllowedRole;
         this.boardAllowAttachment = boardAllowAttachment;
         this.boardAllowImage = boardAllowImage;
         this.boardAllowReply = boardAllowReply;
@@ -82,9 +82,9 @@ public class BoardCategory extends BaseEntity {
        if (createDto.getBoardCategoryDescription() != null) {
            this.boardCategoryDescription = createDto.getBoardCategoryDescription();
        }
-       if (createDto.getBoardAllowedRole() != null) {
-           this.boardAllowedRole = createDto.getBoardAllowedRole();
-       }
+//       if (createDto.getBoardAllowedRole() != null) {
+//           this.boardAllowedRole = createDto.getBoardAllowedRole();
+//       }
        if (createDto.getBoardAllowImage() != null) {
            this.boardAllowImage = createDto.getBoardAllowImage();
        }
