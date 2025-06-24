@@ -30,54 +30,54 @@ import lombok.extern.slf4j.Slf4j;
 public class PetService {
 
     private final RestTemplate restTemplate;
-    
+
     private final PetFacilityRepository petFacilityRepository;
     private final PetShelterRepository petShelterRepository;
     private final PetKindRepository petKindRepository;
-    
+
     // api 인증키
     @Value("${pet-api-service-key-decoded}")
     private String apiKey;
-   
-	//반려동물 동반가능 업장 api url
+
+    //반려동물 동반가능 업장 api url
     @Value("${pet-facility-api-url}")
     private String petFacilityApiUrl;
-    
+
     //동물 보호소 정보 api url
     @Value("${pet-shelter-api-url}")
     private String petShelterApiUrl;
-    
+
     // 시군구 정보 url
     @Value("${sigungu-api-url}")
     private String sigunguApiUrl;
-    
+
     // 시도 정보 url
     @Value("${sido-api-url}")
     private String sidoApiUrl;
-    
+
     // 동물품종 정보 url
     @Value("${kind-api-url}")
     private String kindApiUrl;
-    
+
     // 유기동물 조회  url
     @Value("${abandonment-public-api-url}")
     private String abandonmentPublicApiurl;
-    
-    
-    // 각각 api 호출 
+
+
+    // 각각 api 호출
     public void fetchAllApi() {
-         // fetchPetFacility(); // 반려동물 동반가능 업장 - 중복 제거 x
-         // fetchPetShelter(); // 동물 보호소 - 중복제거 x
-    	fetchPetKind(); // 동물품종 
+        // fetchPetFacility(); // 반려동물 동반가능 업장 - 중복 제거 x
+        // fetchPetShelter(); // 동물 보호소 - 중복제거 x
+        fetchPetKind(); // 동물품종
     }
-    
+
     public void fetchPetFacility() {
         int perPage = 1000;
         int page = 1;
 
         // 일단 첫 페이지로 totalCount 받아오기
-        String initialUrl = petFacilityApiUrl + "?page=" + page + "&perPage=" + 
-        		            perPage+ "&returnType=JSON" + "&serviceKey=" + apiKey;
+        String initialUrl = petFacilityApiUrl + "?page=" + page + "&perPage=" +
+                perPage+ "&returnType=JSON" + "&serviceKey=" + apiKey;
 
         ResponseEntity<PetFacilityWrapper> initialResponse = restTemplate.getForEntity(initialUrl, PetFacilityWrapper.class);
 
@@ -140,7 +140,7 @@ public class PetService {
             }
         }
     }
-    
+
     public void fetchPetShelter() {
         int numOfRows = 100;
         int pageNo = 1;
@@ -210,7 +210,7 @@ public class PetService {
                             .breedCnt(dto.getBreedCnt())
                             .quarabtineCnt(dto.getQuarabtineCnt())
                             .feedCnt(dto.getFeedCnt())
-                            .transCarCnt(dto.getTransCarCnt())  
+                            .transCarCnt(dto.getTransCarCnt())
                             .careTel(dto.getCareTel())
                             .dataStdDt(dto.getDataStdDt())
                             .build();
@@ -219,11 +219,11 @@ public class PetService {
                 }
 
             } catch (Exception e) {
-            	log.error(e.getMessage());
+                log.error(e.getMessage());
             }
         }
     }
-    
+
     @Transactional
     public void fetchPetKind() {
         for (String upKindCd : Arrays.asList("417000", "422400", "429900")) {
@@ -244,9 +244,9 @@ public class PetService {
 
                     PetKindWrapper wrapper = response.getBody();
                     if (wrapper == null || wrapper.getResponse() == null || wrapper.getResponse().getBody() == null
-                    	    || wrapper.getResponse().getBody().getItems() == null) {
-                    	    break;
-                    	}
+                            || wrapper.getResponse().getBody().getItems() == null) {
+                        break;
+                    }
 
 
                     List<PetKindDto> kindList = wrapper.getResponse().getBody().getItems().getItem();
