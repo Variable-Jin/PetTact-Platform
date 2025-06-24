@@ -101,8 +101,8 @@ public class SecurityConfig {
                     "/v1/user/withdraw"
                 ).authenticated()
 	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨 - 아래는 권한 설정하는 예시
-//				.requestMatchers("/v1/admin/**")
-//				.hasAnyAuthority("ROLE_ADMIN") //반드시 해당 권한만 허가  
+				.requestMatchers("/v1/admin/**")
+				.hasAnyAuthority("ROLE_ADMIN") //반드시 해당 권한만 허가  
 				.anyRequest().permitAll() // 나머지는 비로그인 상태에서도 접근 가능
 			);
 
@@ -120,7 +120,7 @@ public class SecurityConfig {
                     "userEmail", user.getUserEmail(),
                     "userNo", user.getUserNo(),
                     "userNickname", user.getUserNickname(),
-                    "userRole", user.getRoleCode().getCodeId()
+                    "userRole", user.getRoleCode()
                 );
 
                 String accessToken = jwtTokenProvider.generateToken(claims, 7);
