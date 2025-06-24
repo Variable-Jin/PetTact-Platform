@@ -1,5 +1,6 @@
-package com.pettact.api.board.Category;
+package com.pettact.api.Category.repository;
 
+import com.pettact.api.Category.entity.BoardCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

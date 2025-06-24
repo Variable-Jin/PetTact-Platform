@@ -1,7 +1,7 @@
-package com.pettact.api.board.Category.dto;
+package com.pettact.api.Category.dto;
 
 
-import com.pettact.api.board.Category.BoardCategory;
+import com.pettact.api.Category.entity.BoardCategory;
 import lombok.*;
 
 import java.time.LocalDateTime;

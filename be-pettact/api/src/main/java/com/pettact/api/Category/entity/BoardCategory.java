@@ -1,8 +1,8 @@
-package com.pettact.api.board.Category;
+package com.pettact.api.Category.entity;
 
 
-import com.pettact.api.board.Board.Board;
-import com.pettact.api.board.Category.dto.CreateDto;
+import com.pettact.api.board.entity.Board;
+import com.pettact.api.Category.dto.CreateDto;
 import com.pettact.api.core.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,7 +1,9 @@
-package com.pettact.api.board.Category;
+package com.pettact.api.Category.service;
 
-import com.pettact.api.board.Category.dto.CreateDto;
-import com.pettact.api.board.Category.dto.ResponseDto;
+import com.pettact.api.Category.dto.CreateDto;
+import com.pettact.api.Category.dto.ResponseDto;
+import com.pettact.api.Category.entity.BoardCategory;
+import com.pettact.api.Category.repository.CategoryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

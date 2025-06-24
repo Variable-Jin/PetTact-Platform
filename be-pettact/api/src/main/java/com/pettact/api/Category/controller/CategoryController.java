@@ -1,7 +1,8 @@
-package com.pettact.api.board.Category;
+package com.pettact.api.Category.controller;
 
-import com.pettact.api.board.Category.dto.CreateDto;
-import com.pettact.api.board.Category.dto.ResponseDto;
+import com.pettact.api.Category.service.CategoryService;
+import com.pettact.api.Category.dto.CreateDto;
+import com.pettact.api.Category.dto.ResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
