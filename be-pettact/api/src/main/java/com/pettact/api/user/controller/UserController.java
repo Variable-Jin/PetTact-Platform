@@ -86,7 +86,7 @@ public class UserController {
             "userEmail", user.getUserEmail(),
             "userNo", user.getUserNo(),
             "userNickname", user.getUserNickname(),
-            "userRole", user.getRoleCode().getCodeId()
+            "userRole", user.getRoleCode()
         );
         
         return ResponseEntity.ok(result);
