@@ -43,7 +43,8 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     	    "/favicon.ico",
     	    "/default-ui.css",
     	    "/api/fetch",
-            "/v1/board-categories"
+            "/v1/board-categories",
+            "/v1/board"
 	);
     
     @Override
