@@ -11,18 +11,22 @@ import org.springframework.web.client.RestTemplate;
 import com.pettact.api.pet.dto.PetKindDto;
 import com.pettact.api.pet.dto.PetShelterDto;
 import com.pettact.api.pet.dto.PetSidoDto;
+import com.pettact.api.pet.dto.PetSigunguDto;
 import com.pettact.api.pet.dto.wrapper.PetFacilityWrapper;
 import com.pettact.api.pet.dto.wrapper.PetKindWrapper;
 import com.pettact.api.pet.dto.wrapper.PetShelterWrapper;
 import com.pettact.api.pet.dto.wrapper.PetSidoWrapper;
+import com.pettact.api.pet.dto.wrapper.PetSigunguWrapper;
 import com.pettact.api.pet.entity.PetFacilityEntity;
 import com.pettact.api.pet.entity.PetKindEntity;
 import com.pettact.api.pet.entity.PetShelterEntity;
 import com.pettact.api.pet.entity.PetSidoEntity;
+import com.pettact.api.pet.entity.PetSigunguEntity;
 import com.pettact.api.pet.repository.PetFacilityRepository;
 import com.pettact.api.pet.repository.PetKindRepository;
 import com.pettact.api.pet.repository.PetShelterRepository;
 import com.pettact.api.pet.repository.PetSidoRepository;
+import com.pettact.api.pet.repository.PetSigunguRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +43,7 @@ public class PetService {
     private final PetShelterRepository petShelterRepository;
     private final PetKindRepository petKindRepository;
     private final PetSidoRepository petSidoRepository;
-    
+    private final PetSigunguRepository petSigunguRepository;
     // api 인증키
     @Value("${pet-api-service-key-decoded}")
     private String apiKey;
@@ -74,7 +78,8 @@ public class PetService {
     	//fetchPetFacility(); // 반려동물 동반가능 업장 - 중복 제거 x
         //fetchPetShelter(); // 동물 보호소 - 중복제거 x
         //fetchPetKind(); // 동물품종 
-    	fetchPetSido();
+    	//fetchPetSido();
+    	fetchPetSigungu();
     }
     
     public void fetchPetFacility() {
@@ -325,6 +330,65 @@ public class PetService {
             log.error("시도 API 호출 실패: {}", e.getMessage());
         }
     }
+    
+    @Transactional
+    public void fetchPetSigungu() {
+        List<PetSidoEntity> sidoList = petSidoRepository.findAll();
 
+        for (PetSidoEntity sido : sidoList) {
+            String uprCd = sido.getOrgCd();
+            int pageNo = 1;
+            int numOfRows = 100;
+
+            while (true) {
+                String url = sigunguApiUrl
+                        + "?serviceKey=" + apiKey
+                        + "&upr_cd=" + uprCd
+                        + "&_type=json"
+                        + "&numOfRows=" + numOfRows
+                        + "&pageNo=" + pageNo;
+
+                try {
+                    ResponseEntity<PetSigunguWrapper> response = restTemplate.getForEntity(url, PetSigunguWrapper.class);
+                    PetSigunguWrapper wrapper = response.getBody();
+
+                    if (wrapper == null || wrapper.getResponse() == null || wrapper.getResponse().getBody() == null
+                            || wrapper.getResponse().getBody().getItems() == null) {
+                        log.warn("응답 없음: uprCd={}, page={}", uprCd, pageNo);
+                        break;
+                    }
+
+                    List<PetSigunguDto> sigunguList = wrapper.getResponse().getBody().getItems().getItem();
+                    if (sigunguList == null || sigunguList.isEmpty()) {
+                        log.warn("빈 리스트 수신: uprCd={}, page={}", uprCd, pageNo);
+                        break;
+                    }
+
+                    for (PetSigunguDto dto : sigunguList) {
+                        boolean exists = petSigunguRepository.existsByOrgCd(dto.getOrgCd());
+
+                        if (!exists) {
+                            PetSigunguEntity entity = PetSigunguEntity.builder()
+                                    .orgCd(dto.getOrgCd())
+                                    .orgdownNm(dto.getOrgdownNm())
+                                    .uprCd(dto.getUprCd())
+                                    .build();
+
+                            petSigunguRepository.save(entity);
+                            log.info("시군구 저장 완료: {} {}", dto.getOrgCd(), dto.getOrgdownNm());
+                        } else {
+                            log.info("중복으로 저장 생략: {} {}", dto.getOrgCd(), dto.getOrgdownNm());
+                        }
+                    }
+
+                    pageNo++;
+
+                } catch (Exception e) {
+                    log.error("시군구 API 오류: uprCd={}, page={} => {}", uprCd, pageNo, e.getMessage());
+                    break;
+                }
+            }
+        }
+    }
 
 }
