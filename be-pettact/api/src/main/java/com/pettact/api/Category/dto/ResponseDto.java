@@ -15,7 +15,6 @@ public class ResponseDto {
     private Long boardCategoryNo;
     private String boardCategoryTitle;
     private String boardCategoryDescription;
-  //x  private String boardAllowedRole;
     private Boolean boardAllowImage;
     private Boolean boardAllowAttachment;
     private Boolean boardAllowReply;
@@ -32,7 +31,6 @@ public class ResponseDto {
                 saved.getBoardCategoryNo(),
                 saved.getBoardCategoryTitle(),
                 saved.getBoardCategoryDescription(),
-    //            saved.getBoardAllowedRole(),
                 saved.getBoardAllowImage(),
                 saved.getBoardAllowAttachment(),
                 saved.getBoardAllowReply(),
