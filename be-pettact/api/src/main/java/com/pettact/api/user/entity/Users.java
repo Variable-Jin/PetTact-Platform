@@ -77,4 +77,14 @@ public class Users extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "status_code", nullable = false)
     private CommonCode statusCode;
+    
+    // 회원 권한 코드(String ex.ROLE_ADMIN)
+    public String getRoleCode() {
+        return roleCode != null ? roleCode.getCodeId() : null;
+    }
+
+    // 회원 상태 코드(String ex.STATUS_ACTIVE)
+    public String getStatusCode() {
+        return statusCode != null ? statusCode.getCodeId() : null;
+    }
 }

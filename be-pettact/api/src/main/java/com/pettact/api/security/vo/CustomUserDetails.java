@@ -21,7 +21,7 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // CommonCode에서 꺼낸 권한 코드값 사용
-        String roleCode = user.getRoleCode().getCodeId();
+        String roleCode = user.getRoleCode();
         return List.of(new SimpleGrantedAuthority(roleCode));
     }
 
