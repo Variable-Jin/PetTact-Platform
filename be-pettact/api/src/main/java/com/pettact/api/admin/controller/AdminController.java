@@ -3,7 +3,8 @@ package com.pettact.api.admin.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pettact.api.admin.dto.AdminUserDTO;
+import com.pettact.api.admin.dto.AdminSellerListDTO;
+import com.pettact.api.admin.dto.AdminUserListDTO;
 import com.pettact.api.admin.service.AdminService;
 import com.pettact.api.code.service.CommonCodeService;
 import com.pettact.api.user.entity.Users;
@@ -20,6 +21,7 @@ import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -34,8 +36,9 @@ public class AdminController {
 	
 	// 관리자 responseEntity 응답 형식 -> 에러 출력 e.getMessage() 로 처리
 	
+	// 회원 관리
 	// 회원 목록
-	@GetMapping("/userList")
+	@GetMapping("/user/list")
 	public ResponseEntity<?> getUserList(
 	        @RequestParam(value = "keyword", required = false) String keyword,
 	        @RequestParam(value = "status", required = false) String status,
@@ -48,7 +51,7 @@ public class AdminController {
 	        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
 	        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 	        
-	        List<AdminUserDTO> userList = adminService.getUserList(keyword, status, role, startDateTime, endDateTime);
+	        List<AdminUserListDTO> userList = adminService.getUserList(keyword, status, role, startDateTime, endDateTime);
 	            
 	        return ResponseEntity.ok().body(userList);
 	    } catch (Exception e) {
@@ -58,7 +61,7 @@ public class AdminController {
 	}
 	
 	// 필터 옵션들
-	@GetMapping("/userList/filters")
+	@GetMapping("/user/list/filters")
 	public ResponseEntity<?> getFilterOptions() {
 	    try {
 	        Map<String, Object> filterOptions = new HashMap<>();
@@ -74,7 +77,7 @@ public class AdminController {
 	}
 	
 	// 회원 잠금
-	@PostMapping("/lockUser/{userNo}")
+	@PostMapping("/user/{userNo}/block")
 	public ResponseEntity<?> lockUser(@PathVariable("userNo") Long userNo){
 	    try {
 	        boolean result = adminService.lockUserByUserNo(userNo);
@@ -90,7 +93,7 @@ public class AdminController {
 	}
 	
 	// 회원 잠금 해제
-	@PostMapping("/unlockUser/{userNo}")
+	@PostMapping("/user/{userNo}/unblock")
 	public ResponseEntity<?> unlockUser(@PathVariable("userNo") Long userNo){
 	    try {
 	        boolean result = adminService.unlockUserByUserNo(userNo);
@@ -105,8 +108,45 @@ public class AdminController {
 	    }
 	}
 	
-	// 판매자 권한 승인
+	// 판매자 관리
+	// 판매자 목록 조회
+	@GetMapping("/seller/list")
+	public ResponseEntity<?> getSellerList(
+	        @RequestParam(value = "keyword", required = false) String keyword,
+	        @RequestParam(value = "status", required = false) String status,
+	        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+	        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+	    
+	    try {
+	        // LocalDate -> LocalDateTime 변환
+	        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+	        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
+	        
+	        List<AdminSellerListDTO> sellerList = adminService.getSellerList(keyword, status, startDateTime, endDateTime);
+	            
+	        return ResponseEntity.ok().body(sellerList);
+	    } catch (Exception e) {
+	        return ResponseEntity.badRequest()
+	            .body("판매자 목록을 불러오는 중 오류가 발생했습니다: " + e.getMessage());
+	    }
+	}
 	
+	// 판매자 권한 승인(ROLE_USER -> ROLE_SELLER)
+	@PatchMapping("/seller/{userNo}/approve")
+	public ResponseEntity<?> approveSeller(@PathVariable("userNo") Long userNo){
+		try {
+	        boolean result = adminService.approveSellerByUserNo(userNo);
+
+	        if (result) {
+	            return ResponseEntity.ok().body("판매자 권한이 성공적으로 승인되었습니다.");
+	        } else {
+	            return ResponseEntity.badRequest().body("이미 판매자 권한을 가진 사용자입니다.");
+	        }
+		} catch (Exception e) {
+			return ResponseEntity.badRequest()
+					.body("판매자 권한 승인 중 오류가 발생했습니다: " + e.getMessage());
+		}
+	}
 	
 	// 판매자 활동 내역 조회
 	

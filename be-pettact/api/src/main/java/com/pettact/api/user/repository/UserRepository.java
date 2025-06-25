@@ -25,7 +25,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 	// 회원 목록 조회
 	List<Users> findAllByOrderByCreatedAtDesc();
 	
-	// 회원 검색(회원 이메일, 이름, 닉네임) , 필터링(status_code, role_code 로)
+	// 회원 검색(회원 이메일, 이름, 닉네임) , 필터링(status_code, role_code, 날짜 로)
 	@Query("""
 			SELECT u FROM Users u
 			WHERE (:keyword IS NULL OR u.userNickname LIKE CONCAT('%', :keyword, '%')
@@ -45,4 +45,5 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 	    @Param("startDate") LocalDateTime startDate,
 	    @Param("endDate") LocalDateTime endDate
 	);
+
 }

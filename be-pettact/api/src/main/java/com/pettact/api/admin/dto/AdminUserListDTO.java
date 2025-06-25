@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdminUserDTO {
+public class AdminUserListDTO {
     private Long userNo;
     private String userEmail;
     private String userName;
@@ -35,8 +35,8 @@ public class AdminUserDTO {
     private String statusCode;
     private String provider;
     
-    public static AdminUserDTO from(Users user) {
-        return AdminUserDTO.builder()
+    public static AdminUserListDTO from(Users user) {
+        return AdminUserListDTO.builder()
                 .userNo(user.getUserNo())
                 .userEmail(user.getUserEmail())
                 .userName(user.getUserName())
