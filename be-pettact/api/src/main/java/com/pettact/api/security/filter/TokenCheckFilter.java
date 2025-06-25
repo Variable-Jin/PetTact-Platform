@@ -44,7 +44,9 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     	    "/default-ui.css",
     	    "/api/fetch",
             "/v1/board-categories",
-            "/v1/board"
+            "/v1/board",
+            "/board/1/replies",
+            "/v1/replies"
 	);
     
     @Override
