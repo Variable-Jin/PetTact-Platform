@@ -3,12 +3,15 @@ package com.pettact.api.board.entity;
 import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.Category.entity.BoardCategory;
 import com.pettact.api.core.base.BaseEntity;
+import com.pettact.api.reply.entity.Reply;
 import com.pettact.api.user.entity.Users;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
+import java.util.List;
 
 @Entity
 @Data
@@ -23,11 +26,14 @@ public class Board extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_no")
-    private Users userNo;
+    private Users user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_category_no")
     private BoardCategory boardCategory;
+
+    @OneToMany(mappedBy = "board", fetch = FetchType.LAZY)
+    private List<Reply>replies;
 
     @Column(name="board_title", nullable = false, length = 100)
     private String boardTitle;
@@ -45,12 +51,12 @@ public class Board extends BaseEntity {
 //    }
 
 
-    public Board(String boardTitle, String boardContent, BoardCategory boardCategory, Users users) {
+    public Board(String boardTitle, String boardContent, BoardCategory boardCategory, Users user) {
         super();
         this.boardTitle = boardTitle;
         this.boardContent = boardContent;
         this.boardCategory = boardCategory;
-        this.userNo = users;
+        this.user = user;
 
     }
 

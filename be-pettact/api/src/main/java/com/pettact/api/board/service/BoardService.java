@@ -6,9 +6,12 @@ import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.board.dto.BoardResponseDto;
 import com.pettact.api.Category.entity.BoardCategory;
 import com.pettact.api.Category.repository.CategoryRepository;
+import com.pettact.api.reply.dto.ReplyResponseDto;
+import com.pettact.api.reply.service.ReplyService;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,8 @@ public class BoardService {
 
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    private ReplyService replyService;
     @Autowired
     private CategoryRepository categoryRepository;
     @Autowired
@@ -42,14 +47,17 @@ public class BoardService {
     public List<BoardResponseDto> getAllBoard() {
         List<Board> boards = boardRepository.findAll();
         return boards.stream()
-                .map(BoardResponseDto::fromEntity)
+                .map(BoardResponseDto::getAllBoard)
                 .collect(Collectors.toList());
     }
 
     public BoardResponseDto getBoardByNo(Long boardNo) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
-        return BoardResponseDto.fromEntity(board);
+        List<ReplyResponseDto> replyList = replyService.getAllReplies(boardNo);
+        BoardResponseDto boardResponseDto = BoardResponseDto.fromEntity(board);
+        boardResponseDto.setReplies(replyList);
+        return boardResponseDto;
     }
 
     public BoardResponseDto updateBoard(Long boardNo, BoardCreateDto boardCreateDto) {

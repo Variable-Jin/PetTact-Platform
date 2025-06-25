@@ -17,12 +17,12 @@ public class BoardCreateDto {
     private String boardTitle;
     private String boardContent;
 
-    public static Board toEntity(BoardCreateDto boardCreateDto, BoardCategory boardCategory, Users users) {
+    public static Board toEntity(BoardCreateDto boardCreateDto, BoardCategory boardCategory, Users user) {
         return new Board(
                 boardCreateDto.getBoardTitle(),
                 boardCreateDto.getBoardContent(),
                 boardCategory,
-                users
+                user
         );
     }
 }

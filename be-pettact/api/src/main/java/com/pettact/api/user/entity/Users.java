@@ -2,7 +2,11 @@ package com.pettact.api.user.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.pettact.api.board.entity.Board;
+import com.pettact.api.reply.entity.Reply;
 import org.hibernate.annotations.ColumnDefault;
 
 import com.pettact.api.code.entity.CommonCode;
@@ -24,6 +28,14 @@ public class Users extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_no")
     private Long userNo;
+
+    // board 매핑
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Board> boards = new ArrayList<>();
+
+    // reply 매핑
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Reply> replies = new ArrayList<>();
 
     @Column(name = "user_email", nullable = false, unique = true)
     private String userEmail;
