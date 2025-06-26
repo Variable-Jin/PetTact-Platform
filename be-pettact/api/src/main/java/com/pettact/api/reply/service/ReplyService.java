@@ -3,6 +3,7 @@ package com.pettact.api.reply.service;
 
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.board.repository.BoardRepository;
+import com.pettact.api.recommend.replyRecommend.repository.ReplyRecommendRepository;
 import com.pettact.api.reply.dto.ReplyRequestDto;
 import com.pettact.api.reply.dto.ReplyResponseDto;
 import com.pettact.api.reply.entity.Reply;
@@ -29,6 +30,8 @@ public class ReplyService {
     private BoardRepository boardRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ReplyRecommendRepository replyRecommendRepository;
 
     @Transactional
     public ReplyResponseDto createReply(Long boardNo, ReplyRequestDto replyRequestDto) {
@@ -66,6 +69,11 @@ public class ReplyService {
         // 모든 댓글을 DTO로 변환하여 Map에 저장
         for (Reply reply : replies) {
             ReplyResponseDto dto = ReplyResponseDto.fromEntity(reply);
+
+            // 댓글 추천수 설정 추가!
+            int recommendCount = replyRecommendRepository.countByReplyNo(reply.getReplyNo());
+            dto.setRecommendCount(recommendCount);
+
             replyMap.put(reply.getReplyNo(), dto);
         }
 
