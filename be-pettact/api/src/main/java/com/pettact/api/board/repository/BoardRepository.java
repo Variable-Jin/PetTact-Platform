@@ -34,8 +34,19 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 	    @Param("endDate") LocalDateTime endDate
 	);
 
-
 	// 게시물 상세보기
     @EntityGraph(attributePaths = {"boardCategory", "user"})
     Board findByBoardNo(Long boardNo);
+
+    /* 대시보드 */
+    @Query("SELECT COUNT(b) FROM Board b WHERE b.isDeleted = false")
+    long countTotalBoards();
+
+    @Query("SELECT COUNT(b) FROM Board b WHERE DATE(b.createdAt) = CURRENT_DATE")
+	long countDailyNewBoards();
+
+    @Query("SELECT COUNT(b) FROM Board b WHERE b.isDeleted = true AND DATE(b.deletedAt) = CURRENT_DATE")
+	long countDailyDeletedBoards();
+
+    
 }
