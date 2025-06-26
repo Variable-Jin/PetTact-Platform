@@ -26,7 +26,11 @@ public class PetAbandonmentEntity {
     private String kindNm;
     private String upKindCd;
     private String upKindNm;
-
+    
+    @Builder.Default
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isUpdated = false;
+    
     private String colorCd;
     private String age;
     private String weight;
@@ -75,7 +79,10 @@ public class PetAbandonmentEntity {
     private String healthChk;
 
     private String adptnTitle;
+    @Column(name = "adptn_sdate")
     private String adptnSDate;
+
+    @Column(name = "adptn_edate")
     private String adptnEDate;
 
     @Column(columnDefinition = "TEXT")
@@ -87,7 +94,9 @@ public class PetAbandonmentEntity {
     private String adptnImg;
 
     private String sprtTitle;
+    @Column(name = "sprt_sdate")
     private String sprtSDate;
+    @Column(name = "sprt_edate")
     private String sprtEDate;
 
     @Column(columnDefinition = "TEXT")
@@ -99,7 +108,9 @@ public class PetAbandonmentEntity {
     private String sprtImg;
 
     private String srvcTitle;
+    @Column(name = "srvc_sdate")
     private String srvcSDate;
+    @Column(name = "srvc_edate")
     private String srvcEDate;
 
     @Column(columnDefinition = "TEXT")
@@ -111,7 +122,9 @@ public class PetAbandonmentEntity {
     private String srvcImg;
 
     private String evntTitle;
+    @Column(name = "evnt_sdate")
     private String evntSDate;
+    @Column(name = "evnt_edate")
     private String evntEDate;
 
     @Column(columnDefinition = "TEXT")
