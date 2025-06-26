@@ -6,6 +6,7 @@ import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.board.dto.BoardResponseDto;
 import com.pettact.api.Category.entity.BoardCategory;
 import com.pettact.api.Category.repository.CategoryRepository;
+import com.pettact.api.recommend.boardRecommend.repository.BoardRecommendRepository;
 import com.pettact.api.reply.dto.ReplyResponseDto;
 import com.pettact.api.reply.service.ReplyService;
 import com.pettact.api.user.entity.Users;
@@ -29,6 +30,8 @@ public class BoardService {
     private CategoryRepository categoryRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private BoardRecommendRepository boardRecommendRepository;
 
     @Transactional
     public BoardResponseDto createBoard(BoardCreateDto boardCreateDto) {
@@ -55,8 +58,10 @@ public class BoardService {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
         List<ReplyResponseDto> replyList = replyService.getAllReplies(boardNo);
+        int recommendCount = boardRecommendRepository.countByBoardNo(boardNo);
         BoardResponseDto boardResponseDto = BoardResponseDto.fromEntity(board);
         boardResponseDto.setReplies(replyList);
+        boardResponseDto.setRecommendCount(recommendCount);
         return boardResponseDto;
     }
 
