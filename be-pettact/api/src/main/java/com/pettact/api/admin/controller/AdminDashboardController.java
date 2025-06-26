@@ -27,19 +27,19 @@ public class AdminDashboardController {
 		return dashboardService.getDashboardStats();
 	}
 
-	// 전체 대시보드용
+	// 가입자 통계
 	@GetMapping("/user/registration")
 	public UserRegStatsDTO getUserRegStats() {
 		return dashboardService.getUserRegStats();
 	}
 	
-	// 전체 대시보드용
+	// 일별 가입자 통계(그래프 출력용)
 	@GetMapping("/user/daily")
 	public List<DailyUserStatsDTO> getDailyUserStats(@RequestParam(value = "days", defaultValue = "7") int days) {
 		return dashboardService.getDailyUserStats(days);
 	}
 	
-	// 전체 대시보드용
+	// 게시물 통계
 	@GetMapping("/board")
 	public BoardStatsDTO getBoardStats() {
 		return dashboardService.getBoardStats();
