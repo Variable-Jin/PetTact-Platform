@@ -4,25 +4,21 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
-@Table(name = "pet_kind")
+@Table(name = "pet_sido")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PetKindEntity {
+@Builder
+public class PetSidoEntity {
 
     @Id
-    private String kindCd;
-    private String kindNm;
-    private String upKindCd;// 개, 고양이, 기타 축종 구분용
+    private String orgCd;        // 시도 코드 (Primary Key)
+
+    private String orgdownNm;    // 시도 명칭
     
     
     @Builder.Default

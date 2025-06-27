@@ -1,4 +1,4 @@
-package com.pettact.api.pet.entity;
+package com.pettact.api.pet.entity.tmp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,13 +11,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "pet_kind")
+@Table(name = "pet_kind_tmp")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PetKindEntity {
+public class PetKindTmpEntity {
 
     @Id
     private String kindCd;

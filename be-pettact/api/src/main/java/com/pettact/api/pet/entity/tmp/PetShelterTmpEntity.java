@@ -1,4 +1,4 @@
-package com.pettact.api.pet.entity;
+package com.pettact.api.pet.entity.tmp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,29 +12,28 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 @Entity
 @Table(
-    name = "pet_shelter",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uk_pet_shelter_care_reg_no", columnNames = "careRegNo")
-    }
-)
+	    name = "pet_shelter_tmp",
+	    uniqueConstraints = {
+	        @UniqueConstraint(name = "uk_pet_shelter_care_reg_no", columnNames = "careRegNo")
+	    }
+	)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PetShelterEntity {
+public class PetShelterTmpEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long shelterNo;
-
+    
     private String careNm;
-
     @Column(nullable = false)
     private String careRegNo;
-
     private String orgNm;
     private String divisionNm;
     private String saveTrgtAnimal;
@@ -61,7 +60,6 @@ public class PetShelterEntity {
     private Integer transCarCnt;
     private String careTel;
     private String dataStdDt;
-    
     
     @Builder.Default
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")

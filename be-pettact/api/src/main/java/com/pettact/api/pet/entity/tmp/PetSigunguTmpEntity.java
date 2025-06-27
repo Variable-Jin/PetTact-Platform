@@ -1,4 +1,4 @@
-package com.pettact.api.pet.entity;
+package com.pettact.api.pet.entity.tmp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,19 +11,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "pet_kind")
+@Table(name = "pet_sigungu_tmp")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PetKindEntity {
-
+public class PetSigunguTmpEntity {
     @Id
-    private String kindCd;
-    private String kindNm;
-    private String upKindCd;// 개, 고양이, 기타 축종 구분용
-    
+    private String orgCd;
+    private String orgdownNm;
+    private String uprCd;
     
     @Builder.Default
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
