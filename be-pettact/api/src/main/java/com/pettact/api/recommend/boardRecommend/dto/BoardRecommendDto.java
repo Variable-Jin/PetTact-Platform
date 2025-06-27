@@ -23,12 +23,4 @@ public class BoardRecommendDto {
 
     private LocalDateTime createdAt;
 
-    public BoardRecommend toEntity(Board board, Users users) {
-        return new BoardRecommend(
-                board,
-                users,
-                LocalDateTime.now()
-        );
-    }
-
 }

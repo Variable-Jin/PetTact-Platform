@@ -13,6 +13,8 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 @Slf4j
 public class BoardRecommendService {
@@ -25,32 +27,30 @@ public class BoardRecommendService {
     private UserRepository userRepository;
 
     @Transactional
-    public void createRecommend(Long boardNo, BoardRecommendDto boardRecommendDto) {
-        if (!boardNo.equals(boardRecommendDto.getBoardNo())) {
-            throw new IllegalArgumentException("게시글 번호가 일치하지 않습니다.");
-        }
-        if (boardRecommendRepository.existsByBoardAndUser(
-                boardRecommendDto.getBoardNo(),
-                boardRecommendDto.getUserNo())) {
+    public void createRecommend(Long boardNo, Long userNo) {
+        // 중복 추천 확인
+        if (boardRecommendRepository.existsByBoardAndUser(boardNo, userNo)) {
             throw new IllegalArgumentException("이미 추천한 게시글입니다.");
         }
 
-        Board board = boardRepository.findById(boardRecommendDto.getBoardNo())
+        Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
-        Users users = userRepository.findById(boardRecommendDto.getUserNo())
+        Users users = userRepository.findById(userNo)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다"));
 
-        BoardRecommend boardRecommend = boardRecommendDto.toEntity(board, users);
+        BoardRecommend boardRecommend = new BoardRecommend(
+                board,
+                users,
+                LocalDateTime.now()
+        );
+
         boardRecommendRepository.save(boardRecommend);
     }
 
     @Transactional
-    public void cancelRecommend(Long boardNo, BoardRecommendDto boardRecommendDto) {
-        if (!boardNo.equals(boardRecommendDto.getBoardNo())) {
-            throw new IllegalArgumentException("게시글 번호가 일치하지 않습니다.");
-        }
+    public void cancelRecommend(Long boardNo, Long userNo) {
         BoardRecommend boardRecommend = boardRecommendRepository
-                .findByBoardAndUser(boardRecommendDto.getBoardNo(), boardRecommendDto.getUserNo())
+                .findByBoardAndUser(boardNo, userNo)  // 직접 파라미터 사용!
                 .orElseThrow(() -> new IllegalArgumentException("추천하지 않은 게시글입니다."));
         boardRecommendRepository.delete(boardRecommend);
     }

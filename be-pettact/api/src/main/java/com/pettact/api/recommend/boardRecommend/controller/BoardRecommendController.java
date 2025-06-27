@@ -2,9 +2,11 @@ package com.pettact.api.recommend.boardRecommend.controller;
 
 import com.pettact.api.recommend.boardRecommend.dto.BoardRecommendDto;
 import com.pettact.api.recommend.boardRecommend.service.BoardRecommendService;
+import com.pettact.api.security.vo.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,15 +18,17 @@ public class BoardRecommendController {
 
     @PostMapping
     public ResponseEntity<Void> createBoardRecommend(@PathVariable("boardNo") Long boardNo,
-            @RequestBody BoardRecommendDto boardRecommendDto) {
-        boardRecommendService.createRecommend(boardNo, boardRecommendDto);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userNo = userDetails.getUserEntity().getUserNo();
+        boardRecommendService.createRecommend(boardNo, userNo);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @DeleteMapping
     public ResponseEntity<Void> deleteBoardRecommend(@PathVariable("boardNo") Long boardNo,
-            @RequestBody BoardRecommendDto boardRecommendDto) {
-        boardRecommendService.cancelRecommend(boardNo, boardRecommendDto);
+                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userNo = userDetails.getUserEntity().getUserNo();
+        boardRecommendService.cancelRecommend(boardNo, userNo);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 
     }

@@ -34,10 +34,11 @@ public class BoardService {
     private BoardRecommendRepository boardRecommendRepository;
 
     @Transactional
-    public BoardResponseDto createBoard(BoardCreateDto boardCreateDto) {
-        // TODO: user 조회 검증
-        Users users = userRepository.findById(boardCreateDto.getUserNo())
+    public BoardResponseDto createBoard(BoardCreateDto boardCreateDto,  Long userNo) {
+
+        Users users = userRepository.findById(userNo)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
+
         BoardCategory boardCategory = categoryRepository
                 .findById(boardCreateDto.getBoardCategoryNo())
                 .orElseThrow(() -> new RuntimeException("게시글 카테고리가 존재하지 않습니다."));
@@ -65,9 +66,14 @@ public class BoardService {
         return boardResponseDto;
     }
 
-    public BoardResponseDto updateBoard(Long boardNo, BoardCreateDto boardCreateDto) {
+    @Transactional
+    public BoardResponseDto updateBoard(Long boardNo, BoardCreateDto boardCreateDto, Long userNo) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. No: " + boardNo));
+
+        if (!board.getUser().getUserNo().equals(userNo)) {
+            throw new IllegalArgumentException("수정 권한이 없습니다. 작성자만 수정할 수 있습니다.");
+        }
 
         board.updateBoard(boardCreateDto);
         Board updated = boardRepository.save(board);
@@ -75,9 +81,13 @@ public class BoardService {
         return BoardResponseDto.fromEntity(updated);
     }
 
-    public void deleteBoard(Long boardNo) {
-        if (!boardRepository.existsById(boardNo)) {
-            throw new IllegalArgumentException("게시글 정보를 찾을 수 럾습니다. No: " + boardNo);
+    @Transactional
+    public void deleteBoard(Long boardNo, Long userNo) {
+        Board board = boardRepository.findById(boardNo)
+                .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
+
+        if (!board.getUser().getUserNo().equals(userNo)) {
+            throw new IllegalArgumentException("해당 사용자가 아닙니다. 삭제를 할 수 없습니다.");
         }
         boardRepository.deleteById(boardNo);
     }

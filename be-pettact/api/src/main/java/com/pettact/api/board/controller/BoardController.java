@@ -3,8 +3,10 @@ package com.pettact.api.board.controller;
 import com.pettact.api.board.service.BoardService;
 import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.board.dto.BoardResponseDto;
+import com.pettact.api.security.vo.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +26,10 @@ public class BoardController {
      */
 
     @PostMapping
-    public ResponseEntity<BoardResponseDto> createBoard(@RequestBody BoardCreateDto boardCreateDto) {
-        BoardResponseDto boardResponseDto = boardService.createBoard(boardCreateDto);
+    public ResponseEntity<BoardResponseDto> createBoard(@RequestBody BoardCreateDto boardCreateDto,
+                                                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userNo = userDetails.getUserEntity().getUserNo();
+        BoardResponseDto boardResponseDto = boardService.createBoard(boardCreateDto, userNo);
         return ResponseEntity.ok(boardResponseDto);
     }
 
@@ -58,8 +62,10 @@ public class BoardController {
 
     @PutMapping("/{boardNo}")
     public ResponseEntity<BoardResponseDto> updateBoard
-            (@PathVariable Long boardNo, @RequestBody BoardCreateDto boardCreateDto) {
-        BoardResponseDto boardResponseDto = boardService.updateBoard(boardNo, boardCreateDto);
+            (@PathVariable Long boardNo, @RequestBody BoardCreateDto boardCreateDto,
+             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userNo = userDetails.getUserEntity().getUserNo();
+        BoardResponseDto boardResponseDto = boardService.updateBoard(boardNo, boardCreateDto, userNo);
         return ResponseEntity.ok(boardResponseDto);
     }
 
@@ -69,8 +75,10 @@ public class BoardController {
      */
 
     @DeleteMapping("/{boardNo}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable Long boardNo) {
-        boardService.deleteBoard(boardNo);
+    public ResponseEntity<Void> deleteBoard(@PathVariable Long boardNo,
+                                            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userNo = userDetails.getUserEntity().getUserNo();
+        boardService.deleteBoard(boardNo, userNo);
         return ResponseEntity.noContent().build();
     }
 }
