@@ -6,13 +6,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.pettact.api.code.entity.CommonCode;
-import com.pettact.api.code.repository.CommonCodeRepository;
-import com.pettact.api.security.service.EmailService;
-import com.pettact.api.security.util.VerificationCodeStore;
+import com.pettact.api.code.service.CommonCodeService;
 import com.pettact.api.user.dto.UserJoinDTO;
 import com.pettact.api.user.dto.UserPatchDTO;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
+import com.pettact.api.verification.EmailService;
+import com.pettact.api.verification.VerificationCodeStore;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserService {
 	private final UserRepository userRepository;
-	private final CommonCodeRepository commonCodeRepository;
+	private final CommonCodeService commonCodeService;
 	private final PasswordEncoder passwordEncoder;
 	private final VerificationCodeStore verificationCodeStore;
 	private final EmailService emailService;
@@ -47,13 +47,8 @@ public class UserService {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
         
-        // 권한
-        CommonCode role = commonCodeRepository.findById("ROLE_NORMAL")
-            .orElseThrow(() -> new IllegalStateException("기본 권한 코드 없음"));
-        
-        // 상태
-        CommonCode status = commonCodeRepository.findById("STATUS_ACTIVE")
-            .orElseThrow(() -> new IllegalStateException("기본 상태 코드 없음"));
+        CommonCode role = commonCodeService.getCodeById("ROLE_USER");
+        CommonCode status = commonCodeService.getCodeById("STATUS_ACTIVE");
     	
         Users user = Users.builder()
                 .userEmail(dto.getUserEmail())
@@ -145,10 +140,9 @@ public class UserService {
         Users user = userRepository.findById(userNo)
             .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-        CommonCode withdrawStatus = commonCodeRepository.findById("STATUS_WITHDRAW")
-            .orElseThrow(() -> new IllegalStateException("탈퇴 상태 코드 없음"));
+        CommonCode status = commonCodeService.getCodeById("STATUS_WITHDRAW");
 
-        user.setStatusCode(withdrawStatus);
+        user.setStatusCode(status);
         user.softDelete();
 
         userRepository.save(user);

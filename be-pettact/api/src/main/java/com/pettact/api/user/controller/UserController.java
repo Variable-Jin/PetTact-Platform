@@ -8,14 +8,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pettact.api.security.service.EmailService;
-import com.pettact.api.security.util.VerificationCodeStore;
 import com.pettact.api.security.vo.CustomUserDetails;
 import com.pettact.api.user.dto.EmailFindRequestDTO;
 import com.pettact.api.user.dto.EmailFindResponseDTO;
@@ -25,6 +22,8 @@ import com.pettact.api.user.dto.UserJoinDTO;
 import com.pettact.api.user.dto.UserPatchDTO;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.service.UserService;
+import com.pettact.api.verification.EmailService;
+import com.pettact.api.verification.VerificationCodeStore;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,14 +39,14 @@ public class UserController {
     // 회원가입
     @PostMapping("/join")
     public ResponseEntity<?> join(@RequestBody @Valid UserJoinDTO dto) {
-    	try {
-    		userService.join(dto);
-    		return ResponseEntity.ok().build();
-		} catch (IllegalArgumentException e) {
-	        return ResponseEntity.badRequest().body(e.getMessage());
-	    } catch (Exception e) {
-			return ResponseEntity.status(500).body("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.");
-		}
+        try {
+            userService.join(dto);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.");
+        }
     }
     
     // 이메일 인증 요청(링크)
@@ -81,12 +80,12 @@ public class UserController {
     	}
     	
     	Users user = userDetails.getUserEntity();
-    	
+
         Map<String, Object> result = Map.of(
-            "userEmail", user.getUserEmail(),
-            "userNo", user.getUserNo(),
-            "userNickname", user.getUserNickname(),
-            "userRole", user.getRoleCode().getCodeId()
+                "userEmail", user.getUserEmail(),
+                "userNo", user.getUserNo(),
+                "userNickname", user.getUserNickname(),
+                "userRole", user.getRoleCode()
         );
         
         return ResponseEntity.ok(result);
