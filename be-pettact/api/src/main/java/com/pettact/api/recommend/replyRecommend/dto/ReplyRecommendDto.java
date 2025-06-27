@@ -23,11 +23,4 @@ public class ReplyRecommendDto {
 
     private LocalDateTime createdAt;
 
-    public ReplyRecommend toEntity(Reply reply, Users users) {
-        return new ReplyRecommend(
-                reply,
-                users,
-                LocalDateTime.now()
-        );
-    }
 }
