@@ -11,6 +11,7 @@ import com.pettact.api.pet.dto.PetDiaryDto;
 import com.pettact.api.pet.entity.PetDiaryEntity;
 import com.pettact.api.pet.service.PetDiaryService;
 import com.pettact.api.security.vo.CustomUserDetails;
+import com.pettact.api.user.entity.Users;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,12 +23,12 @@ public class PetDiaryController {
 	private final PetDiaryService diaryService;
 	
 	@PostMapping("/create")
-	public ResponseEntity<PetDiaryEntity> createDiary(@RequestBody PetDiaryDto dto, @AuthenticationPrincipal CustomUserDetails user) {
+	public ResponseEntity<PetDiaryEntity> createDiary(@RequestBody PetDiaryDto dto, Users user) {
 	    // 프론트에서 보낸 prompt 그대로 전달
 	    String generatedDiary = diaryService.generatePetDiary(dto.getPrompt());
 
 	    // 생성된 일기 저장
-	    PetDiaryEntity saved = diaryService.saveDiary(user.getUserEntity(), dto.getPetId(), generatedDiary);
+	    PetDiaryEntity saved = diaryService.saveDiary(dto.getPetId(), generatedDiary);
 
 	    return ResponseEntity.ok(saved);
 	}
