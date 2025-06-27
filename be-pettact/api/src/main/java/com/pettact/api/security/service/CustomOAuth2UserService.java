@@ -40,7 +40,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // 권한
-        CommonCode role = commonCodeRepository.findById("ROLE_NORMAL")
+        CommonCode role = commonCodeRepository.findById("ROLE_USER")
             .orElseThrow(() -> new IllegalStateException("기본 권한 코드 없음"));
         
         // 상태

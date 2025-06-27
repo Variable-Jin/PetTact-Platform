@@ -1,4 +1,4 @@
-package com.pettact.api.security.service;
+package com.pettact.api.verification;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
