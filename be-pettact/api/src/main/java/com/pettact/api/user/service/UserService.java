@@ -6,14 +6,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.pettact.api.code.entity.CommonCode;
-import com.pettact.api.code.repository.CommonCodeRepository;
 import com.pettact.api.code.service.CommonCodeService;
-import com.pettact.api.security.service.EmailService;
-import com.pettact.api.security.util.VerificationCodeStore;
 import com.pettact.api.user.dto.UserJoinDTO;
 import com.pettact.api.user.dto.UserPatchDTO;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
+import com.pettact.api.verification.EmailService;
+import com.pettact.api.verification.VerificationCodeStore;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
