@@ -15,21 +15,23 @@ import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PetDiaryService {
 
     private final UserRepository usersRepository;
     private final PetDiaryRepository petDiaryRepository;
     private final RestTemplate restTemplate;
     
-    private final String FASTAPI_URL = "http://localhost:8000/generate";
+    private final String FASTAPI_URL = "http://192.168.4.149:8000/generate";
 
     public String generatePetDiary(String prompt) {
         Map<String, String> body = new HashMap<>();
         body.put("prompt", prompt);
-
+        log.info("{}", prompt);
         ResponseEntity<String> response = restTemplate.postForEntity(
         	FASTAPI_URL,  // ex: http://localhost:8000/generate
             body,
@@ -45,14 +47,12 @@ public class PetDiaryService {
         }
     }
 
-
-    public PetDiaryEntity saveDiary(Users user, Long petId, String diaryContent) {
-        Users users = usersRepository.findById(user.getUserNo())
-                .orElseThrow(() -> new RuntimeException("사용자 없음"));
+    
+    
+    public PetDiaryEntity saveDiary(Long petId, String diaryContent) {
 
         PetDiaryEntity entity = PetDiaryEntity.builder()
-                //.user(user.getUserNo())
-                .petId(petId)
+                .petId(1L)
                 .diaryContent(diaryContent)
                 .build();
 

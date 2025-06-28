@@ -46,7 +46,8 @@ public class TokenCheckFilter extends OncePerRequestFilter {
             "/v1/board-categories",
             "/v1/board",
             "/board/1/replies",
-            "/v1/replies"
+            "/v1/replies",
+            "/diary/create"
 	);
     
     @Override
