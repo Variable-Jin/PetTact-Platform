@@ -20,6 +20,7 @@ import lombok.Setter;
 public class PetKindEntity {
 
     @Id
+    @Column(name = "kind_cd")
     private String kindCd;
     private String kindNm;
     private String upKindCd;// 개, 고양이, 기타 축종 구분용
