@@ -32,6 +32,9 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     	    "/v1/user/join",
     	    "/v1/user/email/send",
     	    "/v1/user/email/verify",
+    	    "/v1/user/email/verified",
+    	    "/v1/user/email/check",
+    	    "/v1/user/nickname/check",
     	    "/v1/user/email/find",
 		    "/v1/user/password/send",
 		    "/v1/user/password/verify",
@@ -46,7 +49,11 @@ public class TokenCheckFilter extends OncePerRequestFilter {
             "/v1/board-categories",
             "/v1/board",
             "/board/1/replies",
-            "/v1/replies"
+            "/v1/replies",
+            "/",
+            "/ws-stomp/**",             // SockJS handshake endpoint
+            "/index.html",       // 테스트용 HTML
+            "/app.js"         // JS 파일 (필요시)
 	);
     
     @Override
@@ -60,10 +67,15 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         log.info("요청 URI: {}", path);
 
         // 예외 경로는 통과
-        if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
-            log.info("TokenCheckFilter skip: {}", path);
-            filterChain.doFilter(request, response);
-            return;
+//        if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
+//            log.info("TokenCheckFilter skip: {}", path);
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
+        if (EXCLUDED_PATHS.contains(path)) {
+        	log.info("TokenCheckFilter skip: {}", path);
+        	filterChain.doFilter(request, response);
+        	return;
         }
 
         try {
