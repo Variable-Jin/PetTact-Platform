@@ -11,19 +11,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "pet_kind")
+@Table(name = "pet_sigungu")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PetKindEntity {
-
+public class PetSigunguEntity {
     @Id
-    @Column(name = "kind_cd")
-    private String kindCd;
-    private String kindNm;
-    private String upKindCd;// 개, 고양이, 기타 축종 구분용
+    private String orgCd;
+    private String orgdownNm;
+    private String uprCd;
     
     
     @Builder.Default

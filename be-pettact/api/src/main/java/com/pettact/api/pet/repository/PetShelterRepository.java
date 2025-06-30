@@ -7,4 +7,6 @@ import com.pettact.api.pet.entity.PetShelterEntity;
 
 @Repository
 public interface PetShelterRepository extends JpaRepository<PetShelterEntity, Long> {
+
+	Object findByCareRegNo(String careRegNo);
 }

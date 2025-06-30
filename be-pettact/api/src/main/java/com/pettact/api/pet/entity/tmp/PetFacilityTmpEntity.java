@@ -1,4 +1,4 @@
-package com.pettact.api.pet.entity;
+package com.pettact.api.pet.entity.tmp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,21 +8,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "pet_facility", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"facilityKey"})
-})
+@Table(name = "pet_facility_tmp")
 @Builder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PetFacilityEntity {
+public class PetFacilityTmpEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,9 +63,13 @@ public class PetFacilityEntity {
 
     private String closedDays;
 
+    /** 중복 제거용 key: facility_name + '-' + lot_address */
     @Column(name = "facilityKey", nullable = false, length = 300)
     private String facilityKey;
 
+    /**
+     * entity 저장 또는 업데이트 전 자동으로 facilityKey 생성
+     */
     @PrePersist
     @PreUpdate
     private void generateFacilityKey() {
