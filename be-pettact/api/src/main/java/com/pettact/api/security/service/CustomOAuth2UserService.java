@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -53,8 +54,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             Users existingUser = existing.get();
             
             if (!provider.equals(existingUser.getProvider())) {
-            	log.error("이미 이메일입니다. provider [{}], email [{}]", provider, email);
-                throw new OAuth2AuthenticationException("이미 다른 플랫폼으로 가입된 이메일입니다.");
+            	log.error("이미 가입된 이메일입니다. provider [{}], email [{}]", provider, email);
+            	throw new OAuth2AuthenticationException(
+            		    new OAuth2Error("invalid_request", "이미 다른 플랫폼(구글/카카오/네이버)으로 가입된 이메일입니다.", ""));
+
             }
 
             return new CustomOAuth2User(existingUser, attributes);

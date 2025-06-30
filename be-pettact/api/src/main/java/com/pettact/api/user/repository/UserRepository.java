@@ -34,7 +34,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 			AND (:role IS NULL OR u.roleCode.codeId = :role)
 			AND (:startDate IS NULL OR u.createdAt >= :startDate)
 			AND (:endDate IS NULL OR u.createdAt <= :endDate)
-			AND u.isDeleted = false
+
 			ORDER BY u.createdAt DESC
 			""")
 	List<Users> findUsersWithFilters(
