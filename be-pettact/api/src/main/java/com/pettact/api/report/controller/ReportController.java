@@ -4,6 +4,7 @@ import com.pettact.api.report.dto.ReportCreateDto;
 import com.pettact.api.report.dto.ReportResponseDto;
 import com.pettact.api.report.service.ReportService;
 import com.pettact.api.security.vo.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +31,30 @@ public class ReportController {
      */
 
     @PostMapping
-    public ResponseEntity<ReportResponseDto> submitReport(@RequestBody ReportCreateDto createDto, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ReportResponseDto> submitReport(@RequestBody ReportCreateDto createDto, @AuthenticationPrincipal CustomUserDetails userDetails,
+                                                          HttpServletRequest request) {
         Long userNo = userDetails.getUser().getUserNo();
-        ReportResponseDto responseDto = reportService.submitReport(createDto, userNo);
+        String clientIP = getClientIP(request);
+        ReportResponseDto responseDto = reportService.submitReport(createDto, userNo, clientIP);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    private String getClientIP(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+
+        // X-Forwarded-For에 여러 IP가 있을 경우 첫 번째가 실제 클라이언트 IP
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+
+        return ip;
     }
 
     @GetMapping("/my/{reportNo}")

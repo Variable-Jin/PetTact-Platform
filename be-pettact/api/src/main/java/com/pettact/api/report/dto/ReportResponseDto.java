@@ -24,7 +24,7 @@ public class ReportResponseDto {
     private Integer reportStatus;
     private LocalDateTime createdAt;    // 신고 접수 시간
     private LocalDateTime updatedAt;    // 신고 처리 시간
-    // private String reportIP;
+    private String reportIP;
 
     public static ReportResponseDto fromEntity(Report savedReport) {
         return new ReportResponseDto(
@@ -36,7 +36,8 @@ public class ReportResponseDto {
                 savedReport.getReportDescription(),
                 savedReport.getReportStatus(),
                 savedReport.getCreatedAt(),
-                savedReport.getUpdatedAt()
+                savedReport.getUpdatedAt(),
+                savedReport.getReportIP()
         );
     }
 }

@@ -26,7 +26,7 @@ public class ReportService {
 
     // user
     @Transactional
-    public ReportResponseDto submitReport(ReportCreateDto createDto, Long userNo) {
+    public ReportResponseDto submitReport(ReportCreateDto createDto, Long userNo, String clientIP) {
 
         Users users = userRepository.findById(userNo)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
@@ -43,6 +43,7 @@ public class ReportService {
         }
 
         Report report = createDto.toEntity(users);
+        report.setReportIP(clientIP);
         Report savedReport = reportRepository.save(report);
         return ReportResponseDto.fromEntity(savedReport);
     }

@@ -26,6 +26,7 @@ public class Report extends BaseEntity {
     private Users users;
 
     // Enum
+    @Enumerated(EnumType.STRING)
     @Column(name = "REPORT_TARGET_LOCATION")
     private ReportTargetLocation reportTargetLocation;
 
@@ -44,8 +45,8 @@ public class Report extends BaseEntity {
     private static final int APPROVED = 1;
     private static final int REJECTED = 2;
 
-    // @Column(name = "RPORT_IP")
-    // private String reportIP;
+     @Column(name = "RPORT_IP")
+     private String reportIP;
 
 
 
