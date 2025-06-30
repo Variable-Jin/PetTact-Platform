@@ -26,6 +26,7 @@ public class BoardResponseDto {
     private Boolean isDeleted;
     private LocalDateTime deletedAt;
     private List<ReplyResponseDto> replies = new ArrayList<>();
+    private int recommendCount;
 
 
     public static BoardResponseDto fromEntity(Board savedBoard) {
@@ -39,7 +40,8 @@ public class BoardResponseDto {
                 savedBoard.getUpdatedAt(),
                 savedBoard.isDeleted(),
                 savedBoard.getDeletedAt(),
-                new ArrayList<>()
+                new ArrayList<>(),
+                0
         );
     }
 
@@ -54,7 +56,8 @@ public class BoardResponseDto {
                 board.getUpdatedAt(),
                 board.isDeleted(),
                 board.getDeletedAt(),
-                null
+                null,
+                0
         );
     }
 }
