@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pettact.api.pet.dto.PetDiaryDto;
 import com.pettact.api.pet.entity.PetDiaryEntity;
 import com.pettact.api.pet.repository.PetDiaryRepository;
 import com.pettact.api.user.entity.Users;
@@ -26,14 +27,14 @@ public class PetDiaryService {
     private final PetDiaryRepository petDiaryRepository;
     private final RestTemplate restTemplate;
     
-    private final String FASTAPI_URL = "http://192.168.4.149:8000/generate";
+    private final String FASTAPI_URL = "http://192.168.4.149:8000/generate"; // ip주소 변경시 같이 변경할것 
 
     public String generatePetDiary(String prompt) {
         Map<String, String> body = new HashMap<>();
         body.put("prompt", prompt);
         log.info("{}", prompt);
         ResponseEntity<String> response = restTemplate.postForEntity(
-        	FASTAPI_URL,  // ex: http://localhost:8000/generate
+        	FASTAPI_URL, 
             body,
             String.class
         );
@@ -41,7 +42,7 @@ public class PetDiaryService {
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(response.getBody());
-            return root.get("generated_diary").asText();  // 이 줄이 핵심
+            return root.get("generated_diary").asText(); 
         } catch (Exception e) {
             throw new RuntimeException("AI 일기 응답 파싱 실패", e);
         }
@@ -49,14 +50,15 @@ public class PetDiaryService {
 
     
     
-    public PetDiaryEntity saveDiary(Long petId, String diaryContent) {
-
+    public PetDiaryEntity saveDiary(Long petId, String diaryContent, Users user) {
         PetDiaryEntity entity = PetDiaryEntity.builder()
-                .petId(1L)
+                .user(user)
+                .petId(petId)
                 .diaryContent(diaryContent)
                 .build();
 
-        return petDiaryRepository.save(entity);
+        return petDiaryRepository.save(entity); 
     }
+
 
 }
