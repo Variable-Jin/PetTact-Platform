@@ -63,10 +63,12 @@ public class UserController {
     // 이메일 인증 링크 클릭
     @GetMapping("/email/verify")
     public void verifyEmail(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
-        String email = verificationCodeStore.getCode("email-token:" + token);
+        String redisKey = "email-token:" + token;
+        String email = verificationCodeStore.getCode(redisKey);
+        System.out.println("[DEBUG] 인증 시도: redisKey=" + redisKey + ", email=" + email);
         if (email != null) {
             verificationCodeStore.saveCode("verified:" + email, "true");
-            verificationCodeStore.remove("email-token:" + token);
+            verificationCodeStore.remove(redisKey);
             response.sendRedirect("http://localhost:5173/user/email/verify?email=" + email);
         } else {
             response.sendRedirect("http://localhost:5173/");

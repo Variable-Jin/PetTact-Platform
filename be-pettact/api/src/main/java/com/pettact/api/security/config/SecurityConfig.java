@@ -1,5 +1,10 @@
 package com.pettact.api.security.config;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,18 +14,12 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettact.api.security.filter.LoginFilter;
@@ -135,13 +134,21 @@ public class SecurityConfig {
                 String accessToken = jwtTokenProvider.generateToken(claims, 7);
                 String refreshToken = jwtTokenProvider.generateToken(claims, 10);
 
-    			Map<String, String> keyMap = Map.of("accessToken", jwtTokenProvider.generateToken(claims, 7), //Access Token 유효기간 1일로 생성
-						"refreshToken", jwtTokenProvider.generateToken(claims, 10)); //Refresh Token 유효기간 10일로 생성
+    		    String redirectUrl = "http://localhost:5173/oauth2/success"
+    		            + "?accessToken=" + accessToken
+    		            + "&refreshToken=" + refreshToken;
 
+    		        response.sendRedirect(redirectUrl);
+            })
+            .failureHandler((request, response, exception) -> {
+                String errorMessage = "소셜 로그인 실패";
 
-                new ObjectMapper().writeValue(response.getWriter(), keyMap);
-                // TODO: 프론트로 리디렉션 url은 설정하면됨
-                // response.sendRedirect("http://localhost:5173/oauth2/success?token=" + jwt);
+                if (exception instanceof OAuth2AuthenticationException oAuth2Ex) {
+                    errorMessage = oAuth2Ex.getError().getDescription();
+                }
+
+                String redirectUrl = "http://localhost:5173/user/login?error=EMAIL_ALREADY_EXISTS";
+                response.sendRedirect(redirectUrl);
             })
         );
         

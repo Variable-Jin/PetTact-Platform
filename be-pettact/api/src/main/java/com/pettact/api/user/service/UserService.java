@@ -113,24 +113,31 @@ public class UserService {
         Users user = userRepository.findById(userNo)
             .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-        dto.getUserNickname().ifPresent(nickname -> {
-            if (nickname.isBlank()) {
+        if (dto.getUserNickname() != null) {
+            if (dto.getUserNickname().isBlank()) {
                 throw new IllegalArgumentException("닉네임은 비어 있을 수 없습니다.");
             }
+            user.setUserNickname(dto.getUserNickname());
+        }
 
-            user.setUserNickname(nickname);
-        });
-        
-        dto.getUserTel().ifPresent(tel -> {
-            if (!tel.matches("^01[016789]\\d{7,8}$")) {
+        if (dto.getUserTel() != null) {
+            if (!dto.getUserTel().matches("^01[016789]\\d{7,8}$")) {
                 throw new IllegalArgumentException("전화번호 형식이 올바르지 않습니다.");
             }
-            user.setUserTel(tel);
-        });
-        
-        dto.getUserZipcode().ifPresent(user::setUserZipcode);
-        dto.getUserStreet1().ifPresent(user::setUserStreet1);
-        dto.getUserDetailAddress().ifPresent(user::setUserDetailAddress);
+            user.setUserTel(dto.getUserTel());
+        }
+
+        if (dto.getUserZipcode() != null) {
+            user.setUserZipcode(dto.getUserZipcode());
+        }
+
+        if (dto.getUserStreet1() != null) {
+            user.setUserStreet1(dto.getUserStreet1());
+        }
+
+        if (dto.getUserDetailAddress() != null) {
+            user.setUserDetailAddress(dto.getUserDetailAddress());
+        }
 
         userRepository.save(user);
     }

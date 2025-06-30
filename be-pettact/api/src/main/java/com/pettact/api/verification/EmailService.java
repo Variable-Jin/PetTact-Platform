@@ -34,7 +34,7 @@ public class EmailService {
 
     // 회원가입 시 이메일 인증 링크
     public void sendVerificationLink(String toEmail, String token) {
-        String link = "http://localhost:5173/user/email/verify?token=" + token;
+    	String link = "http://localhost:8080/v1/user/email/verify?token=" + token;
 
         String html = """
             <div style="font-family:Arial,sans-serif; font-size:14px;">
