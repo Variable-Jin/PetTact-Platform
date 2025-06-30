@@ -1,6 +1,8 @@
 package com.pettact.api.cart.entity;
 
+import com.pettact.api.core.base.BaseEntity;
 import com.pettact.api.product.entity.ProductEntity;
+import com.pettact.api.user.entity.Users;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,17 +24,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CartEntity {
+public class CartEntity extends BaseEntity {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    private Long userId; // 실제 회원 기능 완료 전까지 임시 값
-    // 사용자 추후에 UserEntity 연동 가능
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private UserEntity userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_no", nullable = false)
+    private Users user;
 
     // 상품
     @ManyToOne(fetch = FetchType.LAZY)

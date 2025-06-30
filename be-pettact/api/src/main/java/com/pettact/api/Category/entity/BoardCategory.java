@@ -29,7 +29,7 @@ public class BoardCategory extends BaseEntity {
     @OneToMany(mappedBy = "boardCategory", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<Board> boards = new ArrayList<>();
 
-    @Column(name = "boaard_category_title", nullable = false, length = 255)
+    @Column(name = "board_category_title", nullable = false, length = 255)
     private String boardCategoryTitle;
 
     @Column(name = "board_category_description", columnDefinition = "TEXT")

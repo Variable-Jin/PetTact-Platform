@@ -6,15 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.pettact.api.report.dto.ReportResponseDto;
+import com.pettact.api.report.entity.Report;
+import com.pettact.api.report.service.ReportService;
+import com.pettact.api.security.vo.CustomUserDetails;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import com.pettact.api.admin.dto.AdminBoardDetailDTO;
 import com.pettact.api.admin.dto.AdminBoardListDTO;
@@ -34,7 +33,8 @@ import lombok.RequiredArgsConstructor;
 public class AdminController {
 	private final AdminService adminService;
 	private final CommonCodeService commonCodeService;
-	
+	private final ReportService reportService;
+
 	// 관리자 responseEntity 응답 형식 -> 에러 출력 e.getMessage() 로 처리
 	
 	// 회원 관리
@@ -203,6 +203,43 @@ public class AdminController {
 	
 	// TODO: 게시물 삭제 처리
 	
-	
-	// 신고
+	// TODO: 권한 체크 관련 로직 -> 기존 스타일에 맞게 변경 plz
+	// 신고 목록 조회
+	@GetMapping("/report")
+	public ResponseEntity<List<ReportResponseDto>> getListReport(
+			@RequestParam(value = "location", required = false) Report.ReportTargetLocation location,
+			@RequestParam(value = "status", required = false) Integer status,
+			@RequestParam(value = "reason", required = false) String reason,
+			@RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+			@RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+
+		if(reason != null && reason.trim().length() < 2) {
+			throw new IllegalArgumentException("검색어는 2글자 이상 입력해주세요");
+		}
+
+		List<ReportResponseDto> responseDto = reportService.getAdminListReport(location, status, reason, startDate, endDate);
+		return ResponseEntity.ok(responseDto);
+	}
+
+	// 신고 내역 상세 조회
+	@GetMapping("/report/{reportNo}")
+	public ResponseEntity<ReportResponseDto> getReportDetail(@PathVariable("reportNo") Long reportNo) {
+		ReportResponseDto responseDto = reportService.getReportDetail(reportNo);
+		return ResponseEntity.ok(responseDto);
+	}
+
+	// 신고 상태 변경
+	@PatchMapping("/report/{reportNo}/status")
+	public ResponseEntity<ReportResponseDto> updateReportStatus(@PathVariable Long reportNo, @RequestParam Integer status) {
+		ReportResponseDto responseDto = reportService.updateReport(reportNo, status);
+		return ResponseEntity.ok(responseDto);
+	}
+
+	// 신고 삭제
+	@DeleteMapping("/report/{reportNo}")
+	public ResponseEntity<Void> deleteReport(@PathVariable Long reportNo) {
+		reportService.deleteReport(reportNo);
+		return ResponseEntity.noContent().build();
+	}
+
 }

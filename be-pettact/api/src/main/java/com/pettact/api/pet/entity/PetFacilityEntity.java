@@ -5,14 +5,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "pet_facility")
+@Table(name = "pet_facility", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"facilityKey"})
+})
 @Builder
 @Getter
 @NoArgsConstructor
@@ -52,9 +57,22 @@ public class PetFacilityEntity {
     private String category1;
     private String category2;
     private String category3;
-    
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isUpdated;
+
     @Column(columnDefinition = "TEXT")
     private String homepage;
-    
+
     private String closedDays;
+
+    @Column(name = "facilityKey", nullable = false, length = 300)
+    private String facilityKey;
+
+    @PrePersist
+    @PreUpdate
+    private void generateFacilityKey() {
+        this.facilityKey = (facilityName == null ? "" : facilityName.trim()) + "-" +
+                           (lotAddress == null ? "" : lotAddress.trim());
+    }
 }
