@@ -48,7 +48,7 @@ public class PetDataMergeService {
         mergeSigungu();
         mergeKind();
         mergeShelter(); 
-        mergeAbandonment(); // 여기까지 잘됨... 
+        mergeAbandonment();
         mergeFacility();
     }
 }
