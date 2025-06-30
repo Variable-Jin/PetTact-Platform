@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderRequestDTO {
 	// 주문 요청 DTO
-    private Long id;
+    private Long orderNo;
     private String createdAt;
     private String status;
     private int totalPrice;

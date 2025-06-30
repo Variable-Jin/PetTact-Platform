@@ -17,20 +17,20 @@ public class ProductCreateDTO {
 	
 	//상품 등록 전용 DTO
 	@NotBlank(message = "상품 이름은 필수입니다.")
-	private String productsName;
+	private String productName;
 	
 	@NotBlank(message = "상품 내용은 필수입니다.")
-	private String productsDescription;
+	private String productDescription;
 	
     @NotNull(message = "가격은 필수입니다.")
     @Min(value = 0, message = "가격은 0 이상이어야 합니다.")
-	private Integer productsPrice;
+	private Integer productPrice;
     
     @NotNull(message = "수량은 필수입니다.")
     @Min(value = 0, message = "수량은 0 이상이어야 합니다.")
-	private Integer productsStock;
+	private Integer productStock;
     
     @NotNull(message = "카테고리를 선택하세요.")
-    private Long categoryId;
-	private boolean productsStatus;
+    private Long categoryNo;
+	private boolean productStatus;
 }

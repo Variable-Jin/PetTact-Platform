@@ -35,7 +35,7 @@ public class OrderService {
 			OrderDetailEntity  orderDetailEntity = mapperUtil.map(d, OrderDetailEntity.class);
 			ProductEntity productEntity = productRepository.findById(d.getProductNo()).get(); 
 			orderDetailEntity.setProduct(productEntity);
-			orderDetailEntity.setPrice(productEntity.getProductsPrice());
+			orderDetailEntity.setPrice(productEntity.getProductPrice());
 			orderDetailEntity.setOrder(orderEntity);
 			orderEntity.addOrderDetail(orderDetailEntity);
 			//주문상세를 저장한다 
@@ -52,12 +52,12 @@ public class OrderService {
 	// 주문 등록
 	@Transactional
 	public OrderDTO createOrder(Users user, List<OrderDetailDTO> list) { 
-		Long orderId = Long.valueOf(0);
+		Long orderNo = Long.valueOf(0);
 		if (list.size() > 0) {
-			orderId = list.get(0).getOrderId();
+			orderNo = list.get(0).getOrderNo();
 		}
 		
-		OrderEntity orderEntity = orderId == null ? null : orderRepository.findById(orderId).orElse(null);
+		OrderEntity orderEntity = orderNo == null ? null : orderRepository.findById(orderNo).orElse(null);
 		if(orderEntity == null) {
 		    // 신규 주문 객체 생성
 		    orderEntity = OrderEntity.builder()
@@ -86,24 +86,24 @@ public class OrderService {
 	
 	// 주문 상세
 	@Transactional(readOnly = true)
-	public OrderResponseDTO getOrderDetail(Long orderId, Users user) {
-		OrderEntity order = orderRepository.findById(orderId)
+	public OrderResponseDTO getOrderDetail(Long orderNo, Users user) {
+		OrderEntity order = orderRepository.findById(orderNo)
 				.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 		
 		if(!order.getUser().getUserNo().equals(user.getUserNo())) {
 			throw new SecurityException("해당 주문에 접근할 수 없습니다.");
 		}
 		OrderResponseDTO dto = mapperUtil.map(order, OrderResponseDTO.class);
-		dto.setId(order.getUser().getUserNo());
+		dto.setOrderNo(order.getUser().getUserNo());
 		dto.setStatus(order.getStatus().name());
 		
 	    List<OrderDetailDTO> products = order.getOrderDetailList().stream()
 	            .map(detail -> new OrderDetailDTO(
-	            		detail.getOrder().getOrderId(),
+	            		detail.getOrder().getOrderNo(),
 	                    detail.getOrderDetailId(),
-	                    detail.getProduct().getProductsNo(),
-	                    detail.getProduct().getProductsName(),
-	                    detail.getQuantity(),
+	                    detail.getProduct().getProductNo(),
+	                    detail.getProduct().getProductName(),
+	                    detail.getProductStock(),
 	                    detail.getPrice()
 	            ))
 	            .toList();
@@ -114,8 +114,8 @@ public class OrderService {
 	
 	// 주문 취소
 	@Transactional
-	public String cancelOrder(Long orderId, Users user) {
-	    OrderEntity order = orderRepository.findById(orderId)
+	public String cancelOrder(Long orderNo, Users user) {
+	    OrderEntity order = orderRepository.findById(orderNo)
 	            .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
 
 	    if (!order.getUser().getUserNo().equals(user.getUserNo())) {

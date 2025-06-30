@@ -7,8 +7,9 @@ import lombok.Data;
 @Data
 public class CartAddDTO {
 	// 장바구니 상품 등록 DTO
+	private Long cartNo;
 	@NotNull
-    private Long productId;
+    private Long productNo;
 	@Min(1)
-    private int quantity;
+    private int productStock;
 }

@@ -40,13 +40,14 @@ public class ProductService {
 	    }
 	    
 	    return ProductDetailDTO.builder()
-	            .name(product.getProductsName())
-	            .description(product.getProductsDescription())
-	            .price(product.getProductsPrice())
-	            .quantity(product.getProductsStock())
-	            .categoryName(product.getProductsCategory().getCategoryName())
+	    		.productNo(product.getProductNo())
+	            .productName(product.getProductName())
+	            .productDescription(product.getProductDescription())
+	            .productPrice(product.getProductPrice())
+	            .productStock(product.getProductStock())
+	            .categoryName(product.getProductCategory().getCategoryName())
 	            .createdAt(product.getCreatedAt())
-	            .status(product.isProductsStatus())
+	            .status(product.isProductStatus())
 	            .userNo(product.getUser().getUserNo())
 	            .userName(product.getUser().getUserName())
 	            .build();
@@ -54,34 +55,31 @@ public class ProductService {
 
 	
 	//상품 목록 
-	public List<ProductDTO> getAllProducts(){
+	public List<ProductDTO> getAllProduct(){
 		
 		List<ProductEntity> productList = productRepository.findAll()
 		        .stream()
 		        .filter(product -> !product.isDeleted()) // 삭제되지 않은 상품만 목록에 가져옴
 		        .collect(Collectors.toList());
-		
 		System.out.println("조회된 상품 수: " + productList.size()); // 로그 찍기
 		return productList.stream().map(product -> ProductDTO.builder()
-	            .productsNo(product.getProductsNo())
-	            .productsName(product.getProductsName())
-	            .productsDescription(product.getProductsDescription())
-	            .productsPrice(product.getProductsPrice())
-	            .productsStock(product.getProductsStock())
+	            .productNo(product.getProductNo())
+	            .productName(product.getProductName())
+	            .productDescription(product.getProductDescription())
+	            .productPrice(product.getProductPrice())
+	            .productStock(product.getProductStock())
 	            .createdAt(product.getCreatedAt())
-	            .categoryId(product.getProductsCategory().getCategoryId())
-	            .categoryName(product.getProductsCategory().getCategoryName())
-	            .status(product.isProductsStatus())
-	            .userNo(product.getUser().getUserNo())     // Long 값만 추출
-	            .userName(product.getUser().getUserName()) // 사용자 이름
+	            .categoryNo(product.getProductCategory().getCategoryNo())
+	            .categoryName(product.getProductCategory().getCategoryName())
+	            .status(product.isProductStatus())
 	            .build())
 	        .collect(Collectors.toList());
-}
+	}
 	
 	//상품 삭제
 	public void deleteProduct(Long productNo ,Users user) throws AccessDeniedException {
 		
-	    ProductEntity product = productRepository.findByProductsNo(productNo)
+	    ProductEntity product = productRepository.findByProductNo(productNo)
 	            .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
 	    log.info("userNo = {} , userNo = {}", product.getUser().getUserNo(),user.getUserNo());
 	    if (!product.getUser().getUserNo().equals(user.getUserNo())) {
@@ -96,17 +94,17 @@ public class ProductService {
 	public void updateProduct(Long id, ProductUpdateDTO dto, CustomUserDetails user) {
 		ProductEntity product = productRepository.findById(id)
 				.orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
-	    ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+	    ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
 	            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
 		
 		//기존 상품 정보 수정
-		product.setProductsName(dto.getProductsName());
-		product.setProductsDescription(dto.getProductsDescription());
-		product.setProductsPrice(dto.getProductsPrice());
-		product.setProductsStock(dto.getProductsStock());
-		product.setProductsCategory(category);
+		product.setProductName(dto.getProductName());
+		product.setProductDescription(dto.getProductDescription());
+		product.setProductPrice(dto.getProductPrice());
+		product.setProductStock(dto.getProductStock());
+		product.setProductCategory(category);
 		product.prePersist();
-		product.setProductsStatus(dto.isProductsStatus());
+		product.setProductStatus(dto.isProductStatus());
 		
 		productRepository.save(product); // 레포지토리에 저장
 	}
@@ -114,16 +112,16 @@ public class ProductService {
 	//상품 등록
 	public void createProduct(ProductCreateDTO dto, CustomUserDetails user) {
 		
-	    ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+	    ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
 	            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
 
 		ProductEntity product = ProductEntity.builder()
-				.productsName(dto.getProductsName())
-				.productsDescription(dto.getProductsDescription())
-				.productsPrice(dto.getProductsPrice())
-				.productsStock(dto.getProductsStock())
-				.productsCategory(category) 
-				.productsStatus(dto.isProductsStatus())
+				.productName(dto.getProductName())
+				.productDescription(dto.getProductDescription())
+				.productPrice(dto.getProductPrice())
+				.productStock(dto.getProductStock())
+				.productCategory(category) 
+				.productStatus(dto.isProductStatus())
 				.user(user.getUserEntity()) 
 				.build();
 		

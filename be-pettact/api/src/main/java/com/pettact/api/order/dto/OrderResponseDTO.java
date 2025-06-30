@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderResponseDTO extends BaseEntity{
 	//주문 응답 DTO
-    private Long id;
+    private Long orderNo;
     private String status;
     private int totalPrice;
     private List<OrderDetailDTO> products;
