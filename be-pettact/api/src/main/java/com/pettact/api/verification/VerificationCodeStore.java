@@ -2,6 +2,7 @@ package com.pettact.api.verification;
 
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VerificationCodeStore {
     
+	@Qualifier("customStringRedisTemplate")
     private final RedisTemplate<String, String> redisTemplate;
+	
     private static final String PREFIX = "verification:";
     private static final int EXPIRE_MINUTES = 5;
 
