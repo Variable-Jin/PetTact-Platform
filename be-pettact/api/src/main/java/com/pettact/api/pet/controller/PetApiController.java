@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/v1/api")
 public class PetApiController {
 
     private final PetDataInitService petDataInitService;

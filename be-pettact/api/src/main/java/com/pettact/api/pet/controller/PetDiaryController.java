@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor    
-@RequestMapping("/diary")
+@RequestMapping("/v1/diary")
 public class PetDiaryController {
 	
 	private final PetDiaryService diaryService;
