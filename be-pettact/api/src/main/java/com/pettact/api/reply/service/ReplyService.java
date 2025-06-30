@@ -3,6 +3,7 @@ package com.pettact.api.reply.service;
 
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.board.repository.BoardRepository;
+import com.pettact.api.recommend.replyRecommend.repository.ReplyRecommendRepository;
 import com.pettact.api.reply.dto.ReplyRequestDto;
 import com.pettact.api.reply.dto.ReplyResponseDto;
 import com.pettact.api.reply.entity.Reply;
@@ -29,13 +30,15 @@ public class ReplyService {
     private BoardRepository boardRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ReplyRecommendRepository replyRecommendRepository;
 
     @Transactional
-    public ReplyResponseDto createReply(Long boardNo, ReplyRequestDto replyRequestDto) {
+    public ReplyResponseDto createReply(Long boardNo, ReplyRequestDto replyRequestDto, Long userNo) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(()-> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        Users users = userRepository.findById(replyRequestDto.getUserNo())
+        Users users = userRepository.findById(userNo)
                 .orElseThrow(()-> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다."));
 
         Reply parentReply = null;
@@ -43,6 +46,9 @@ public class ReplyService {
             parentReply = replyRepository.findById(replyRequestDto.getParentReplyNo())
                     .orElseThrow(()-> new IllegalArgumentException("부모 댓글을 찾을 수 없습니다."));
         }
+        // DTO의 userNo를 인증된 사용자로 덮어쓰기!
+        replyRequestDto.setUserNo(userNo);
+
         Reply reply = replyRequestDto.toEntity(board, parentReply, users);
         Reply savedReply = replyRepository.save(reply);
         return ReplyResponseDto.fromEntity(savedReply);
@@ -66,6 +72,11 @@ public class ReplyService {
         // 모든 댓글을 DTO로 변환하여 Map에 저장
         for (Reply reply : replies) {
             ReplyResponseDto dto = ReplyResponseDto.fromEntity(reply);
+
+            // 댓글 추천수 설정 추가!
+            int recommendCount = replyRecommendRepository.countByReplyNo(reply.getReplyNo());
+            dto.setRecommendCount(recommendCount);
+
             replyMap.put(reply.getReplyNo(), dto);
         }
 
@@ -90,26 +101,26 @@ public class ReplyService {
     }
 
     @Transactional
-    public ReplyResponseDto updateReply(Long replyNo, ReplyRequestDto replyRequestDto) {
+    public ReplyResponseDto updateReply(Long replyNo, ReplyRequestDto replyRequestDto, Long userNo) {
         Reply reply = replyRepository.findById(replyNo)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-        if (!reply.getUser().getUserNo().equals(replyRequestDto.getUserNo())) {
+        if (!reply.getUser().getUserNo().equals(userNo)) {
             throw new IllegalArgumentException("댓글 작성자만 수정할 수 있습니다.");
         }
-
         reply.updateContent(replyRequestDto);
-
         Reply updatedReply = replyRepository.save(reply);
         return ReplyResponseDto.fromEntity(updatedReply);
-
     }
 
 
-    public void deleteReply(Long replyNo) {
+    public void deleteReply(Long replyNo, Long userNo) {
         Reply reply = replyRepository.findById(replyNo)
                 .orElseThrow(()-> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
+        if (!reply.getUser().getUserNo().equals(userNo)) {
+            throw new IllegalArgumentException("댓글 작성자만 삭제할 수 있습니다.");
+        }
         boolean hasChildReplies = replyRepository.existsByParentReply_ReplyNo(replyNo);
 
         if (hasChildReplies) {
@@ -119,8 +130,6 @@ public class ReplyService {
             // 대댓글 x -> 완전 삭제
             replyRepository.delete(reply);
         }
-
-
     }
 
 

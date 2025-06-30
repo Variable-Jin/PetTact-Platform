@@ -29,6 +29,7 @@ public class ReplyResponseDto {
     private Long parentReplyNo;
     // Reply -> ReplyResponseDto로 변환
     private List<ReplyResponseDto> childReplies;
+    private int recommendCount;
 
 
     public static ReplyResponseDto fromEntity(Reply savedReply) {
@@ -41,7 +42,8 @@ public class ReplyResponseDto {
                 savedReply.getCreatedAt(),
                 savedReply.getUpdatedAt(),
                 savedReply.getParentReply() != null ? savedReply.getParentReply().getReplyNo() : null,
-                new ArrayList<>()
+                new ArrayList<>(),
+                0
         );
     }
 }
