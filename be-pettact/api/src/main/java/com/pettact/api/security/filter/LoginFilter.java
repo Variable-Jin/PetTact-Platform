@@ -55,7 +55,7 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
 				    "accessToken", jwtTokenProvider.generateToken(claims, 7),	//Access Token 유효기간 1일
 				    "refreshToken", jwtTokenProvider.generateToken(claims, 10),	//Refresh Token 유효기간 10일
 				    "user", Map.of(
-				    		"userEmail", user.getUserEmail(),
+			    		"userEmail", user.getUserEmail(),
 				        "userNo", user.getUserNo(),
 				        "userNickname", user.getUserNickname(),
 				        "userRole", user.getRoleCode()
@@ -66,7 +66,15 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
 		});
 		//로그인 실패시 처리 핸들러 등록  
 		this.setAuthenticationFailureHandler((request, response, exception) -> {
-			log.info("로그인 실패시 처리 핸들러 등록 ............." );
+		    log.info("로그인 실패시 처리 핸들러 등록 ............." );
+		    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+
+		    Map<String, Object> errorResponse = Map.of(
+		        "message", "아이디 또는 비밀번호가 일치하지 않습니다."
+		    );
+
+		    response.setContentType("application/json;charset=UTF-8");
+		    objectMapper.writeValue(response.getWriter(), errorResponse);
 		});
 	}
 

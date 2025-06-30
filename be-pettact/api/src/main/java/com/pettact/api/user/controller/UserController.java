@@ -1,5 +1,6 @@
 package com.pettact.api.user.controller;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ import com.pettact.api.user.service.UserService;
 import com.pettact.api.verification.EmailService;
 import com.pettact.api.verification.VerificationCodeStore;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -60,16 +62,37 @@ public class UserController {
     
     // 이메일 인증 링크 클릭
     @GetMapping("/email/verify")
-    public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
+    public void verifyEmail(@RequestParam("token") String token, HttpServletResponse response) throws IOException {
         String email = verificationCodeStore.getCode("email-token:" + token);
-
-        if (email == null) {
-            return ResponseEntity.badRequest().body("유효하지 않거나 만료된 인증 링크입니다.");
+        if (email != null) {
+            verificationCodeStore.saveCode("verified:" + email, "true");
+            verificationCodeStore.remove("email-token:" + token);
+            response.sendRedirect("http://localhost:5173/user/email/verify?email=" + email);
+        } else {
+            response.sendRedirect("http://localhost:5173/");
         }
-
-        verificationCodeStore.saveCode("verified:" + email, "true");
-        verificationCodeStore.remove("email-token:" + token);
-        return ResponseEntity.ok("이메일 인증이 완료되었습니다.");
+    }
+    
+    // 이메일 인증됐는지 프론트에 
+    @GetMapping("/email/verified")
+    public ResponseEntity<?> checkEmailVerified(@RequestParam("email") String userEmail) {
+        String verified = verificationCodeStore.getCode("verified:" + userEmail);
+        boolean isVerified = "true".equals(verified);
+        return ResponseEntity.ok(isVerified);
+    }
+    
+    // 이메일 중복 확인
+    @GetMapping("/email/check")
+    public ResponseEntity<?> checkEmail(@RequestParam("email") String userEmail) {
+        boolean exists = userService.isEmailDuplicated(userEmail);
+        return ResponseEntity.ok(exists);
+    }
+    
+    // 닉네임 중복 확인
+    @GetMapping("/nickname/check")
+    public ResponseEntity<?> checkNickname(@RequestParam("nickname") String userNickname) {
+        boolean exists = userService.isNicknameDuplicated(userNickname);
+        return ResponseEntity.ok(exists);
     }
     
     // 현재 로그인된 사용자 정보 조회(이건 AccessToken 사용)
@@ -142,7 +165,7 @@ public class UserController {
     }
     
     // 마이페이지용 내 정보 조회
-    @GetMapping("/me/detail")
+    @GetMapping("/myInfo")
     public ResponseEntity<?> getUserDetail(@AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {
             return ResponseEntity.status(401).body("로그인이 필요합니다.");

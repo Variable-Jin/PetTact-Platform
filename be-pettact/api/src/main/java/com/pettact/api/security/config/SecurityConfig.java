@@ -95,12 +95,10 @@ public class SecurityConfig {
 
 		http.authorizeHttpRequests(authroize ->
 			authroize
-
                     .requestMatchers(HttpMethod.GET, "/v1/board").permitAll()
                     .requestMatchers(HttpMethod.GET, "/v1/board/*").permitAll()
                     .requestMatchers(HttpMethod.GET, "/v1/board/*/replies").permitAll()
                     .requestMatchers(HttpMethod.GET, "/v1/board-categories/**").permitAll()
-
                     .requestMatchers(
                         "/v1/user/me",
                         "/v1/user/me/detail",
@@ -109,11 +107,11 @@ public class SecurityConfig {
                         "/v1/board-categories/**",
                         "/v1/board/**",
                         "/v1/replies/**"
-
                 ).authenticated()
 	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨 - 아래는 권한 설정하는 예시
 				.requestMatchers("/v1/admin/**")
 				.hasAnyAuthority("ROLE_ADMIN") //반드시 해당 권한만 허가  
+				.requestMatchers("/ws/**", "/index.html", "/app.js").permitAll()
 				.anyRequest().permitAll() // 나머지는 비로그인 상태에서도 접근 가능
 			);
 
