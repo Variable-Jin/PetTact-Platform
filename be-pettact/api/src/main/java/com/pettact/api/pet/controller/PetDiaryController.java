@@ -21,16 +21,15 @@ import lombok.RequiredArgsConstructor;
 public class PetDiaryController {
 	
 	private final PetDiaryService diaryService;
-	
+
 	@PostMapping("/create")
-	public ResponseEntity<PetDiaryEntity> createDiary(@RequestBody PetDiaryDto dto, Users user) {
-	    // 프론트에서 보낸 prompt 그대로 전달
-	    String generatedDiary = diaryService.generatePetDiary(dto.getPrompt());
-
-	    // 생성된 일기 저장
-	    PetDiaryEntity saved = diaryService.saveDiary(dto.getPetId(), generatedDiary);
-
-	    return ResponseEntity.ok(saved);
+	public ResponseEntity<String> createDiary(@RequestBody PetDiaryDto dto, @AuthenticationPrincipal CustomUserDetails user) {
+		String generatedDiary = diaryService.generatePetDiary(dto.getPrompt());
+	    
+	    diaryService.saveDiary(dto.getPetId(), generatedDiary, user.getUserEntity());
+	    // Entity → DTO 변환
+	    return ResponseEntity.ok("일기가 성공적으로 저장되었습니다.");
 	}
+
 
 }
