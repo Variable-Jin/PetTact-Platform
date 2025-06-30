@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 public class CartUpdateDTO {
 	// 장바구니 상품 수량 업데이트 DTO
+	private Long cartId;
 	@NotNull
     private Long productId;
 	@Min(1)

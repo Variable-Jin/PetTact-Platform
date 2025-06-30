@@ -40,9 +40,9 @@ public class CartController {
     }
     
     // 장바구니 상품 삭제
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteProduct(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("id") Long id) {
-        cartService.deleteProduct(user.getUserEntity(),id);
+    @DeleteMapping("/delete/{cartId}")
+    public ResponseEntity<String> deleteProduct(@AuthenticationPrincipal CustomUserDetails user, @PathVariable("cartId") Long cartId) {
+        cartService.deleteProduct(user.getUserEntity(),cartId);
         return ResponseEntity.ok("장바구니에서 상품이 삭제되었습니다.");
     }
     

@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CartDTO {
 	
+	private Long cartId;
     private Long productId;       // 상품 ID
     private String productName;   // 상품 이름
     private Integer productPrice; // 상품 가격

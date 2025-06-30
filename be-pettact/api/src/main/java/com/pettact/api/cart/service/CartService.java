@@ -30,30 +30,31 @@ public class CartService {
         
         return cartRepository.findByUser_UserNo(userNo)
                 .stream()
-                .map(cartProduct -> {
+                .map(cart -> {
                     return CartDTO.builder()
-                            .productId(cartProduct.getProduct().getProductsNo())
-                            .productName(cartProduct.getProduct().getProductsName())
-                            .productPrice(cartProduct.getProduct().getProductsPrice())
-                            .quantity(cartProduct.getQuantity())
-                            .totalPrice(cartProduct.getProduct().getProductsPrice() * cartProduct.getQuantity())
+                    		.cartId(cart.getCartId())
+                            .productId(cart.getProduct().getProductsNo())
+                            .productName(cart.getProduct().getProductsName())
+                            .productPrice(cart.getProduct().getProductsPrice())
+                            .quantity(cart.getQuantity())
+                            .totalPrice(cart.getProduct().getProductsPrice() * cart.getQuantity())
                             .build();
                 })
                 .collect(Collectors.toList());
     }
     
     // 장바구니 상품 삭제
-    public void deleteProduct(Users user, Long id) {
+    public void deleteProduct(Users user, Long cartId) {
     	
-    	CartEntity cartProduct = cartRepository.findById(id)
+    	CartEntity cart = cartRepository.findById(cartId)
             .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
         // 혹시 해당 cart가 현재 로그인한 사용자(user)에 속하는지 확인 (보안상)
-        if (!cartProduct.getUser().getUserNo().equals(user.getUserNo())) {
+        if (!cart.getUser().getUserNo().equals(user.getUserNo())) {
             throw new IllegalArgumentException("해당 장바구니 상품에 접근 권한이 없습니다.");
         }
-        cartProduct.softDelete();
-        cartRepository.delete(cartProduct);
+        cart.softDelete();
+        cartRepository.delete(cart);
     }
     
     // 장바구니 수량 업데이트
@@ -64,12 +65,12 @@ public class CartService {
         ProductEntity product = productRepository.findById(productId)
             .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        CartEntity cartProduct = cartRepository.findByUserAndProduct(user, product)
+        CartEntity cart = cartRepository.findByUserAndProduct(user, product)
             .orElseThrow(() -> new IllegalArgumentException("장바구니에 상품이 없습니다."));
         
-        cartProduct.setQuantity(quantity);
-        cartProduct.prePersist();
-        cartRepository.save(cartProduct);
+        cart.setQuantity(quantity);
+        cart.prePersist();
+        cartRepository.save(cart);
     }
     
     // 장바구니 상품 추가 ( 동일 상품 등록 시에 수량 증가 )
@@ -83,15 +84,15 @@ public class CartService {
         ProductEntity product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        CartEntity cartProduct = cartRepository.findByUserAndProduct(user, product)
+        CartEntity cart = cartRepository.findByUserAndProduct(user, product)
                 .orElse(CartEntity.builder()
                         .user(user)
                         .product(product)
                         .quantity(0)
                         .build());
 
-        cartProduct.setQuantity(cartProduct.getQuantity() + quantity);
-        cartProduct.prePersist();
-        cartRepository.save(cartProduct);
+        cart.setQuantity(cart.getQuantity() + quantity);
+        cart.prePersist();
+        cartRepository.save(cart);
     }
 }
