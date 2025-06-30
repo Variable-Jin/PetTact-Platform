@@ -7,4 +7,5 @@ import com.pettact.api.pet.entity.PetFacilityEntity;
 
 @Repository
 public interface PetFacilityRepository extends JpaRepository<PetFacilityEntity, Long> {
+	boolean existsByFacilityKey(String facilityKey);
 }

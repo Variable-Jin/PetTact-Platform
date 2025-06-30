@@ -6,6 +6,7 @@ import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.board.dto.BoardResponseDto;
 import com.pettact.api.Category.entity.BoardCategory;
 import com.pettact.api.Category.repository.CategoryRepository;
+import com.pettact.api.recommend.boardRecommend.repository.BoardRecommendRepository;
 import com.pettact.api.reply.dto.ReplyResponseDto;
 import com.pettact.api.reply.service.ReplyService;
 import com.pettact.api.user.entity.Users;
@@ -20,7 +21,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class BoardService {
-
     @Autowired
     private BoardRepository boardRepository;
     @Autowired
@@ -29,50 +29,52 @@ public class BoardService {
     private CategoryRepository categoryRepository;
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private BoardRecommendRepository boardRecommendRepository;
     @Transactional
-    public BoardResponseDto createBoard(BoardCreateDto boardCreateDto) {
-        // TODO: user 조회 검증
-        Users users = userRepository.findById(boardCreateDto.getUserNo())
+    public BoardResponseDto createBoard(BoardCreateDto boardCreateDto,  Long userNo) {
+        Users users = userRepository.findById(userNo)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
         BoardCategory boardCategory = categoryRepository
                 .findById(boardCreateDto.getBoardCategoryNo())
                 .orElseThrow(() -> new RuntimeException("게시글 카테고리가 존재하지 않습니다."));
-
         Board board = BoardCreateDto.toEntity(boardCreateDto, boardCategory, users);
         Board savedBoard = boardRepository.save(board);
         return BoardResponseDto.fromEntity(savedBoard);
     }
-
     public List<BoardResponseDto> getAllBoard() {
         List<Board> boards = boardRepository.findAll();
         return boards.stream()
                 .map(BoardResponseDto::getAllBoard)
                 .collect(Collectors.toList());
     }
-
     public BoardResponseDto getBoardByNo(Long boardNo) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
         List<ReplyResponseDto> replyList = replyService.getAllReplies(boardNo);
+        int recommendCount = boardRecommendRepository.countByBoardNo(boardNo);
         BoardResponseDto boardResponseDto = BoardResponseDto.fromEntity(board);
         boardResponseDto.setReplies(replyList);
+        boardResponseDto.setRecommendCount(recommendCount);
         return boardResponseDto;
     }
-
-    public BoardResponseDto updateBoard(Long boardNo, BoardCreateDto boardCreateDto) {
+    @Transactional
+    public BoardResponseDto updateBoard(Long boardNo, BoardCreateDto boardCreateDto, Long userNo) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. No: " + boardNo));
-
+        if (!board.getUser().getUserNo().equals(userNo)) {
+            throw new IllegalArgumentException("수정 권한이 없습니다. 작성자만 수정할 수 있습니다.");
+        }
         board.updateBoard(boardCreateDto);
         Board updated = boardRepository.save(board);
-
         return BoardResponseDto.fromEntity(updated);
     }
-
-    public void deleteBoard(Long boardNo) {
-        if (!boardRepository.existsById(boardNo)) {
-            throw new IllegalArgumentException("게시글 정보를 찾을 수 럾습니다. No: " + boardNo);
+    @Transactional
+    public void deleteBoard(Long boardNo, Long userNo) {
+        Board board = boardRepository.findById(boardNo)
+                .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
+        if (!board.getUser().getUserNo().equals(userNo)) {
+            throw new IllegalArgumentException("해당 사용자가 아닙니다. 삭제를 할 수 없습니다.");
         }
         boardRepository.deleteById(boardNo);
     }

@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,43 +17,43 @@ public class PetFacilityDto {
     @JsonProperty("경도")
     private String longitude;
 
-    @JsonProperty("소재지 도로명")
+    @JsonProperty("기본 정보_장소설명")
     private String placeDescription;
 
-    @JsonProperty("도로명")
+    @JsonProperty("도로명 이름")
     private String roadName;
 
-    @JsonProperty("소재지 도로명 주소")
+    @JsonProperty("도로명주소")
     private String roadAddress;
 
-    @JsonProperty("리 명")
+    @JsonProperty("리 명칭")
     private String riName;
 
-    @JsonProperty("반려동물 동반 가능 여부")
+    @JsonProperty("반려동물 동반 가능정보")
     private String petAllowed;
 
-    @JsonProperty("반려동물 전용 여부")
+    @JsonProperty("반려동물 전용 정보")
     private String petOnly;
 
     @JsonProperty("반려동물 제한사항")
     private String petLimit;
 
-    @JsonProperty("지번 번호")
+    @JsonProperty("번지")
     private String lotNumber;
 
-    @JsonProperty("법정동 명")
+    @JsonProperty("법정읍면동명칭")
     private String legalDongName;
 
-    @JsonProperty("시군구명")
+    @JsonProperty("시군구 명칭")
     private String sigunguName;
 
-    @JsonProperty("시도 명")
-    private String sidoName; 
+    @JsonProperty("시도 명칭")
+    private String sidoName;
 
     @JsonProperty("시설명")
     private String facilityName;
 
-    @JsonProperty("추가 요금")
+    @JsonProperty("애견 동반 추가 요금")
     private String additionalFee;
 
     @JsonProperty("우편번호")
@@ -66,28 +65,28 @@ public class PetFacilityDto {
     @JsonProperty("위도")
     private String latitude;
 
-    @JsonProperty("반려동물 크기")
+    @JsonProperty("입장 가능 동물 크기")
     private String allowedPetSize;
 
-    @JsonProperty("입장료 정보")
+    @JsonProperty("입장(이용료)가격 정보")
     private String entranceFeeInfo;
 
-    @JsonProperty("실내 여부")
+    @JsonProperty("장소(실내) 여부")
     private String isIndoor;
 
-    @JsonProperty("실외 여부")
+    @JsonProperty("장소(실외)여부")
     private String isOutdoor;
 
     @JsonProperty("전화번호")
     private String phone;
 
-    @JsonProperty("주차 가능 여부")
+    @JsonProperty("주차 가능여부")
     private String parkingAvailable;
 
-    @JsonProperty("소재지 지번 주소")
+    @JsonProperty("지번주소")
     private String lotAddress;
 
-    @JsonProperty("정보 최종 갱신일")
+    @JsonProperty("최종작성일")
     private String lastUpdatedDate;
 
     @JsonProperty("카테고리1")

@@ -2,6 +2,7 @@ package com.pettact.api.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -44,46 +45,46 @@ public class SecurityConfig {
 	private final JwtTokenProvider jwtTokenProvider;
 	private final CustomUserDetailsService CustomUserDetailsService;
 	private final CustomOAuth2UserService customOAuth2UserService;
-	
+
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	
+
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         log.info("------------web configure-------------------");
         return (web) -> web.ignoring()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
-	
+
     @Bean
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
         log.info("------------configure-------------------");
-        //인증관리자 빌더 객체 얻기  
+        //인증관리자 빌더 객체 얻기
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        
+
         //인증관리자에 userDetailsService와 비밀번호 암호화 객체를 설정한다
         authenticationManagerBuilder
         	.userDetailsService(CustomUserDetailsService)
         	.passwordEncoder(passwordEncoder());
-        
-        //인증관리자를 생성한다 
+
+        //인증관리자를 생성한다
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
-        
-        //http 보안 객체에 인증관리자를 설정한다 
+
+        //http 보안 객체에 인증관리자를 설정한다
         http.authenticationManager(authenticationManager);
-        
+
         //해당 소스 작성후 : 브라우저에서 /generateToken URL을 실행한다
         final LoginFilter loginFilter = new LoginFilter("/v1/user/login", objectMapper, jwtTokenProvider);
         loginFilter.setAuthenticationManager(authenticationManager);
-        
-        //UsernamePasswordAuthenticationFilter 필더 객체 실행 전에 동작할 loginFilter를 설정한다 
+
+        //UsernamePasswordAuthenticationFilter 필더 객체 실행 전에 동작할 loginFilter를 설정한다
         http.addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class);
 
         //UsernamePasswordAuthenticationFilter 필더 객체 실행 전에 동작할 TokenCheckFilter 객체를 생성하여 설정한다
         http.addFilterBefore(new TokenCheckFilter(jwtTokenProvider, CustomUserDetailsService), UsernamePasswordAuthenticationFilter.class);
-        
+
         //TokenCheckFilter 필더 객체 실행 전에 동작할 RefreshTokenFilter 객체를 생성하여 설정한다
         //해당 소스 작성후 : 브라우저에서 /refreshToken URL을 실행한다
         http.addFilterBefore(new RefreshTokenFilter("/refreshToken", objectMapper, jwtTokenProvider), TokenCheckFilter.class);
@@ -92,14 +93,20 @@ public class SecurityConfig {
         //세션을 사용하지 않음
         http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-		http.authorizeHttpRequests(authroize -> 
+		http.authorizeHttpRequests(authroize ->
 			authroize
-            	.requestMatchers(
-                    "/v1/user/me",
-                    "/v1/user/me/detail",
-                    "/v1/user/update",
-                    "/v1/user/withdraw",
-                    "/v1/notification/**"
+                    .requestMatchers(HttpMethod.GET, "/v1/board").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/board/*").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/board/*/replies").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/board-categories/**").permitAll()
+                    .requestMatchers(
+                        "/v1/user/me",
+                        "/v1/user/me/detail",
+                        "/v1/user/update",
+                        "/v1/user/withdraw",
+                        "/v1/board-categories/**",
+                        "/v1/board/**",
+                        "/v1/replies/**"
                 ).authenticated()
 	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨 - 아래는 권한 설정하는 예시
 				.requestMatchers("/v1/admin/**")

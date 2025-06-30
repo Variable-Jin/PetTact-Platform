@@ -1,6 +1,7 @@
 package com.pettact.api.product.entity;
 
 import com.pettact.api.core.base.BaseEntity;
+import com.pettact.api.user.entity.Users;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,10 +48,12 @@ public class ProductEntity extends BaseEntity {
 
     @Column(nullable = false)
     private boolean productsStatus; //  (1)true: 판매중, (0)false: 판매완료
-
-//    @Column(nullable = false)
-//    private boolean productsDeleted; // 삭제 여부 ((1)true: 삭제완료 , (0)false: 미삭제 )
-
     
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_no") // FK 컬럼명
+    private Users user; // 상품 등록자
+   
+    
+
 }
 
