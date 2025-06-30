@@ -90,7 +90,7 @@ public class AdminController {
 		}
 	}
 	
-	// 회원 잠금
+	// 회원 잠금(status_code 변경)
 	@PostMapping("/user/{userNo}/block")
 	public ResponseEntity<?> lockUser(@PathVariable("userNo") Long userNo){
 	    try {
@@ -121,6 +121,8 @@ public class AdminController {
 	        return ResponseEntity.badRequest().body("회원 잠금 해제 기능 중 오류가 발생했습니다: " + e.getMessage());
 	    }
 	}
+	
+	// TODO: 블랙리스트 처리 -> 신고 내역 기반으로 처리
 	
 	// 판매자 관리
 	// 판매자 목록 조회
