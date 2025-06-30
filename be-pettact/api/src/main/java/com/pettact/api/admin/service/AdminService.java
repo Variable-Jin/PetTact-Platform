@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.pettact.api.admin.dto.AdminBoardDetailDTO;
 import com.pettact.api.admin.dto.AdminBoardListDTO;
@@ -52,32 +53,36 @@ public class AdminService {
 	}
     
 	// 회원 잠금
+	@Transactional
 	public boolean lockUserByUserNo(Long userNo) {
 	    Users user = userRepository.findById(userNo)
 	            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-	    if (user.getUserBlacklist()) {
+	    CommonCode blockedCode = commonCodeService.getCodeById("STATUS_BLOCKED");
+	    
+	    if ("STATUS_BLOCKED".equals(user.getStatusCode())) {
 	        return false;
 	    }
 
-	    user.setUserBlacklist(true);
+	    user.setStatusCode(blockedCode);
 	    userRepository.save(user);
-
 	    return true;
 	}
 	
 	// 회원 잠금 해제
+	@Transactional
 	public boolean unlockUserByUserNo(Long userNo) {
 	    Users user = userRepository.findById(userNo)
 	            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
-	    if (!user.getUserBlacklist()) {
+	    CommonCode activeCode = commonCodeService.getCodeById("STATUS_ACTIVE");
+	    
+	    if (!"STATUS_BLOCKED".equals(user.getStatusCode())) {
 	        return false;
 	    }
 
-	    user.setUserBlacklist(false);
+	    user.setStatusCode(activeCode);
 	    userRepository.save(user);
-
 	    return true;
 	}
 	
