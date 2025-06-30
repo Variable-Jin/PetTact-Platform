@@ -40,18 +40,18 @@ public class OrderController {
     }
     
     // 주문 상세
-    @GetMapping("/detail/{orderId}")
-    public ResponseEntity<OrderResponseDTO> getOrderDetail(@PathVariable("orderId") Long orderId, @AuthenticationPrincipal CustomUserDetails user){
+    @GetMapping("/detail/{orderNo}")
+    public ResponseEntity<OrderResponseDTO> getOrderDetail(@PathVariable("orderNo") Long orderNo, @AuthenticationPrincipal CustomUserDetails user){
     	
-    	OrderResponseDTO dto = orderService.getOrderDetail(orderId, user.getUserEntity());
+    	OrderResponseDTO dto = orderService.getOrderDetail(orderNo, user.getUserEntity());
     	return ResponseEntity.ok(dto);
     }
     
     // 주문 취소
-    @PatchMapping("/cancel/{orderId}")
-    public ResponseEntity<String> cancelOrder(@PathVariable("orderId") Long orderId,
+    @PatchMapping("/cancel/{orderNo}")
+    public ResponseEntity<String> cancelOrder(@PathVariable("orderNo") Long orderNo,
                                             @AuthenticationPrincipal CustomUserDetails user) {
-        String message = orderService.cancelOrder(orderId, user.getUserEntity());
+        String message = orderService.cancelOrder(orderNo, user.getUserEntity());
         return ResponseEntity.ok(message);
     }
 }

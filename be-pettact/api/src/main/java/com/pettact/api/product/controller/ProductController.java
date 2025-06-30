@@ -37,14 +37,14 @@ public class ProductController {
 	// 상품 상세보기 
 	@GetMapping("/list/{productNo}")
 	public ResponseEntity <ProductDetailDTO> getProductDetail(@PathVariable("productNo") Long productNo) {
-	    ProductDetailDTO myProducts = productService.getProductDetail(productNo);
-	    return ResponseEntity.ok(myProducts);
+	    ProductDetailDTO myProduct = productService.getProductDetail(productNo);
+	    return ResponseEntity.ok(myProduct);
 	}
 
 	// 상품 목록
 	@GetMapping("/list")
-	public ResponseEntity<List<ProductDTO>> getAllProducts(){
-		List<ProductDTO> products = productService.getAllProducts();
+	public ResponseEntity<List<ProductDTO>> getAllProduct(){
+		List<ProductDTO> products = productService.getAllProduct();
 		return ResponseEntity.ok(products);
 	}
 	

@@ -28,7 +28,7 @@ public class CartEntity extends BaseEntity {
 	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long cartId;
+    private Long cartNo;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_no", nullable = false)
@@ -36,11 +36,11 @@ public class CartEntity extends BaseEntity {
 
     // 상품
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_no", nullable = false)
     private ProductEntity product;
 
     // 수량
     @Column(nullable = false)
-    private int quantity;
+    private int productStock;
 
 }

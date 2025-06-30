@@ -31,25 +31,25 @@ public class OrderDetailEntity extends BaseEntity {
     private Long orderDetailId; // 주문 내역 번호
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
+    @JoinColumn(name = "order_no")
     private OrderEntity order; // 주문 번호
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_no")
     private ProductEntity product; // 상품 번호
 
-    private int quantity; // 수량
+    private int productStock; // 수량
 
     private int price; // 단가
     
     public int getTotalPrice() {
-    	return quantity * price;
+    	return productStock * price;
     }
     
     public OrderDetailDTO of(MapperUtil mapperUtil) {
     	OrderDetailDTO orderDetailDTO = mapperUtil.map(this, OrderDetailDTO.class);
-    	orderDetailDTO.setProductNo(product.getProductsNo());
-    	orderDetailDTO.setName(product.getProductsName());
+    	orderDetailDTO.setProductNo(product.getProductNo());
+    	orderDetailDTO.setName(product.getProductName());
     	return orderDetailDTO;
     }
 }

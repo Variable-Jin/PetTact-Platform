@@ -22,7 +22,7 @@ public class ProductCategoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
-    private Long categoryId;
+    private Long categoryNo;
 
     @Column(nullable = false, length = 50)
     private String categoryName;

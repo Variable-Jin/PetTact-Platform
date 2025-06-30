@@ -36,10 +36,10 @@ public class OrderEntity extends BaseEntity {
 
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long orderId;
+    private Long orderNo;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_no")
     private Users user;
 
     private int totalPrice;
@@ -68,7 +68,7 @@ public class OrderEntity extends BaseEntity {
 			orderDetailList.stream()
 				.map(d -> d.of(mapperUtil)).toList()
     	);
-    	orderDTO.setUserId(user.getUserNo());
+    	orderDTO.setUserNo(user.getUserNo());
     	return orderDTO;
     }
 
