@@ -14,11 +14,12 @@ import lombok.NoArgsConstructor;
 public class ProductDetailDTO {
 	
 	//상품 상세보기 DTO
-    
-    private String name;          // 상품 이름
-    private String description;   // 상품 설명
-    private Integer price;        // 상품 가격
-    private Integer quantity;     // 상품 수량
+	
+	private Long productsNo; 			  // 상품 번호
+    private String productsName;          // 상품 이름
+    private String productsDescription;   // 상품 설명
+    private Integer productsPrice;        // 상품 가격
+    private Integer productsStock;     // 상품 수량
     private String categoryName;      // 상품 카테고리 이름
     private LocalDateTime createdAt; // 상품 등록 시간
     private boolean status;       // true: 판매중, false: 품절

@@ -40,10 +40,11 @@ public class ProductService {
 	    }
 	    
 	    return ProductDetailDTO.builder()
-	            .name(product.getProductsName())
-	            .description(product.getProductsDescription())
-	            .price(product.getProductsPrice())
-	            .quantity(product.getProductsStock())
+	    		.productsNo(product.getProductsNo())
+	            .productsName(product.getProductsName())
+	            .productsDescription(product.getProductsDescription())
+	            .productsPrice(product.getProductsPrice())
+	            .productsStock(product.getProductsStock())
 	            .categoryName(product.getProductsCategory().getCategoryName())
 	            .createdAt(product.getCreatedAt())
 	            .status(product.isProductsStatus())
@@ -60,7 +61,6 @@ public class ProductService {
 		        .stream()
 		        .filter(product -> !product.isDeleted()) // 삭제되지 않은 상품만 목록에 가져옴
 		        .collect(Collectors.toList());
-		
 		System.out.println("조회된 상품 수: " + productList.size()); // 로그 찍기
 		return productList.stream().map(product -> ProductDTO.builder()
 	            .productsNo(product.getProductsNo())
@@ -72,11 +72,9 @@ public class ProductService {
 	            .categoryId(product.getProductsCategory().getCategoryId())
 	            .categoryName(product.getProductsCategory().getCategoryName())
 	            .status(product.isProductsStatus())
-	            .userNo(product.getUser().getUserNo())     // Long 값만 추출
-	            .userName(product.getUser().getUserName()) // 사용자 이름
 	            .build())
 	        .collect(Collectors.toList());
-}
+	}
 	
 	//상품 삭제
 	public void deleteProduct(Long productNo ,Users user) throws AccessDeniedException {
