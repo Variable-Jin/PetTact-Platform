@@ -41,5 +41,9 @@ public class PetDiaryEntity extends BaseEntity {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String diaryContent;
+    
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String prompt;
 }
 
