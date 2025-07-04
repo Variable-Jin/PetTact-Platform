@@ -1,8 +1,13 @@
 package com.pettact.api.pet.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,12 +28,22 @@ public class PetDiaryController {
 	private final PetDiaryService diaryService;
 
 	@PostMapping("/create")
-	public ResponseEntity<String> createDiary(@RequestBody PetDiaryDto dto, @AuthenticationPrincipal CustomUserDetails user) {
-		String generatedDiary = diaryService.generatePetDiary(dto.getPrompt());
-	    
-	    diaryService.saveDiary(dto.getPetId(), generatedDiary, user.getUserEntity());
-	    // Entity → DTO 변환
-	    return ResponseEntity.ok("일기가 성공적으로 저장되었습니다.");
+	public ResponseEntity<String> createDiary(@RequestBody PetDiaryDto dto,@AuthenticationPrincipal CustomUserDetails user){
+		String generatedDiary = diaryService.generatePetDiary(dto.getPrompt(), dto.getPetId());
+	    diaryService.saveDiary(dto.getPetId(), generatedDiary, user.getUserEntity(), dto.getPrompt());
+
+	    return ResponseEntity.ok("saved"); 
+	}
+
+	@GetMapping("/{petId}")
+	public ResponseEntity<List<PetDiaryDto>> diaryList(@PathVariable("petId") Long petId) {
+	    return ResponseEntity.ok(diaryService.diaryList(petId));
+	}
+
+	@PutMapping("/{diaryId}")
+	public ResponseEntity<String> deleteDiary(@PathVariable("diaryId") Long diaryId, @AuthenticationPrincipal CustomUserDetails user) {
+	    diaryService.deleteDiary(diaryId, user.getUserEntity().getUserNo());
+	    return ResponseEntity.ok("일기가 삭제되었습니다.");
 	}
 
 
