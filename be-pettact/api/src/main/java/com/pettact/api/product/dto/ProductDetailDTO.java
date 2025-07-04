@@ -1,7 +1,9 @@
 package com.pettact.api.product.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.pettact.api.multiFile.entity.MultiFile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +29,9 @@ public class ProductDetailDTO {
     // 작성자 정보
     private Long userNo;       // 작성자 ID
     private String userName;   // 작성자 이름
+
+    // multiFile
+    private List<MultiFile> files;
     
 
 }

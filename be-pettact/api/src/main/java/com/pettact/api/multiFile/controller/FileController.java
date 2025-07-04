@@ -7,13 +7,20 @@ import com.pettact.api.multiFile.dto.FileUpdateDto;
 import com.pettact.api.multiFile.entity.MultiFile;
 import com.pettact.api.multiFile.service.FileService;
 import com.pettact.api.security.vo.CustomUserDetails;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/v1/file")
@@ -23,7 +30,7 @@ public class FileController {
     private FileService fileService;
 
     /**
-     * @param fileCreateDto
+     * @param
      * @param file
      * @return
      * 1. 파일 업로드
@@ -57,6 +64,30 @@ public class FileController {
         FileResponseDto responseDto = fileService.createFile(fileCreateDto, file, userNo);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
+
+    // 다운로드 컨트롤러 관련
+//    @GetMapping("/download/{fileNo}")
+//    public ResponseEntity<Resource> downloadFile(@PathVariable Long fileNo) {
+//        try {
+//            // 파일 정보 조회
+//            FileResponseDto fileInfo = fileService.getFile(fileNo);
+//
+//            // 실제 파일 경로에서 파일 읽기
+//            Path filePath = Paths.get(fileInfo.getFilePath());
+//            Resource resource = new UrlResource(filePath.toUri());
+//
+//            if (resource.exists() && resource.isReadable()) {
+//                return ResponseEntity.ok()
+//                        .contentType(MediaType.parseMediaType("application/octet-stream"))
+//                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileInfo.getFileName() + "\"")
+//                        .body(resource);
+//            } else {
+//                return ResponseEntity.notFound().build();
+//            }
+//        } catch (Exception e) {
+//            return ResponseEntity.internalServerError().build();
+//        }
+//    }
 
     @GetMapping("/{fileNo}")
     public ResponseEntity<FileResponseDto> getFile(@PathVariable Long fileNo) {

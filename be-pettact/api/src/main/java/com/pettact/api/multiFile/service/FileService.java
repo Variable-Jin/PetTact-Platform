@@ -21,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -57,12 +59,20 @@ public class FileService {
         }
     }
 
+    /**
+     * 다음 순서 번호 계산
+     */
+    private int getNextFileOrder(MultiFile.ReferenceTable referenceTable, Long referenceNo) {
+        Integer maxOrder = fileRepository.findMaxOrderByReference(referenceTable, referenceNo);
+        return (maxOrder == null) ? 1 : maxOrder + 1;
+    }
+
     @Transactional
     public FileResponseDto createFile(FileCreateDto fileCreateDto, MultipartFile file, Long userNo) {
-         if (file == null || file.isEmpty()) {
-             throw new IllegalArgumentException("파일이 비어있습니다.");
-         }
-         String mimeType = file.getContentType();
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+        String mimeType = file.getContentType();
 
         if (FileUtil.isImageFile(mimeType)) {
             // 이미지: 10MB 제한
@@ -83,6 +93,11 @@ public class FileService {
 
         MultiFile multiFile = fileCreateDto.toEntity();
         multiFile.setUserNo(userNo);
+
+        // 순서 자동 계산 적용
+        int nextOrder = getNextFileOrder(multiFile.getReferenceTable(), multiFile.getReferenceNo());
+        multiFile.setFileOrderNo(nextOrder);
+
         multiFile.setFilePath(filePath);
         multiFile.setFileName(file.getOriginalFilename());
         multiFile.setFileSize((int) file.getSize());
@@ -101,6 +116,21 @@ public class FileService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 파일을 찾을 수 없습니다."));
         return FileResponseDto.fromEntity(file);
     }
+
+
+    /**
+     * 특정 테이블의 특정 레코드에 연결된 파일 목록 조회
+     */
+    public List<MultiFile> getFilesByReference(MultiFile.ReferenceTable referenceTable, Long referenceNo) {
+        return fileRepository.findByReferenceTableAndReferenceNoOrderByFileOrderNo(
+                referenceTable, referenceNo);
+    }
+
+
+    /**
+     * 여러 파일을 한번에 저장
+     */
+
 
     @Transactional
     public FileResponseDto updateFile(Long fileNo, FileUpdateDto fileUpdateDto, Long userNo) {
