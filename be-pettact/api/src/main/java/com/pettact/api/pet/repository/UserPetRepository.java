@@ -1,10 +1,14 @@
 package com.pettact.api.pet.repository;
 
-import com.pettact.api.pet.entity.UserPetEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import com.pettact.api.pet.entity.UserPetEntity;
 
 public interface UserPetRepository extends JpaRepository<UserPetEntity, Long> {
-    List<UserPetEntity> findByUser_UserNo(Long userNo); 
+    
+    Page<UserPetEntity> findByUser_UserNoAndIsDeletedFalse(Long userNo, Pageable pageable);
+
+
 }

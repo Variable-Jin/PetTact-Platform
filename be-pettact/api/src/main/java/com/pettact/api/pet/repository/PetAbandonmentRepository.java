@@ -1,7 +1,10 @@
 package com.pettact.api.pet.repository;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,12 +17,16 @@ public interface PetAbandonmentRepository extends JpaRepository<PetAbandonmentEn
 		    SELECT a FROM PetAbandonmentEntity a
 		    WHERE (:kindNm IS NULL OR a.kindNm = :kindNm)
 		      AND (:orgNm IS NULL OR a.orgNm LIKE CONCAT(:orgNm, '%'))
-		      AND (:careRegNo IS NULL OR a.careRegNo = :careRegNo)
 		""")
-		List<PetAbandonmentEntity> searchByConditions(
+		Page<PetAbandonmentEntity> searchByConditionsPaged(
 		    @Param("kindNm") String kindNm,
 		    @Param("orgNm") String orgNm,
-		    @Param("careRegNo") String careRegNo
+		    Pageable pageable
 		);
+
+
+	Optional<PetAbandonmentEntity> findByDesertionNo(String desertionNo);
+
+
 
 }
