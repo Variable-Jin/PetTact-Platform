@@ -1,6 +1,7 @@
 package com.pettact.api.pet.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import lombok.Data;
 
@@ -12,6 +13,8 @@ public class UserPetDto {
     private Long userNo;        // 사용자 고유 번호 (Users.userNo)
 
     private String kindCd;      // 품종 코드 (PetKindEntity.kindCd)
+    
+    private String kindNm;      // 품종 코드 (PetKindEntity.kindCd)
 
     private String rfidNo;      // RFID 번호
 
@@ -27,5 +30,5 @@ public class UserPetDto {
 
     private String petImageUrl; // 반려동물 사진 URL
 
-    private LocalDate regDate;  // 등록일
+    private LocalDateTime createdAt;  // 등록일
 }

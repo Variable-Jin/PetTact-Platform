@@ -9,6 +9,10 @@ import com.pettact.api.user.entity.Users;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +43,6 @@ public class UserPetService {
             .petBirth(dto.getPetBirth())
             .petWeight(dto.getPetWeight())
             .petImageUrl(dto.getPetImageUrl())
-            .regDate(dto.getRegDate())
             .build();
 
         UserPetEntity saved = userPetRepository.save(entity);
@@ -47,7 +50,7 @@ public class UserPetService {
     }
 
     // 단건 조회
-    public UserPetDto petSearch(Long petId) {
+    public UserPetDto detailPet(Long petId) {
         UserPetEntity entity = userPetRepository.findById(petId)
             .filter(pet -> !pet.isDeleted())
             .orElseThrow(() -> new IllegalArgumentException("해당 반려동물이 존재하지 않습니다."));
@@ -55,12 +58,12 @@ public class UserPetService {
     }
 
     // 사용자별 전체 조회
-    public List<UserPetDto> petListSearch(Long userNo) {
-        return userPetRepository.findByUser_UserNo(userNo).stream()
-            .filter(pet -> !pet.isDeleted())
-            .map(this::toDto)
-            .collect(Collectors.toList());
+    public Page<UserPetDto> petList(Long userNo, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<UserPetEntity> result = userPetRepository.findByUser_UserNoAndIsDeletedFalse(userNo, pageable);
+        return result.map(this::toDto); 
     }
+
 
     // 논리 삭제 (soft delete)
     public void petDelete(Long petId) {
@@ -72,6 +75,9 @@ public class UserPetService {
 
     private UserPetDto toDto(UserPetEntity entity) {
         UserPetDto dto = new UserPetDto();
+        if (entity.getPetKind() != null) {
+            dto.setKindNm(entity.getPetKind().getKindNm());
+        }
         dto.setPetId(entity.getPetId());
         dto.setUserNo(entity.getUser().getUserNo());
         dto.setKindCd(entity.getPetKind().getKindCd());
@@ -82,7 +88,7 @@ public class UserPetService {
         dto.setPetBirth(entity.getPetBirth());
         dto.setPetWeight(entity.getPetWeight());
         dto.setPetImageUrl(entity.getPetImageUrl());
-        dto.setRegDate(entity.getRegDate());
+        dto.setCreatedAt(entity.getCreatedAt());
         return dto;
     }
 

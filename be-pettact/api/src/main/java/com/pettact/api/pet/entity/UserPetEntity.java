@@ -38,12 +38,10 @@ public class UserPetEntity extends BaseEntity{
 	    @ManyToOne(fetch = FetchType.LAZY)
 	    @JoinColumn(name = "kind_cd", referencedColumnName = "kind_cd")
 	    private PetKindEntity petKind; //kindCd
-
+	    
 	    private String rfidNo; // 등록된 동물의 RFID 번호
 
 	    private String petName; // 반려동물 이름
-
-	    private String speciesCode; // 축종 코드 (개/고양이/기타 등 구분)
 
 	    private String petGender; // 성별 ("M" 또는 "F")
 
@@ -55,5 +53,4 @@ public class UserPetEntity extends BaseEntity{
 
 	    private String petImageUrl; // 반려동물 사진 (일단은 url 저장.)
 
-	    private LocalDate regDate; // 등록일 (사용자 등록 시각 기준)
 }

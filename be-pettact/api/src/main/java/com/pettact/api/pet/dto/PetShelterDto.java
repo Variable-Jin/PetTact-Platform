@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PetShelterDto {
+    private Long shelterNo;
     private String careNm;
     private String careRegNo;
     private String orgNm;
@@ -37,5 +38,6 @@ public class PetShelterDto {
     private Integer feedCnt;
     private Integer transCarCnt;
     private String careTel;
-    private String dataStdDt;  
+    private String dataStdDt;
+    private Boolean isUpdated;  
 }
