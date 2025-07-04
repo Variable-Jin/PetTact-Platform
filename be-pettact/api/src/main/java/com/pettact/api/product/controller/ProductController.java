@@ -2,17 +2,13 @@ package com.pettact.api.product.controller;
 
 import java.util.List;
 
+import com.pettact.api.multiFile.entity.MultiFile;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.pettact.api.product.dto.ProductCreateDTO;
 import com.pettact.api.product.dto.ProductDTO;
@@ -24,6 +20,7 @@ import com.pettact.api.security.vo.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/v1/product")
@@ -67,11 +64,17 @@ public class ProductController {
     	productService.updateProduct(productNo, dto, user);
     	return ResponseEntity.ok("상품이 수정되었습니다.");
     }
-    
+
     // 상품 등록
-    @PostMapping("/create")
-    public ResponseEntity<String> createProduct(@RequestBody @Valid ProductCreateDTO dto, @AuthenticationPrincipal CustomUserDetails user) {
-        productService.createProduct(dto, user);
+    @PostMapping(value = "/create")
+    public ResponseEntity<String> createProduct(
+            //@RequestPart("product") @Valid ProductCreateDTO dto,
+            @RequestPart("product") String productJson,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails user) {
+
+        productService.createProduct(productJson, files, user);
         return ResponseEntity.ok("상품이 등록되었습니다.");
     }
+
 }

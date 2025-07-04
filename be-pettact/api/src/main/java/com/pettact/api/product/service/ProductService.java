@@ -5,6 +5,11 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pettact.api.multiFile.dto.FileCreateDto;
+import com.pettact.api.multiFile.entity.MultiFile;
+import com.pettact.api.multiFile.service.FileService;
 import org.springframework.stereotype.Service;
 
 import com.pettact.api.product.dto.ProductCreateDTO;
@@ -20,6 +25,7 @@ import com.pettact.api.user.entity.Users;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +34,8 @@ public class ProductService {
 	
 	private final ProductRepository productRepository;
 	private final ProductCategoryRepository categoryRepository;
+	private final FileService fileService;
+	private final ObjectMapper objectMapper;
 
 	//상품 상세보기
 	public ProductDetailDTO getProductDetail (Long productNo) {
@@ -38,6 +46,9 @@ public class ProductService {
 	    if (product.isDeleted()) {
 	        throw new RuntimeException("삭제된 상품입니다.");
 	    }
+
+		List<MultiFile> files = fileService.getFilesByReference(
+				MultiFile.ReferenceTable.PRODUCT, productNo);
 	    
 	    return ProductDetailDTO.builder()
 	    		.productNo(product.getProductNo())
@@ -50,6 +61,7 @@ public class ProductService {
 	            .status(product.isProductStatus())
 	            .userNo(product.getUser().getUserNo())
 	            .userName(product.getUser().getUserName())
+				.files(files)
 	            .build();
 	}
 
@@ -108,24 +120,46 @@ public class ProductService {
 		
 		productRepository.save(product); // 레포지토리에 저장
 	}
-	
-	//상품 등록
-	public void createProduct(ProductCreateDTO dto, CustomUserDetails user) {
-		
-	    ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
-	            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
 
-		ProductEntity product = ProductEntity.builder()
-				.productName(dto.getProductName())
-				.productDescription(dto.getProductDescription())
-				.productPrice(dto.getProductPrice())
-				.productStock(dto.getProductStock())
-				.productCategory(category) 
-				.productStatus(dto.isProductStatus())
-				.user(user.getUserEntity()) 
-				.build();
-		
-		productRepository.save(product);
+
+	//상품 등록
+	public void createProduct(String productJson, List<MultipartFile> files, CustomUserDetails user) {
+		try {
+			// 1. JSON 파싱
+			ProductCreateDTO dto = objectMapper.readValue(productJson, ProductCreateDTO.class);
+
+			// 2. 카테고리 조회
+			ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
+					.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
+
+			// 3. 상품 생성
+			ProductEntity product = ProductEntity.builder()
+					.productName(dto.getProductName())
+					.productDescription(dto.getProductDescription())
+					.productPrice(dto.getProductPrice())
+					.productStock(dto.getProductStock())
+					.productCategory(category)
+					.productStatus(dto.isProductStatus())
+					.user(user.getUserEntity())
+					.build();
+
+			// 4. 상품 저장
+			ProductEntity savedProduct = productRepository.save(product);
+
+			// 5. 파일 저장
+			if (files != null && !files.isEmpty()) {
+				for (MultipartFile uploadFile : files) {
+					FileCreateDto createDto = new FileCreateDto();
+					createDto.setReferenceTable(MultiFile.ReferenceTable.PRODUCT);
+					createDto.setReferenceNo(savedProduct.getProductNo());
+
+					fileService.createFile(createDto, uploadFile, user.getUser().getUserNo());
+				}
+			}
+
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+		}
 	}
-	
 }
+
