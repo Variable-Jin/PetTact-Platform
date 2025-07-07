@@ -3,6 +3,10 @@ package com.pettact.api.reply.service;
 
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.board.repository.BoardRepository;
+import com.pettact.api.notification.dto.NotificationReqDTO;
+import com.pettact.api.notification.enums.NotificationType;
+import com.pettact.api.notification.enums.TargetType;
+import com.pettact.api.notification.service.NotificationService;
 import com.pettact.api.recommend.replyRecommend.repository.ReplyRecommendRepository;
 import com.pettact.api.reply.dto.ReplyRequestDto;
 import com.pettact.api.reply.dto.ReplyResponseDto;
@@ -32,6 +36,8 @@ public class ReplyService {
     private UserRepository userRepository;
     @Autowired
     private ReplyRecommendRepository replyRecommendRepository;
+    @Autowired
+    private NotificationService notificationService;
 
     @Transactional
     public ReplyResponseDto createReply(Long boardNo, ReplyRequestDto replyRequestDto, Long userNo) {
@@ -51,7 +57,54 @@ public class ReplyService {
 
         Reply reply = replyRequestDto.toEntity(board, parentReply, users);
         Reply savedReply = replyRepository.save(reply);
+        
+        sendCommentNotification(board, parentReply, users, reply);
+        
         return ReplyResponseDto.fromEntity(savedReply);
+    }
+
+    private void sendCommentNotification(Board board, Reply parentReply, Users commenter, Reply reply) {
+        Long userNo = commenter.getUserNo();
+
+        if (parentReply != null) {
+            Long parentUserNo = parentReply.getUser().getUserNo();
+            Long boardOwnerNo = board.getUser().getUserNo();
+
+            if (!parentUserNo.equals(userNo)) {
+                NotificationReqDTO dto = NotificationReqDTO.of(
+                    userNo, parentUserNo,
+                    NotificationType.COMMENT,
+                    board.getBoardNo(), TargetType.BOARD,
+                    "내 댓글에 대댓글이 달렸습니다.",
+                    commenter.getUserNickname() + "님이 대댓글을 남겼습니다: " + reply.getContent()
+                );
+                notificationService.sendNotification(dto);
+            }
+
+            if (!boardOwnerNo.equals(parentUserNo) && !boardOwnerNo.equals(userNo)) {
+                NotificationReqDTO dto = NotificationReqDTO.of(
+                    userNo, boardOwnerNo,
+                    NotificationType.COMMENT,
+                    board.getBoardNo(), TargetType.BOARD,
+                    "새 댓글이 달렸습니다.",
+                    commenter.getUserNickname() + "님이 댓글을 남겼습니다: " + reply.getContent()
+                );
+                notificationService.sendNotification(dto);
+            }
+
+        } else {
+            Long boardOwnerNo = board.getUser().getUserNo();
+            if (!boardOwnerNo.equals(userNo)) {
+                NotificationReqDTO dto = NotificationReqDTO.of(
+                    userNo, boardOwnerNo,
+                    NotificationType.COMMENT,
+                    board.getBoardNo(), TargetType.BOARD,
+                    "새 댓글이 달렸습니다.",
+                    commenter.getUserNickname() + "님이 댓글을 남겼습니다: " + reply.getContent()
+                );
+                notificationService.sendNotification(dto);
+            }
+        }
     }
 
 

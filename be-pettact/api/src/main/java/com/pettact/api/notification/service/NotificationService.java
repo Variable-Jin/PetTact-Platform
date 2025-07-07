@@ -1,71 +1,82 @@
 package com.pettact.api.notification.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pettact.api.config.RedisChannel;
-import com.pettact.api.notification.RedisPublisher;
-import com.pettact.api.notification.RedisSubscriber;
 import com.pettact.api.notification.dto.NotificationReqDTO;
 import com.pettact.api.notification.dto.NotificationResDTO;
 import com.pettact.api.notification.entity.Notification;
 import com.pettact.api.notification.repository.NotificationRepository;
+import com.pettact.api.websocket.publisher.NotificationPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class NotificationService {
-	private final NotificationRepository notificationRepository;
-	private final RedisPublisher redisPublisher;
-	private final ObjectMapper objectMapper;
-	
-	// 알림 생성
-	public void createNotification(NotificationReqDTO reqDTO) {
-		Notification notification = Notification.from(reqDTO);
-		
-		notificationRepository.save(notification);
-		
-		// Redis
-        try {
-            // 알림을 JSON으로 직렬화하여 Redis에 발행
-            String json = objectMapper.writeValueAsString(NotificationResDTO.from(notification));
-            redisPublisher.publish(RedisChannel.NOTIFICATION, json);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("notification JSON 직렬화 실패");
-        }
-	}
 
-	// 알림 목록
-	public List<NotificationResDTO> getNotificationsByUser(Long userNo){
-		List<Notification> notifications = notificationRepository.findByReceiverUserNoOrderByNotificationNoDesc(userNo);
-		
-		return notifications.stream()
-				.map(NotificationResDTO::from)
-				.toList();
-	};
-	
-	// 읽지 않음 알림 수 조회
-	public Long countUnreadNotifications(Long userNo) {
-		return notificationRepository.countByReceiverUserNoAndIsReadFalse(userNo);
-	};
-		
-	// 읽음 처리
-	public void markAsRead(Long notificationNo) {
-	    Notification notification = notificationRepository.findById(notificationNo)
-	            .orElseThrow(() -> new IllegalArgumentException("해당 알림이 존재하지 않습니다."));
-	    
-	    if(!notification.getIsRead()) {
-	    	notification.setIsRead(true);
-	    	notificationRepository.save(notification);
-	    }
-	};
+    private final NotificationRepository notificationRepository;
+    private final NotificationPublisher notificationPublisher;
+    private final ObjectMapper objectMapper;
+
+    public void sendNotification(NotificationReqDTO dto) {
+        Notification notification = Notification.from(dto);
+        notificationRepository.save(notification);
+
+        try {
+            String message = objectMapper.writeValueAsString(notification);
+            notificationPublisher.publish("notifications", message);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON 변환 실패", e);
+        }
+    }        
+
+    // 특정 사용자의 모든 알림
+    @Transactional(readOnly = true)
+    public List<NotificationResDTO> getNotificationsByUser(Long userNo) {
+        List<Notification> notifications = notificationRepository.findByReceiverUserNoOrderByCreatedAtDesc(userNo);
+        return notifications.stream()
+                .map(NotificationResDTO::from)
+                .toList();
+    }
+
+    // 읽지 않은 알림 개수 조회
+    @Transactional(readOnly = true)
+    public Long getUnreadNotificationCount(Long userNo) {
+        return notificationRepository.countByReceiverUserNoAndIsReadFalse(userNo);
+    }
+
+    // 특정 알림 읽음 처리
+    @Transactional
+    public void markAsRead(Long notificationNo) {
+        Notification notification = notificationRepository.findById(notificationNo)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+        if (!notification.getIsRead()) {
+            notification.setIsRead(true);
+            notification.setReadAt(LocalDateTime.now());
+            notificationRepository.save(notification);
+        }
+    }
+
+    // 모든 알림 읽음 처리
+    @Transactional
+    public void markAllAsRead(Long userNo) {
+        List<Notification> notifications = notificationRepository.findByReceiverUserNoOrderByCreatedAtDesc(userNo);
+        for (Notification notification : notifications) {
+            if (!notification.getIsRead()) {
+                notification.setIsRead(true);
+                notification.setReadAt(LocalDateTime.now());
+            }
+        }
+        notificationRepository.saveAll(notifications);
+    }
 }
