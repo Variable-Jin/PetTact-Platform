@@ -1,5 +1,9 @@
 package com.pettact.api.report.service;
 
+import com.pettact.api.notification.dto.NotificationReqDTO;
+import com.pettact.api.notification.enums.NotificationType;
+import com.pettact.api.notification.enums.TargetType;
+import com.pettact.api.notification.service.NotificationService;
 import com.pettact.api.report.Repository.ReportRepository;
 import com.pettact.api.report.dto.ReportCreateDto;
 import com.pettact.api.report.dto.ReportResponseDto;
@@ -22,6 +26,8 @@ public class ReportService {
     private ReportRepository reportRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private NotificationService notificationService;
 
 
     // user
@@ -84,7 +90,7 @@ public class ReportService {
     }
 
     @Transactional
-    public ReportResponseDto updateReport(Long reportNo, Integer status) {
+    public ReportResponseDto updateReport(Long reportNo, Integer status, Long adminUserNo) {
 
         Report report = reportRepository.findById(reportNo)
                 .orElseThrow(() -> new IllegalArgumentException("해당 번호의 신고를 찾을 수 없습니다."));
@@ -93,9 +99,34 @@ public class ReportService {
         }
         report.setReportStatus(status);
         Report savedReport = reportRepository.save(report);
+        
+        NotificationReqDTO dto = NotificationReqDTO.of(
+                adminUserNo,
+                report.getUsers().getUserNo(),
+                NotificationType.REPORT_RESULT,
+                report.getReportNo(),
+                TargetType.REPORT,
+                "신고 처리 결과 안내",
+                getReportStatusMessage(status, report)
+            );
+
+            notificationService.sendNotification(dto);
+        
         return ReportResponseDto.fromEntity(savedReport);
     }
 
+    private String getReportStatusMessage(Integer status, Report report) {
+        String targetType = report.getReportTargetLocation().name();
+        switch (status) {
+            case 1:
+                return "회원님이 신고하신 [" + targetType + "]이(가) 승인 처리되었습니다.";
+            case 2:
+                return "회원님이 신고하신 [" + targetType + "]은(는) 검토 결과 반려되었습니다.";
+            default:
+                return "회원님이 신고하신 [" + targetType + "]의 상태가 변경되었습니다.";
+        }
+    }
+    
     @Transactional
     public void deleteReport(Long reportNo) {
 

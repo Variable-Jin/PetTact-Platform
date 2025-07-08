@@ -25,7 +25,7 @@ public class ReplyController {
      */
 
     @PostMapping("/board/{boardNo}/replies")
-    public ResponseEntity<ReplyResponseDto> createReply(@PathVariable Long boardNo, @RequestBody ReplyRequestDto replyRequestDto,
+    public ResponseEntity<ReplyResponseDto> createReply(@PathVariable("boardNo") Long boardNo, @RequestBody ReplyRequestDto replyRequestDto,
                                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userNo = userDetails.getUserEntity().getUserNo();
         ReplyResponseDto createdDto = replyService.createReply(boardNo, replyRequestDto, userNo);

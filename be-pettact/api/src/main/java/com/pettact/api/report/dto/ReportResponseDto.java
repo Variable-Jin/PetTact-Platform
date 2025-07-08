@@ -17,6 +17,8 @@ public class ReportResponseDto {
 
     private Long reportNo;
     private Long userNo;
+    private String userEmail;
+    private String userNickname;
     private Report.ReportTargetLocation reportTargetLocation;
     private Long reportTargetNo;
     private String reportReason;
@@ -30,6 +32,8 @@ public class ReportResponseDto {
         return new ReportResponseDto(
                 savedReport.getReportNo(),
                 savedReport.getUsers().getUserNo(),
+                savedReport.getUsers().getUserEmail(),
+                savedReport.getUsers().getUserNickname(),
                 savedReport.getReportTargetLocation(),
                 savedReport.getReportTargetNo(),
                 savedReport.getReportReason(),
@@ -40,4 +44,5 @@ public class ReportResponseDto {
                 savedReport.getReportIP()
         );
     }
+
 }
