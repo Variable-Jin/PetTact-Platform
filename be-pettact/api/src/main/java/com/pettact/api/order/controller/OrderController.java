@@ -34,7 +34,7 @@ public class OrderController {
     }
     
     // 주문 내역 목록 
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<List<OrderDTO>> getUserOrders(@AuthenticationPrincipal CustomUserDetails user) {
         return ResponseEntity.ok(orderService.getOrdersByUser(user.getUserEntity()));
     }

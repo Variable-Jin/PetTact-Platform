@@ -17,5 +17,5 @@ public class CartDTO {
     private Integer productPrice; // 상품 가격
     private Integer productStock;     // 수량
     private Integer totalPrice;   // 총 가격 (상품 가격 * 수량)
-    
+    private String imageUrl;  // 추가
 }

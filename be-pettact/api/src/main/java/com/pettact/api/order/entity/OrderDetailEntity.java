@@ -40,16 +40,19 @@ public class OrderDetailEntity extends BaseEntity {
 
     private int productStock; // 수량
 
-    private int price; // 단가
+    private int productPrice; // 단가
     
     public int getTotalPrice() {
-    	return productStock * price;
+    	return productStock * productPrice;
     }
     
     public OrderDetailDTO of(MapperUtil mapperUtil) {
     	OrderDetailDTO orderDetailDTO = mapperUtil.map(this, OrderDetailDTO.class);
     	orderDetailDTO.setProductNo(product.getProductNo());
-    	orderDetailDTO.setName(product.getProductName());
+    	orderDetailDTO.setProductName(product.getProductName());
+    	orderDetailDTO.setProductPrice(product.getProductPrice());
+    	orderDetailDTO.setProductStock(this.productStock);
+    	orderDetailDTO.setImageUrl(product.getImageUrl());  // 여기 추가
     	return orderDetailDTO;
     }
 }

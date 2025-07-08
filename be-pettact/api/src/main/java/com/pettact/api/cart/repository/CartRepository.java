@@ -22,5 +22,8 @@ public interface CartRepository extends JpaRepository<CartEntity, Long> {
 
     // 유저의 장바구니에서 특정 상품 제거
     void deleteByUserAndProduct(Users user, ProductEntity product);
+    
+    // ✅ 여기 추가하세요
+    void deleteByUserAndProduct_ProductNoIn(Users user, List<Long> productNos);
    
 }

@@ -12,4 +12,6 @@ public class CartAddDTO {
     private Long productNo;
 	@Min(1)
     private int productStock;
+	@Min(1)
+    private int productPrice;
 }

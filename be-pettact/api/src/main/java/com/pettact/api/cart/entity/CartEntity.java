@@ -42,5 +42,9 @@ public class CartEntity extends BaseEntity {
     // 수량
     @Column(nullable = false)
     private int productStock;
+    
+    // 가격
+    @Column(nullable = false)
+    private int productPrice;
 
 }
