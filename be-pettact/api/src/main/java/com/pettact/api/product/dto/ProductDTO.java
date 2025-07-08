@@ -29,4 +29,7 @@ public class ProductDTO {
     private Long userNo;
     private String userName;
     
+    private String imageUrl;
+
+    
 }

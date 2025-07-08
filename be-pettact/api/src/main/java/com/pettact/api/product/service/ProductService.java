@@ -1,17 +1,21 @@
 package com.pettact.api.product.service;
 
-
 import java.nio.file.AccessDeniedException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettact.api.multiFile.dto.FileCreateDto;
+import com.pettact.api.multiFile.dto.FileResponseDto;
 import com.pettact.api.multiFile.entity.MultiFile;
+import com.pettact.api.multiFile.repository.FileRepository;
 import com.pettact.api.multiFile.service.FileService;
-import org.springframework.stereotype.Service;
-
 import com.pettact.api.product.dto.ProductCreateDTO;
 import com.pettact.api.product.dto.ProductDTO;
 import com.pettact.api.product.dto.ProductDetailDTO;
@@ -25,56 +29,77 @@ import com.pettact.api.user.entity.Users;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ProductService {
-	
+
 	private final ProductRepository productRepository;
 	private final ProductCategoryRepository categoryRepository;
 	private final FileService fileService;
 	private final ObjectMapper objectMapper;
+	private final FileRepository fileRepository;
 
-	//상품 상세보기
-	public ProductDetailDTO getProductDetail (Long productNo) {
-		
-	    ProductEntity product = productRepository.findById(productNo)
-	    		 .orElseThrow(() -> new RuntimeException("해당 상품을 찾을 수 없습니다."));
+	// 상품 상세보기
+	public ProductDetailDTO getProductDetail(Long productNo) {
 
-	    if (product.isDeleted()) {
-	        throw new RuntimeException("삭제된 상품입니다.");
-	    }
+		ProductEntity product = productRepository.findById(productNo)
+				.orElseThrow(() -> new RuntimeException("해당 상품을 찾을 수 없습니다."));
 
-		List<MultiFile> files = fileService.getFilesByReference(
-				MultiFile.ReferenceTable.PRODUCT, productNo);
-	    
-	    return ProductDetailDTO.builder()
-	    		.productNo(product.getProductNo())
-	            .productName(product.getProductName())
-	            .productDescription(product.getProductDescription())
-	            .productPrice(product.getProductPrice())
-	            .productStock(product.getProductStock())
-	            .categoryName(product.getProductCategory().getCategoryName())
-	            .createdAt(product.getCreatedAt())
-	            .status(product.isProductStatus())
-	            .userNo(product.getUser().getUserNo())
-	            .userName(product.getUser().getUserName())
-				.files(files)
-	            .build();
+		if (product.isDeleted()) {
+			throw new RuntimeException("삭제된 상품입니다.");
+		}
+
+		List<MultiFile> files = fileService.getFilesByReference(MultiFile.ReferenceTable.PRODUCT, productNo);
+
+		// 2. 이미지 URL 리스트로 변환
+		List<String> imageUrls = files.stream()
+				.map(file -> file.getImageUrl() != null ? "/files/" + file.getImageUrl() : "/files/" + file.getFileNo()) // 대체경로 (백엔드에서 생성한 파일 경로)
+				.toList();
+
+		return ProductDetailDTO.builder()
+				.productNo(product.getProductNo())
+				.productName(product.getProductName())
+				.productDescription(product.getProductDescription())
+				.productPrice(product.getProductPrice())
+				.productStock(product.getProductStock())
+				.categoryName(product.getProductCategory().getCategoryName())
+				.categoryNo(product.getProductCategory().getCategoryNo())
+				.createdAt(product.getCreatedAt())
+				.status(product.isProductStatus())
+				.userNo(product.getUser().getUserNo())
+				.userName(product.getUser().getUserName()).files(files)
+				.imageUrls(imageUrls) // ✅ 여러 이미지 URL 리스트
+				.build();
 	}
 
-	
-	//상품 목록 
-	public List<ProductDTO> getAllProduct(){
-		
-		List<ProductEntity> productList = productRepository.findAll()
-		        .stream()
-		        .filter(product -> !product.isDeleted()) // 삭제되지 않은 상품만 목록에 가져옴
-		        .collect(Collectors.toList());
-		System.out.println("조회된 상품 수: " + productList.size()); // 로그 찍기
-		return productList.stream().map(product -> ProductDTO.builder()
+	// 상품 목록
+	public List<ProductDTO> getAllProduct(String keyword,Long categoryNo) {
+	    List<ProductEntity> productList;
+	    
+	    // 키워드와 카테고리가 모두 있는 경우
+	    if ((keyword != null && !keyword.trim().isEmpty()) && categoryNo != null) {
+	        productList = productRepository.findByProductNameContainingIgnoreCaseAndProductCategory_CategoryNoAndIsDeletedFalseOrderByCreatedAtDesc(
+	            keyword.trim(), categoryNo);
+	    }
+	    // 키워드만 있는 경우
+	    else if (keyword != null && !keyword.trim().isEmpty()) {
+	        productList = productRepository.findByProductNameContainingIgnoreCaseAndIsDeletedFalseOrderByCreatedAtDesc(
+	            keyword.trim());
+	    }
+	    // 카테고리만 있는 경우
+	    else if (categoryNo != null) {
+	        productList = productRepository.findByProductCategory_CategoryNoAndIsDeletedFalseOrderByCreatedAtDesc(categoryNo);
+	    }
+	    // 아무것도 없으면 전체 조회
+	    else {
+	        productList = productRepository.findAllByOrderByCreatedAtDesc()
+	                .stream()
+	                .filter(product -> !product.isDeleted())
+	                .collect(Collectors.toList());
+	    }
+	    return productList.stream().map(product -> ProductDTO.builder()
 	            .productNo(product.getProductNo())
 	            .productName(product.getProductName())
 	            .productDescription(product.getProductDescription())
@@ -84,32 +109,50 @@ public class ProductService {
 	            .categoryNo(product.getProductCategory().getCategoryNo())
 	            .categoryName(product.getProductCategory().getCategoryName())
 	            .status(product.isProductStatus())
-	            .build())
-	        .collect(Collectors.toList());
+	            .imageUrl(product.getImageUrl() != null && !product.getImageUrl().startsWith("/files/")
+	                    ? "/files/" + product.getImageUrl()
+	                    : product.getImageUrl())
+	            .build()).collect(Collectors.toList());
 	}
-	
-	//상품 삭제
-	public void deleteProduct(Long productNo ,Users user) throws AccessDeniedException {
-		
-	    ProductEntity product = productRepository.findByProductNo(productNo)
-	            .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
-	    log.info("userNo = {} , userNo = {}", product.getUser().getUserNo(),user.getUserNo());
-	    if (!product.getUser().getUserNo().equals(user.getUserNo())) {
-	        throw new AccessDeniedException("상품을 삭제할 권한이 없습니다.");
-	    }
-	    
-	    product.softDelete(); // 논리 삭제 및 삭제 시간 등록
-	    productRepository.save(product);
+//		return productList.stream().map(product -> ProductDTO.builder()
+//	            .productNo(product.getProductNo())
+//	            .productName(product.getProductName())
+//	            .productDescription(product.getProductDescription())
+//	            .productPrice(product.getProductPrice())
+//	            .productStock(product.getProductStock())
+//	            .createdAt(product.getCreatedAt())
+//	            .categoryNo(product.getProductCategory().getCategoryNo())
+//	            .categoryName(product.getProductCategory().getCategoryName())
+//	            .status(product.isProductStatus())
+//	            .imageUrl(product.getImageUrl()!= null
+//	                    ? "/files/" + product.getMultiFile().getStoredFileName()
+//	                            : null)  // ✅ 파일 없을 경우 null)
+//	            .build())
+//	        .collect(Collectors.toList());
+//	}
+
+	// 상품 삭제
+	public void deleteProduct(Long productNo, Users user) throws AccessDeniedException {
+
+		ProductEntity product = productRepository.findByProductNo(productNo)
+				.orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
+		log.info("userNo = {} , userNo = {}", product.getUser().getUserNo(), user.getUserNo());
+		if (!product.getUser().getUserNo().equals(user.getUserNo())) {
+			throw new AccessDeniedException("상품을 삭제할 권한이 없습니다.");
+		}
+
+		product.softDelete(); // 논리 삭제 및 삭제 시간 등록
+		productRepository.save(product);
 	}
-	
-	//상품 수정
-	public void updateProduct(Long id, ProductUpdateDTO dto, CustomUserDetails user) {
+
+	// 상품 수정
+	public void updateProduct(Long id, ProductUpdateDTO dto, List<MultipartFile> files, CustomUserDetails user) {
 		ProductEntity product = productRepository.findById(id)
 				.orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
-	    ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
-	            .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
-		
-		//기존 상품 정보 수정
+		ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
+				.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
+
+		// 기존 상품 정보 수정
 		product.setProductName(dto.getProductName());
 		product.setProductDescription(dto.getProductDescription());
 		product.setProductPrice(dto.getProductPrice());
@@ -117,49 +160,183 @@ public class ProductService {
 		product.setProductCategory(category);
 		product.prePersist();
 		product.setProductStatus(dto.isProductStatus());
-		
-		productRepository.save(product); // 레포지토리에 저장
+
+		// ✅ 이미지 처리 시작
+		List<MultiFile> existingFiles = fileRepository.findByReferenceTableAndReferenceNoOrderByFileOrderNo(
+				MultiFile.ReferenceTable.PRODUCT, product.getProductNo());
+
+		Set<String> newImageUrls = new HashSet<>(dto.getImageUrls() != null ? dto.getImageUrls() : List.of());
+		for (MultiFile file : existingFiles) {
+			String fileUrl = "/files/" + file.getStoredFileName();
+			// String fileUrl = "/files/" + file.getStoredFileName();
+
+			if (!newImageUrls.contains(fileUrl)) {
+				// 삭제할 이미지
+				System.out.println("if탐");
+				fileService.delete(file.getFileNo(), user.getUserEntity().getUserNo());
+			}
+		}
+
+		// ✅ 새로 업로드된 이미지의 URL만 별도 저장
+		List<String> newlyUploadedImageUrls = new ArrayList<>();
+
+		if (files != null && !files.isEmpty()) {
+
+		    if (dto.getImageUrls() == null) {
+		        dto.setImageUrls(new ArrayList<>());
+		    }
+
+		    for (MultipartFile uploadFile : files) {
+		        FileCreateDto createDto = new FileCreateDto();
+		        createDto.setReferenceTable(MultiFile.ReferenceTable.PRODUCT);
+		        createDto.setReferenceNo(product.getProductNo());
+
+		        try {
+		            FileResponseDto savedFileDto = fileService.createFile(createDto, uploadFile, user.getUser().getUserNo());
+		            String url = "/files/" + savedFileDto.getStoredFileName();
+
+		            dto.getImageUrls().add(url); // 전체 이미지 리스트에 추가
+		            newlyUploadedImageUrls.add(url); // 새로 추가된 이미지만 따로 저장
+
+		            System.out.println("✅ 새 이미지 업로드 성공: " + url);
+		        } catch (Exception e) {
+		            System.out.println("❌ 파일 업로드 실패: " + uploadFile.getOriginalFilename());
+		            e.printStackTrace();
+		        }
+		    }
+		}
+
+		// ✅ 대표 이미지 결정: 새 이미지가 있으면 그것 중 첫 번째로 설정
+		String representativeImageUrl = null;
+
+		if (!newlyUploadedImageUrls.isEmpty()) {
+		    representativeImageUrl = newlyUploadedImageUrls.get(0); // 새 이미지 중 첫 번째
+		    System.out.println("✅ 대표 이미지(새 이미지): " + representativeImageUrl);
+		} else if (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) {
+		    representativeImageUrl = dto.getImageUrls().get(0); // 기존 이미지 중 첫 번째
+		    System.out.println("✅ 대표 이미지(기존): " + representativeImageUrl);
+		}
+
+		product.setImageUrl(representativeImageUrl);
+		productRepository.save(product);
 	}
 
+//	//상품 등록
+//	public void createProduct(String productJson, List<MultipartFile> files, CustomUserDetails user) {
+//		try {
+//			// 1. JSON 파싱
+//			ProductCreateDTO dto = objectMapper.readValue(productJson, ProductCreateDTO.class);
+//			
+//			System.out.println("✅ JSON 파싱 성공: " + dto);//.....
+//
+//			// 2. 카테고리 조회
+//			ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
+//					.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
+//			
+//			System.out.println("✅ 카테고리 조회 성공: " + category.getCategoryName());//......
+//			
+//			// 3. 상품 생성
+//			ProductEntity product = ProductEntity.builder()
+//					.productName(dto.getProductName())
+//					.productDescription(dto.getProductDescription())
+//					.productPrice(dto.getProductPrice())
+//					.productStock(dto.getProductStock())
+//					.productCategory(category)
+//					.productStatus(dto.isProductStatus())
+//					.user(user.getUserEntity())
+//					.build();
+//			
+//			System.out.println("✅ 상품 저장 시도");//.........
+//
+//			// 4. 상품 저장
+//			ProductEntity savedProduct = productRepository.save(product);
+//			
+//			System.out.println("상품 저장됨! productNo=" + savedProduct.getProductNo()); //.
+//
+//			// 5. 파일 저장
+//			if (files != null && !files.isEmpty()) {
+//				for (MultipartFile uploadFile : files) {
+//					FileCreateDto createDto = new FileCreateDto();
+//					createDto.setReferenceTable(MultiFile.ReferenceTable.PRODUCT);
+//					createDto.setReferenceNo(savedProduct.getProductNo());
+//
+//					fileService.createFile(createDto, uploadFile, user.getUser().getUserNo());
+//				}
+//			}
+//
+//		} catch (JsonProcessingException e) {
+//			throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+//		}
+//	}
 
-	//상품 등록
-	public void createProduct(String productJson, List<MultipartFile> files, CustomUserDetails user) {
-		try {
-			// 1. JSON 파싱
-			ProductCreateDTO dto = objectMapper.readValue(productJson, ProductCreateDTO.class);
+	// 상품 등록
+	public Long createProduct(ProductCreateDTO dto, List<MultipartFile> files, CustomUserDetails user) {
+		// 1. 카테고리 조회
+		ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
+				.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
 
-			// 2. 카테고리 조회
-			ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
-					.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
+		// 2. 상품 엔티티 생성
+		ProductEntity product = ProductEntity.builder().productName(dto.getProductName())
+				.productDescription(dto.getProductDescription()).productPrice(dto.getProductPrice())
+				.productStock(dto.getProductStock()).productCategory(category).productStatus(dto.isProductStatus())
+				.user(user.getUserEntity()).build();
 
-			// 3. 상품 생성
-			ProductEntity product = ProductEntity.builder()
-					.productName(dto.getProductName())
-					.productDescription(dto.getProductDescription())
-					.productPrice(dto.getProductPrice())
-					.productStock(dto.getProductStock())
-					.productCategory(category)
-					.productStatus(dto.isProductStatus())
-					.user(user.getUserEntity())
-					.build();
+		// 3. 상품 저장
+		ProductEntity savedProduct = productRepository.save(product);
+		System.out.println(">>> 저장된 상품 번호(productNo): " + savedProduct.getProductNo());
 
-			// 4. 상품 저장
-			ProductEntity savedProduct = productRepository.save(product);
+		// 4. 파일 저장
+		if (files == null) {
+			System.out.println("files is null");
+		} else {
+			System.out.println("files is not null, size = " + files.size());
+		}
 
-			// 5. 파일 저장
-			if (files != null && !files.isEmpty()) {
-				for (MultipartFile uploadFile : files) {
-					FileCreateDto createDto = new FileCreateDto();
-					createDto.setReferenceTable(MultiFile.ReferenceTable.PRODUCT);
-					createDto.setReferenceNo(savedProduct.getProductNo());
+		if (files != null && !files.isEmpty()) {
+			for (int i = 0; i < files.size(); i++) {
+				MultipartFile uploadFile = files.get(i);
 
-					fileService.createFile(createDto, uploadFile, user.getUser().getUserNo());
+				if (uploadFile == null) {
+					System.out.println("files[" + i + "] is null");
+					continue;
+				}
+
+				System.out.println("files[" + i + "] original filename: " + uploadFile.getOriginalFilename());
+				System.out.println("files[" + i + "] size: " + uploadFile.getSize());
+				System.out.println("files[" + i + "] content type: " + uploadFile.getContentType());
+
+				FileCreateDto createDto = new FileCreateDto();
+				createDto.setReferenceTable(MultiFile.ReferenceTable.PRODUCT);
+				createDto.setReferenceNo(savedProduct.getProductNo());
+
+				try {
+					// ✅ 파일 저장하면서 저장된 파일 엔티티 받기
+					FileResponseDto savedFileDto = fileService.createFile(createDto, uploadFile,
+							user.getUser().getUserNo());
+					System.out.println("파일 서비스 호출 후 savedFileDto: " + savedFileDto);
+
+					if (i == 0) {
+						System.out.println("상품 imageUrl 세팅 전: " + savedProduct.getImageUrl());
+
+						savedProduct.setImageUrl("/files/" + savedFileDto.getStoredFileName());
+
+						ProductEntity updatedProduct = productRepository.save(savedProduct);
+						System.out.println("저장 후 상품 imageUrl: " + updatedProduct.getImageUrl());
+					}
+				} catch (Exception e) {
+					System.out.println("파일 저장 중 예외 발생 at index " + i);
+					e.printStackTrace();
 				}
 			}
 
-		} catch (JsonProcessingException e) {
-			throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
+			// ✅ imageUrl 변경 사항 반영하여 한 번 더 저장
+			System.out.println(">>> imageUrl 최종 세팅: " + savedProduct.getImageUrl());
+			productRepository.save(savedProduct);
+			System.out.println(">>> 최종 저장 완료");
+		} else {
+			System.out.println("files is empty or null, skipping file save loop");
 		}
+
+		return savedProduct.getProductNo(); // 등록된 상품 번호 반환
 	}
 }
-

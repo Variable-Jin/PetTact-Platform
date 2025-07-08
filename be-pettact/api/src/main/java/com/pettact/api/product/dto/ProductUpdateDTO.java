@@ -1,5 +1,7 @@
 package com.pettact.api.product.dto;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -33,4 +35,9 @@ public class ProductUpdateDTO {
     private Long categoryNo; //카테고리 id
     
     private boolean productStatus;
+    
+    //private String imageUrl;
+    
+    private List<String> imageUrls;
+
 }

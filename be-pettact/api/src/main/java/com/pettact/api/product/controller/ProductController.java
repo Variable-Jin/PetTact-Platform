@@ -1,15 +1,28 @@
 package com.pettact.api.product.controller;
 
 import java.util.List;
+import java.util.Map;
 
-import com.pettact.api.multiFile.entity.MultiFile;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettact.api.product.dto.ProductCreateDTO;
 import com.pettact.api.product.dto.ProductDTO;
 import com.pettact.api.product.dto.ProductDetailDTO;
@@ -20,13 +33,15 @@ import com.pettact.api.security.vo.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/v1/product")
 @RequiredArgsConstructor
 @Slf4j
 public class ProductController {
+	
+	@Autowired
+	private ObjectMapper objectMapper;
 	
 	private final ProductService productService;
 	//단일 상품 조회, 페이징 처리
@@ -40,13 +55,14 @@ public class ProductController {
 
 	// 상품 목록
 	@GetMapping("/list")
-	public ResponseEntity<List<ProductDTO>> getAllProduct(){
-		List<ProductDTO> products = productService.getAllProduct();
-		return ResponseEntity.ok(products);
+	public ResponseEntity<List<ProductDTO>> getAllProduct(@RequestParam(name = "keyword", required = false) String keyword,
+			@RequestParam(name = "categoryNo", required = false) Long categoryNo) {
+	    List<ProductDTO> products = productService.getAllProduct(keyword,categoryNo);
+	    return ResponseEntity.ok(products);
 	}
 	
     // 상품 삭제 (논리 삭제)
-    @PutMapping("/delete/{productNo}")
+    @PatchMapping("/delete/{productNo}")
     public ResponseEntity<String> deleteProduct(@PathVariable("productNo") Long productNo, @AuthenticationPrincipal CustomUserDetails user) throws Exception{
     	try {
             productService.deleteProduct(productNo, user.getUser());
@@ -59,22 +75,80 @@ public class ProductController {
     }
     
     // 상품 수정 
-    @PutMapping("/update/{productNo}")
-    public ResponseEntity<String> updateProduct(@PathVariable("productNo") Long productNo, @RequestBody @Valid ProductUpdateDTO dto, @AuthenticationPrincipal CustomUserDetails user){
-    	productService.updateProduct(productNo, dto, user);
+    @PutMapping(value = "/update/{productNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> updateProduct(@PathVariable("productNo") Long productNo, @RequestPart("dto") @Valid ProductUpdateDTO dto, @RequestPart(value = "files", required = false) List<MultipartFile> files ,@AuthenticationPrincipal CustomUserDetails user){
+    	productService.updateProduct(productNo, dto,files,user);
     	return ResponseEntity.ok("상품이 수정되었습니다.");
     }
-
+    
+//    // 상품 등록
+//    @PostMapping(value = "/create")
+//    public ResponseEntity<String> createProduct(
+//            //@RequestPart("product") @Valid ProductCreateDTO dto,
+//            @RequestPart("product") String productJson,
+//            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+//            @AuthenticationPrincipal CustomUserDetails user) {
+//    	
+//    	 log.info("✅ 상품 등록 요청 도착! JSON: {}, 파일 수: {}", productJson, files != null ? files.size() : 0);
+//    	
+//        productService.createProduct(productJson, files, user);
+//        return ResponseEntity.ok("상품이 등록되었습니다.");
+//    }
+//    
     // 상품 등록
-    @PostMapping(value = "/create")
-    public ResponseEntity<String> createProduct(
-            //@RequestPart("product") @Valid ProductCreateDTO dto,
+//    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<Map<String, Object>> createProduct(
+//            @RequestPart("product") String productJson,
+//            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+//            @AuthenticationPrincipal CustomUserDetails user) {
+//    	
+//    	System.out.println("컨트롤러 진입 성공!");
+//        System.out.println("productJson: " + productJson);
+//        System.out.println("files 개수: " + (files == null ? 0 : files.size()));
+//
+//        ProductCreateDTO dto;
+//        try {
+//            dto = objectMapper.readValue(productJson, ProductCreateDTO.class);
+//        } catch (JsonProcessingException e) {
+//            return ResponseEntity.badRequest().body(Map.of("message", "잘못된 product JSON 데이터입니다."));
+//        }
+//
+//        Long productNo = productService.createProduct(dto, files, user);
+//        return ResponseEntity.ok(Map.of("productNo", productNo));
+//    }
+    
+    
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Object>> createProduct(
             @RequestPart("product") String productJson,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal CustomUserDetails user) {
+        
+        System.out.println("컨트롤러 진입 성공!");
+        System.out.println("productJson: " + productJson);
+        
+        if (files == null) {
+            System.out.println("files is null");
+        } else if (files.isEmpty()) {
+            System.out.println("files is empty");
+        } else {
+            System.out.println("files 개수: " + files.size());
+            for (int i = 0; i < files.size(); i++) {
+                MultipartFile file = files.get(i);
+                System.out.println("file[" + i + "] - originalName: " + file.getOriginalFilename() 
+                    + ", size: " + file.getSize() 
+                    + ", contentType: " + file.getContentType());
+            }
+        }
 
-        productService.createProduct(productJson, files, user);
-        return ResponseEntity.ok("상품이 등록되었습니다.");
+        ProductCreateDTO dto;
+        try {
+            dto = objectMapper.readValue(productJson, ProductCreateDTO.class);
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "잘못된 product JSON 데이터입니다."));
+        }
+
+        Long productNo = productService.createProduct(dto, files, user);
+        return ResponseEntity.ok(Map.of("productNo", productNo));
     }
-
 }

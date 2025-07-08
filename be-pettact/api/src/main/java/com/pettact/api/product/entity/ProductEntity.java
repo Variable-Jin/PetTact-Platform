@@ -1,6 +1,7 @@
 package com.pettact.api.product.entity;
 
 import com.pettact.api.core.base.BaseEntity;
+import com.pettact.api.multiFile.entity.MultiFile;
 import com.pettact.api.user.entity.Users;
 
 import jakarta.persistence.Column;
@@ -11,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,8 +54,13 @@ public class ProductEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_no") // FK 컬럼명
     private Users user; // 상품 등록자
-   
     
+    @Column(name = "image_url")
+    private String imageUrl;
+    
+//    @OneToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "product_no", referencedColumnName = "REFERENCE_NO", insertable = false, updatable = false)
+//    private MultiFile multiFile;
 
 }
 
