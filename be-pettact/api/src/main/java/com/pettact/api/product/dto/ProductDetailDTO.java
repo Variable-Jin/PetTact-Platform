@@ -23,6 +23,7 @@ public class ProductDetailDTO {
     private Integer productPrice;        // 상품 가격
     private Integer productStock;     // 상품 수량
     private String categoryName;      // 상품 카테고리 이름
+    private Long categoryNo;      // 상품 카테고리 번호
     private LocalDateTime createdAt; // 상품 등록 시간
     private boolean status;       // true: 판매중, false: 품절
 
@@ -33,5 +34,7 @@ public class ProductDetailDTO {
     // multiFile
     private List<MultiFile> files;
     
+    //private String imageUrl;
 
+    private List<String> imageUrls;
 }

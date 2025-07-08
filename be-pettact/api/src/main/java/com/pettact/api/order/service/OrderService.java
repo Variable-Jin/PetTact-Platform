@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.pettact.api.cart.repository.CartRepository;
 import com.pettact.api.core.base.MapperUtil;
 import com.pettact.api.order.dto.OrderDTO;
 import com.pettact.api.order.dto.OrderDetailDTO;
@@ -29,20 +30,21 @@ public class OrderService {
 	private final ProductRepository productRepository;
 	private final MapperUtil mapperUtil;
 	
+	private final CartRepository cartRepository;
+	
 	// 주문 상세 정보
 	private void addOrderDetail(OrderEntity orderEntity, List<OrderDetailDTO> list)  {
 		list.stream().forEach(d -> {
 			OrderDetailEntity  orderDetailEntity = mapperUtil.map(d, OrderDetailEntity.class);
 			ProductEntity productEntity = productRepository.findById(d.getProductNo()).get(); 
 			orderDetailEntity.setProduct(productEntity);
-			orderDetailEntity.setPrice(productEntity.getProductPrice());
+			orderDetailEntity.setProductPrice(productEntity.getProductPrice());
+			orderDetailEntity.setProductStock(productEntity.getProductStock());
 			orderDetailEntity.setOrder(orderEntity);
 			orderEntity.addOrderDetail(orderDetailEntity);
 			//주문상세를 저장한다 
 			orderDetailRepository.save(orderDetailEntity);
 		});
-
-		
 		//가격을 재계산한다 
 		orderEntity.recalcTotalPrice();
 		//변경된 가격을 저장한다 
@@ -71,6 +73,13 @@ public class OrderService {
 		//기존 주문에 주문상세 항목 추가 
 		orderEntity.prePersist();
 		addOrderDetail(orderEntity, list);
+		
+        // ✅ 주문된 상품들을 장바구니에서 제거
+        List<Long> productNos = list.stream()
+                .map(OrderDetailDTO::getProductNo)
+                .toList();
+
+        cartRepository.deleteByUserAndProduct_ProductNoIn(user, productNos);
 	    
 		return orderEntity.of(mapperUtil);
 	}
@@ -81,6 +90,7 @@ public class OrderService {
 		
 		 // 사용자 기준 주문 목록 조회
 		 return orderRepository.findByUser(user).stream()
+				 .filter(order -> !order.isDeleted())
 				 .map(order -> order.of(mapperUtil)).toList();
 	}
 	
@@ -94,7 +104,7 @@ public class OrderService {
 			throw new SecurityException("해당 주문에 접근할 수 없습니다.");
 		}
 		OrderResponseDTO dto = mapperUtil.map(order, OrderResponseDTO.class);
-		dto.setOrderNo(order.getUser().getUserNo());
+		dto.setOrderNo(order.getOrderNo());
 		dto.setStatus(order.getStatus().name());
 		
 	    List<OrderDetailDTO> products = order.getOrderDetailList().stream()
@@ -104,7 +114,8 @@ public class OrderService {
 	                    detail.getProduct().getProductNo(),
 	                    detail.getProduct().getProductName(),
 	                    detail.getProductStock(),
-	                    detail.getPrice()
+	                    detail.getProductPrice(),
+	                    detail.getProduct().getImageUrl()
 	            ))
 	            .toList();
 				
@@ -128,6 +139,7 @@ public class OrderService {
 
 	    order.softDelete();
 	    order.setStatus(OrderStatus.CANCELLED); // enum에 CANCELLED 상태 추가 필요
+	    orderRepository.save(order);
 	    return "주문 취소가 완료되었습니다.";
 	}
 }

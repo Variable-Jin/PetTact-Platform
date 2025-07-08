@@ -23,6 +23,10 @@ public class FileResponseDto {
     private String fileMimeType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String imageUrl;
+    
+    private String storedFileName; // 저장된 파일 이름
+
 
     public static FileResponseDto fromEntity(MultiFile saved) {
         return new FileResponseDto(
@@ -35,7 +39,9 @@ public class FileResponseDto {
                 saved.getFilePath(),
                 saved.getFileMimeType(),
                 saved.getCreatedAt(),
-                saved.getUpdatedAt()
+                saved.getUpdatedAt(),
+                saved.getImageUrl(),
+                saved.getStoredFileName()   // ✅ 추가
         );
     }
 }

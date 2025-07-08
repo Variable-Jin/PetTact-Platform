@@ -6,22 +6,24 @@ import lombok.Data;
 public class OrderDetailDTO {
 	
     private Long orderNo;
-	private Long orderDetailId;
+	private Long orderDetailNo;
 	private Long productNo;
-    private String name;
+	private String productName;
     private int productStock;
-    private int price;
+    private int productPrice;
+    private String imageUrl;  // 추가
     
     // 기본 생성자 추가 (Jackson 역직렬화에 필요)
     public OrderDetailDTO() {}
     
-    public OrderDetailDTO(Long orderNo, Long orderDetailId, Long productNo, String name, int productStock, int price) {
+    public OrderDetailDTO(Long orderNo, Long orderDetailNo, Long productNo, String productName, int productStock, int productPrice, String imageUrl) {
         this.orderNo = orderNo;
-        this.orderDetailId = orderDetailId;
+        this.orderDetailNo = orderDetailNo;
         this.productNo = productNo;
-        this.name = name;
+        this.productName = productName;
         this.productStock = productStock;
-        this.price = price;
+        this.productPrice = productPrice;
+        this.imageUrl = imageUrl;
     }
 
 }
