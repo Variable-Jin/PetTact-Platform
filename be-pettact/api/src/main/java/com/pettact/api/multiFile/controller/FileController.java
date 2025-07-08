@@ -8,6 +8,8 @@ import com.pettact.api.multiFile.entity.MultiFile;
 import com.pettact.api.multiFile.service.FileService;
 import com.pettact.api.security.vo.CustomUserDetails;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -22,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Slf4j
 @RestController
 @RequestMapping("/v1/file")
 public class FileController {
@@ -51,6 +54,11 @@ public class FileController {
             @RequestPart("file") MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+    	
+    	log.info("[FILE-CONTROLLER] params: referenceTable={}, referenceNo={}, fileName={}, file is null?={}, userDetails is null?={}",
+                referenceTableStr, referenceNo, fileName, file == null, userDetails == null);
+
+    	
         // String → Enum 변환
         MultiFile.ReferenceTable referenceTable = MultiFile.ReferenceTable.valueOf(referenceTableStr);
 

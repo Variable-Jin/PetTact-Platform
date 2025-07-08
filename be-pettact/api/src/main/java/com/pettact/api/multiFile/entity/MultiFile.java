@@ -35,6 +35,9 @@ public class MultiFile extends BaseEntity {
 
     @Column(name = "FILE_NAME", nullable = false)
     private String fileName;
+    
+    @Column(name = "STORED_FILE_NAME", nullable = false)
+    private String storedFileName;  // 실제 서버에 저장된 파일명 (예: 1751775558286_1sample.jpg)
 
     @Column(name = "FILE_SIZE", nullable = false)
     private Integer fileSize;
@@ -47,6 +50,9 @@ public class MultiFile extends BaseEntity {
 
     @Column(name = "FILE_MIME_TYPE")
     private String fileMimeType;
+    
+    @Column(name = "image_url")
+    private String imageUrl;
 
 
     public enum ReferenceTable {
