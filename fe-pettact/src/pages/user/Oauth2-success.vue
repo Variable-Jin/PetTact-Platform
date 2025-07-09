@@ -5,9 +5,12 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { jwtDecode } from 'jwt-decode';
+import { useUserStore } from '@/stores/user';
 
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore();
 
 onMounted(() => {
   const accessToken = route.query.accessToken;
@@ -16,7 +19,17 @@ onMounted(() => {
   if (accessToken && refreshToken) {
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
-    router.push('/');
+    
+    const decoded = jwtDecode(accessToken);
+    
+    userStore.accessToken = accessToken;
+    userStore.restoreUserFromToken();
+
+    if (decoded.userStatus === 'STATUS_SOCIAL_PENDING') {
+      router.push({ name: 'socialJoin' });
+    } else {
+      router.push('/');
+    }
   } else {
     alert('소셜 로그인 실패');
     router.push('/login');

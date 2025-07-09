@@ -109,6 +109,32 @@
         </div>
       </div>
 
+      <!-- 반려동물 여부 -->
+      <div class="mb-3 row align-items-center">
+        <label class="col-sm-3 col-form-label">반려동물</label>
+        <div class="col-sm-9">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" v-model="userHasPet" id="userHasPet">
+            <label class="form-check-label" for="userHasPet">
+              반려동물이 있습니다.
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 이메일 수신 여부 -->
+      <div class="mb-3 row align-items-center">
+        <label class="col-sm-3 col-form-label">이메일 수신</label>
+        <div class="col-sm-9">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" v-model="userEmailReceiveAgree" id="userEmailChecked">
+            <label class="form-check-label" for="userEmailChecked">
+              이메일 수신에 동의합니다.
+            </label>
+          </div>
+        </div>
+      </div>
+
       <hr class="flex-grow-1">
 
       <!-- 약관동의 -->
@@ -138,7 +164,7 @@
 
               <!-- 개인정보 처리방침 -->
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" v-model="agreePrivacy" id="agreePrivacy">
+                <input class="form-check-input" type="checkbox" v-model="userEmailReceiveAgree" id="agreePrivacy">
                 <label class="form-check-label" for="agreePrivacy">
                   개인정보 처리방침 동의 (필수)
                 </label>
@@ -149,8 +175,8 @@
 
               <!-- 마케팅 수신 동의 -->
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" v-model="agreeMarketing" id="agreeMarketing">
-                <label class="form-check-label" for="agreeMarketing">
+                <input class="form-check-input" type="checkbox" v-model="agreeMarketing" id="userEmailChecked">
+                <label class="form-check-label" for="userEmailChecked">
                   마케팅 정보 수신 동의 (선택)
                 </label>
               </div>
@@ -191,7 +217,6 @@ const userZipcode = ref('')
 const userStreet1 = ref('')
 const userDetailAddress = ref('')
 const userHasPet = ref(false)
-// TODO: 이메일 수신여부(userEmailChecked) 추가 -> isEmailChecked랑 변수 헷갈리지않기,,,
 
 const isEmailChecked = ref(false)
 const emailVerified = ref(false)
@@ -201,7 +226,7 @@ const isNicknameChecked = ref(false)
 const allAgree = ref(false)
 const agreeTerms = ref(false)
 const agreePrivacy = ref(false)
-const agreeMarketing = ref(false)
+const userEmailReceiveAgree = ref(false)    // 이메일 수신여부
 
 const errorMessage = ref('')
 
@@ -349,7 +374,7 @@ const handleJoin = async () => {
       userStreet1: userStreet1.value,
       userDetailAddress: userDetailAddress.value,
       userHasPet: userHasPet.value,
-      userEmailChecked: true
+      userEmailChecked: userEmailReceiveAgree.value
     })
     alert('회원가입이 완료되었습니다.')
 
@@ -362,17 +387,17 @@ const handleJoin = async () => {
 
 // 전체 동의 토글
 const toggleAll = () => {
-  agreeTerms.value = allAgree.value
-  agreePrivacy.value = allAgree.value
-  agreeMarketing.value = allAgree.value
-}
+    agreeTerms.value = allAgree.value;
+    agreePrivacy.value = allAgree.value;
+    userEmailReceiveAgree.value = allAgree.value;
+};
 
-// 개별 동의 변경 시 전체 동의 체크 해제/선택
-watch([agreeTerms, agreePrivacy, agreeMarketing], ([terms, privacy, marketing]) => {
-  if (terms && privacy && marketing) {
-    allAgree.value = true
-  } else {
-    allAgree.value = false
-  }
-})
+// 개별 동의 변경 시 전체 동의 체크 여부 갱신
+watch([agreeTerms, agreePrivacy, userEmailReceiveAgree], ([terms, privacy, marketing]) => {
+    if (terms && privacy && marketing) {
+        allAgree.value = true;
+    } else {
+        allAgree.value = false;
+    }
+});
 </script>
