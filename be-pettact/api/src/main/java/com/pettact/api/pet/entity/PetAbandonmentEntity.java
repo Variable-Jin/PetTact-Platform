@@ -134,4 +134,7 @@ public class PetAbandonmentEntity {
     private String evntTxt;
 
     private LocalDateTime updTm;  // yyyy-MM-dd HH:mm:ss.S
+    
+    @Column(name = "pet_view_cnt")
+    private int petViewCnt;
 }

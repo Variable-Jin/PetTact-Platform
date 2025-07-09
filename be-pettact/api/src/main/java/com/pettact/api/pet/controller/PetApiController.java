@@ -15,6 +15,7 @@ import com.pettact.api.pet.dto.PetShelterDto;
 import com.pettact.api.pet.service.PetAdminService;
 import com.pettact.api.pet.service.PetDataInitService;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -36,8 +37,9 @@ public class PetApiController {
     // ------------------ 유기동물 (abandonment) ------------------
 
     @GetMapping("/abandonment/{desertionNo}")
-    public ResponseEntity<PetAbandonmentDto> detailAbandonment(@PathVariable("desertionNo") String desertionNo) {
-        return ResponseEntity.ok(petAdminService.detailAbandonment(desertionNo));
+    public ResponseEntity<PetAbandonmentDto> detailAbandonment(@PathVariable("desertionNo") String desertionNo,  HttpSession session) {
+    	String sessionId = session.getId();
+        return ResponseEntity.ok(petAdminService.detailAbandonment(desertionNo, sessionId));
     }
 
     @PutMapping("/abandonment/{desertionNo}")
