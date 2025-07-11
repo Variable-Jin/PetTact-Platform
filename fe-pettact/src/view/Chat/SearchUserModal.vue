@@ -60,18 +60,62 @@ function requestChat() {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
-.modal-box {
-  background: salmon;
-  padding: 20px;
-  width: 360px;
+input {
+  width: 100%;
+  padding: 10px 12px;
   border-radius: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+.modal-box {
+  background-color: #fff;
+  padding: 24px;
+  width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.modal-box h4,
+.modal-box h5 {
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.chat-room-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.chat-room-item:hover {
+  background-color: #eaeaea;
+}
+
+.search-btn, .close-btn {
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background-color: #4caf50;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+.search-btn:hover,
+.close-btn:hover {
+  background-color: #43a047;
 }
 </style>
