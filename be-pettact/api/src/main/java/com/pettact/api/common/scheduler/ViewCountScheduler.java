@@ -24,13 +24,13 @@ public class ViewCountScheduler {
 	
     private final StringRedisTemplate redisTemplate;
     private final PetAdminService petService;
-//    private final BoardService boardService;
+    private final BoardService boardService;
 //    private final ProductService productService;
 
     @Scheduled(cron = "0 */10 * * * *") // 배치 주기 10분 - 초 분 시 일 월 요일
     public void syncViewCounts() {
     	syncDomainViewCounts("pet", petService, String.class);
-//        syncDomainViewCounts("board", boardService, Long.class);
+        syncDomainViewCounts("board", boardService, Long.class);
 //        syncDomainViewCounts("product", productService, Long.class);
     }
 
@@ -57,7 +57,6 @@ public class ViewCountScheduler {
         log.info("[{}] 조회수 {}건 DB 반영 완료", domainPrefix, keys.size());
     }
     
-    // Generic 변환 (Pet String, Board/Product Long)
     private <T> T parseId(String idStr, Class<T> clazz) {
         if (clazz == Long.class) {
             return clazz.cast(Long.valueOf(idStr));

@@ -140,7 +140,7 @@ public class AdminService {
 	        throw new IllegalArgumentException("이미 판매자 권한이 있습니다.");
 	    }
 
-	    user.setRoleCode(sellerRoleCode);   // ✅ CommonCode 객체로 세팅
+	    user.setRoleCode(sellerRoleCode);
 	    user.setStatusCode(activeStatusCode);
 	    userRepository.save(user);
 

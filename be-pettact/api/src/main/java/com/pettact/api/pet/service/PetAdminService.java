@@ -44,12 +44,8 @@ public class PetAdminService implements ViewCountSyncable<String> {
         
         String preventKey = "pet:viewed:" + sessionId + ":" + desertionNo;
 
-        // 중복 조회 방지: key 존재 여부 확인
         if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
-            // 실제 조회수 INCR key
             viewCountService.increaseViewCount("pet", desertionNo, 120);
-
-            // 중복 방지 key (TTL: 60분 -> 60분동안 중복 조회 방지)
             redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
         }
         
@@ -101,12 +97,7 @@ public class PetAdminService implements ViewCountSyncable<String> {
         return dto;
     }
 
-    // ------------------ 유기동물 조회수 ------------------
-
-    public Long increasePetViewCount(String desertionNo) {
-        // TTL 5분
-        return viewCountService.increaseViewCount("pet", desertionNo, 5);
-    }
+    // ------------------ 유기동물 조회수 db 갱신 ------------------
     
     @Override
     @Transactional

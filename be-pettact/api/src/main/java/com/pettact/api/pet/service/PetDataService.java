@@ -44,7 +44,6 @@ public class PetDataService {
 
     private final MapperUtil mapper;
     private final ObjectMapper objectMapper;
-//    private final RedisTemplate<String, List<PetAbandonmentDto>> petAbandonmentDtoListRedisTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final PetSidoRepository sidoRepository;

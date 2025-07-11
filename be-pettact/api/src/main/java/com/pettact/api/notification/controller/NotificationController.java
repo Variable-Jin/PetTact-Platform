@@ -1,9 +1,10 @@
 package com.pettact.api.notification.controller;
 
 import java.util.List;
-
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +40,16 @@ public class NotificationController {
         notificationService.sendNotification(dto);
         return "Notification sent successfully!";
     }
+
+//  @PostMapping
+//  public String sendNotification(@RequestBody NotificationReqDTO dto,
+//		  					@Header("simpSessionAttributes") Map<String, Object> sessionAttributes) {
+//      Long senderUserNo = (Long) sessionAttributes.get("userNo");
+//      log.info("!!!!!!senderUserNo {}", senderUserNo);
+//      dto.setSenderUserNo(senderUserNo);
+//      notificationService.sendNotification(dto);
+//      return "Notification sent successfully!";
+//  }
     
     // 사용자 알림 목록 조회
     @GetMapping

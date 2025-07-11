@@ -6,9 +6,11 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.pettact.api.board.entity.Board;
 
@@ -55,11 +57,15 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query("SELECT COUNT(b) FROM Board b WHERE b.createdAt BETWEEN :startDate AND :endDate")
     Long countBoardsBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    // 최근 삭제된 게시물 조회
     @Query("SELECT b FROM Board b WHERE b.isDeleted = true ORDER BY b.deletedAt DESC")
     List<Board> findRecentDeletedBoards(Pageable pageable);
 
-    // 오늘 삭제된 게시물 조회
     @Query("SELECT b FROM Board b WHERE b.isDeleted = true AND DATE(b.deletedAt) = CURRENT_DATE ORDER BY b.deletedAt DESC")
     List<Board> findTodayDeletedBoards(Pageable pageable);
+	
+    @Modifying
+    @Transactional
+    @Query("UPDATE Board b SET b.boardViewCnt = b.boardViewCnt + :count WHERE b.boardNo = :boardNo")
+    void updateViewCount(@Param("boardNo") Long boardNo, @Param("count") int count);
+
 }
