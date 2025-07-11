@@ -37,24 +37,27 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                 throw new IllegalArgumentException("No JWT token found in STOMP CONNECT");
             }
 
-            String token = tokenHeader.substring(7);
+            String token = tokenHeader.substring(7); // "Bearer " 제거
 
+            // ✅ 1. JWT 유효성 검증
             if (!jwtTokenProvider.isValidateToken(token)) {
                 log.warn("유효하지 않은 JWT 토큰");
                 throw new IllegalArgumentException("Invalid JWT token in STOMP CONNECT");
             }
 
+            // ✅ 2. Claims 추출
             Map<String, Object> claims = jwtTokenProvider.validateToken(token);
             Long userNo = claims.get("userNo") != null ? Long.parseLong(claims.get("userNo").toString()) : null;
             String userEmail = (String) claims.get("userEmail");
 
             log.info("STOMP CONNECT 검증 완료 - userNo: {}, userEmail: {}", userNo, userEmail);
 
+            // ✅ 3. UserPrincipal 생성 후 accessor에 주입
             UserPrincipal principal = new UserPrincipal(userNo, userEmail);
             accessor.setUser(principal);
 
-            accessor.getSessionAttributes().put("userNo", userNo);
-            accessor.getSessionAttributes().put("userEmail", userEmail);
+            // 이후 @MessageMapping 핸들러에서
+            // Principal principal 파라미터로 접근 가능
         }
 
         return message;

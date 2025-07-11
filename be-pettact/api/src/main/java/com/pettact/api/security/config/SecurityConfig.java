@@ -51,11 +51,19 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+//    @Bean
+//    public WebSecurityCustomizer webSecurityCustomizer() {
+//        log.info("------------web configure-------------------");
+//        return (web) -> web.ignoring()
+//                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+//    }
+
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         log.info("------------web configure-------------------");
         return (web) -> web.ignoring()
-                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
+                .requestMatchers("/ws-stomp/**");
     }
     
     @Bean

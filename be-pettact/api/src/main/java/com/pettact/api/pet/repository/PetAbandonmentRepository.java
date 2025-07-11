@@ -29,10 +29,12 @@ public interface PetAbandonmentRepository extends JpaRepository<PetAbandonmentEn
 
 	Optional<PetAbandonmentEntity> findByDesertionNo(String desertionNo);
 
-
     @Modifying
     @Transactional
     @Query("UPDATE PetAbandonmentEntity p SET p.petViewCnt = p.petViewCnt + :count WHERE p.desertionNo = :desertionNo")
     void updateViewCount(@Param("desertionNo") String desertionNo, @Param("count") int count);
 
+    @Query("SELECT p FROM PetAbandonmentEntity p WHERE p.noticeEdt BETWEEN :startDate AND :endDate")
+    List<PetAbandonmentEntity> findEndingSoon(@Param("startDate") String startDate,
+                                        @Param("endDate") String endDate);
 }

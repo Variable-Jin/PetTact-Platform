@@ -1,4 +1,4 @@
-package com.pettact.api.admin.dto;
+package com.pettact.api.admin.dto.dashboard;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,17 +1,21 @@
 package com.pettact.api.websocket.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.pettact.api.pet.dto.PetAbandonmentDto;
+import com.pettact.api.websocket.subscriber.ActiveUsersSubscriber;
 import com.pettact.api.websocket.subscriber.NotificationSubscriber;
 
 @Configuration
@@ -20,13 +24,12 @@ public class RedisConfig {
 	// 실시간 알림 연결용
 	@Bean
 	public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory,
-	                                                    NotificationSubscriber notificationSubscriber
-//	                                                    ActiveUsersSubscriber activeUsersSubscriber
-    ) {
+	                                                    NotificationSubscriber notificationSubscriber,
+	                                                    ActiveUsersSubscriber activeUsersSubscriber) {
 	    RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 	    container.setConnectionFactory(connectionFactory);
 	    container.addMessageListener(notificationSubscriber, new PatternTopic("notifications"));
-//	    container.addMessageListener(activeUsersSubscriber, new PatternTopic("activeUsers"));
+	    container.addMessageListener(activeUsersSubscriber, new PatternTopic("activeUsers"));
 	    return container;
 	}
 
@@ -47,6 +50,19 @@ public class RedisConfig {
 	    template.afterPropertiesSet();
 	    return template;
 	}
+
+    /* List<PetAbandonmentDto> 전용 RedisTemplate */
+    @Bean
+    public RedisTemplate<String, List<PetAbandonmentDto>> petAbandonmentDtoListRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, List<PetAbandonmentDto>> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+
+        template.afterPropertiesSet();
+        return template;
+    }
 	
     // viewCountService에서 사용
 	@Bean

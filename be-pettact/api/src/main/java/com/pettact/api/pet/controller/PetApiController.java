@@ -52,7 +52,6 @@ public class PetApiController {
         return ResponseEntity.ok(updated);
     }
 
-
     // ------------------ 편의시설 (facility) ------------------
     @GetMapping("/facility/{facilityNo}")
     public ResponseEntity<?> getFacility(@PathVariable("facilityNo") Long facilityNo) {

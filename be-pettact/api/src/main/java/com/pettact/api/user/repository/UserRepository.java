@@ -45,6 +45,24 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 	    @Param("endDate") LocalDateTime endDate
 	);
 
+	// 판매자 전용
+	@Query("""
+		    SELECT u FROM Users u
+		    WHERE u.roleCode.codeId = 'ROLE_SELLER'
+		    AND (:keyword IS NULL OR u.userNickname LIKE %:keyword% OR u.userEmail LIKE %:keyword% OR u.userName LIKE %:keyword%)
+		    AND (:status IS NULL OR u.statusCode.codeId = :status)
+		    AND (:startDate IS NULL OR u.createdAt >= :startDate)
+		    AND (:endDate IS NULL OR u.createdAt <= :endDate)
+		    ORDER BY u.createdAt DESC
+		""")
+		List<Users> findSellersWithFilters(
+		    @Param("keyword") String keyword,
+		    @Param("status") String status,
+		    @Param("startDate") LocalDateTime startDate,
+		    @Param("endDate") LocalDateTime endDate
+		);
+
+
 	/* 대시보드 */
 	@Query("SELECT COUNT(u) FROM Users u WHERE u.isDeleted = false")
 	long countTotalUsers();
@@ -58,7 +76,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 	@Query("SELECT COUNT(u) FROM Users u WHERE u.roleCode.codeId = 'ROLE_SELLER'")
 	long countActiveSellers();
 
-    @Query("SELECT COUNT(u) FROM Users u WHERE u.statusCode.codeId = 'STATUS_PENDING'")
+    @Query("SELECT COUNT(u) FROM Users u WHERE u.statusCode.codeId = 'STATUS_PENDING' AND u.isDeleted = false")
     long countPendingSellers();
 
     @Query("SELECT COUNT(u) FROM Users u WHERE DATE(u.createdAt) = CURRENT_DATE " +

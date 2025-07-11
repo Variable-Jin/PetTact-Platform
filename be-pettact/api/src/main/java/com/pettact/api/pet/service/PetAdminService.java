@@ -47,7 +47,7 @@ public class PetAdminService implements ViewCountSyncable<String> {
         // 중복 조회 방지: key 존재 여부 확인
         if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
             // 실제 조회수 INCR key
-            viewCountService.increaseViewCount("pet", desertionNo, 60);
+            viewCountService.increaseViewCount("pet", desertionNo, 120);
 
             // 중복 방지 key (TTL: 60분 -> 60분동안 중복 조회 방지)
             redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));

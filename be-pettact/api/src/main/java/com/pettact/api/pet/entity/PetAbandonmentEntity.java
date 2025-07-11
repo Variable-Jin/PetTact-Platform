@@ -36,6 +36,7 @@ public class PetAbandonmentEntity {
     private String weight;
 
     private String noticeSdt;    // yyyyMMdd
+    @Column(name="notice_edt")
     private String noticeEdt;    // yyyyMMdd
 
     private String processState;

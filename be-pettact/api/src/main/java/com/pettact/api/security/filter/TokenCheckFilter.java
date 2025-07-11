@@ -56,15 +56,8 @@ public class TokenCheckFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getRequestURI();
-        String method = request.getMethod();
-        log.info("요청 Method: {}, URI: {}", method, path);
-        
-        //sock.js 추가
-        if (path.startsWith("/ws-stomp")) {
-            log.info("SockJS 경로 JWT 검사 제외: {}", path);
-            filterChain.doFilter(request, response);
-            return;
-        }
+
+        log.info("요청 URI: {}", path);
         
         // 예외 경로는 통과 -> AntPathMatcher 로 변경
         if (EXCLUDED_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path))) {

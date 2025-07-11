@@ -12,13 +12,14 @@ import com.pettact.api.report.service.ReportService;
 import com.pettact.api.security.vo.CustomUserDetails;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import com.pettact.api.admin.dto.AdminBoardDetailDTO;
-import com.pettact.api.admin.dto.AdminBoardListDTO;
-import com.pettact.api.admin.dto.AdminUserDetailDTO;
-import com.pettact.api.admin.dto.AdminUserListDTO;
+import com.pettact.api.admin.dto.board.AdminBoardDetailDTO;
+import com.pettact.api.admin.dto.board.AdminBoardListDTO;
+import com.pettact.api.admin.dto.user.AdminUserDetailDTO;
+import com.pettact.api.admin.dto.user.AdminUserListDTO;
 import com.pettact.api.admin.service.AdminService;
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.code.service.CommonCodeService;
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 @RequestMapping("/v1/admin")
 public class AdminController {
 	private final AdminService adminService;
@@ -139,7 +141,6 @@ public class AdminController {
 	        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 	        
 	        List<AdminUserListDTO> sellerList = adminService.getSellerList(keyword, status, startDateTime, endDateTime);
-	            
 	        return ResponseEntity.ok().body(sellerList);
 	    } catch (Exception e) {
 	        return ResponseEntity.badRequest()
@@ -147,11 +148,24 @@ public class AdminController {
 	    }
 	}
 	
+	// TODO: 판매자 권한 요청 대기중 목록
+	@GetMapping("/seller/requests")
+	public ResponseEntity<?> getSellerRequests() {
+	    try {
+	        List<AdminUserListDTO> requests = adminService.getSellerRequests();
+	        return ResponseEntity.ok().body(requests);
+	    } catch (Exception e) {
+	        return ResponseEntity.badRequest()
+	            .body("판매자 권한 요청 목록을 불러오는 중 오류가 발생했습니다: " + e.getMessage());
+	    }
+	}
+	
 	// 판매자 권한 승인(ROLE_USER -> ROLE_SELLER)
 	@PatchMapping("/seller/{userNo}/approve")
-	public ResponseEntity<?> approveSeller(@PathVariable("userNo") Long userNo){
+	public ResponseEntity<?> approveSeller(@PathVariable("userNo") Long userNo,
+	                                       @AuthenticationPrincipal CustomUserDetails adminUser){
 		try {
-	        boolean result = adminService.approveSellerByUserNo(userNo);
+			boolean result = adminService.approveSellerByUserNo(userNo, adminUser.getUserEntity().getUserNo());
 
 	        if (result) {
 	            return ResponseEntity.ok().body("판매자 권한이 성공적으로 승인되었습니다.");
@@ -164,6 +178,19 @@ public class AdminController {
 		}
 	}
 	
+	// 판매자 활동 내역 조회
+//	@GetMapping("/seller/{userNo}/activity")
+//	public ResponseEntity<?> getSellerActivity(@PathVariable("userNo") Long userNo) {
+//	    try {
+//	        SellerActivityDTO activity = adminService.getSellerActivity(userNo);
+//	        return ResponseEntity.ok().body(activity);
+//	    } catch (Exception e) {
+//	        return ResponseEntity.badRequest()
+//	            .body("판매자 활동 내역 조회 중 오류가 발생했습니다: " + e.getMessage());
+//	    }
+//	}
+	
+	// 게시물 관리
 	// 게시물 목록 조회
 	@GetMapping("/board")
 	public ResponseEntity<?> getBoardList(
@@ -230,14 +257,15 @@ public class AdminController {
 
 	// 신고 상태 변경
 	@PatchMapping("/report/{reportNo}/status")
-	public ResponseEntity<ReportResponseDto> updateReportStatus(@PathVariable Long reportNo, @RequestParam Integer status) {
-		ReportResponseDto responseDto = reportService.updateReport(reportNo, status);
+	public ResponseEntity<ReportResponseDto> updateReportStatus(@PathVariable("reportNo") Long reportNo, @RequestParam("status") Integer status,
+																@AuthenticationPrincipal CustomUserDetails adminUser) {
+		ReportResponseDto responseDto = reportService.updateReport(reportNo, status, adminUser.getUserEntity().getUserNo());
 		return ResponseEntity.ok(responseDto);
 	}
 
 	// 신고 삭제
 	@DeleteMapping("/report/{reportNo}")
-	public ResponseEntity<Void> deleteReport(@PathVariable Long reportNo) {
+	public ResponseEntity<Void> deleteReport(@PathVariable("reportNo") Long reportNo) {
 		reportService.deleteReport(reportNo);
 		return ResponseEntity.noContent().build();
 	}
