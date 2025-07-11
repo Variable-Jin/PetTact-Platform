@@ -57,10 +57,10 @@ export const useOrderStore = defineStore('order', {
       }
     },
 
-    async createOrder(orderDetails) {
+    async createOrder(orderRequest) {
       this.loading = true
       try {
-        const res = await api.post('/v1/order', orderDetails)
+        const res = await api.post('/v1/order', orderRequest)  // orderRequest는 CreateRequest DTO 의미
         return res.data
       } catch (err) {
         this.error = err
@@ -69,6 +69,18 @@ export const useOrderStore = defineStore('order', {
         this.loading = false
       }
     },
+    // async createOrder(orderDetails) {
+    //   this.loading = true
+    //   try {
+    //     const res = await api.post('/v1/order', orderDetails)
+    //     return res.data
+    //   } catch (err) {
+    //     this.error = err
+    //     throw err
+    //   } finally {
+    //     this.loading = false
+    //   }
+    // },
 
     async cancelOrder(orderNo) {
       this.loading = true

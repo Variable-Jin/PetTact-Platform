@@ -195,8 +195,16 @@ const submitOrder = async () => {
       productNo: item.productNo,
       productStock: item.productStock
     }));
-
-    await orderStore.createOrder(orderDetails);
+      await orderStore.createOrder({
+      deliveryName: deliveryName.value,
+      receiver: receiver.value,
+      zipcode: zipcode.value,
+      address1: address1.value,
+      address2: address2.value,
+      phone: phone.value,
+      orderDetails: orderDetails
+    });
+    //await orderStore.createOrder(orderDetails);
     alert('주문이 완료되었습니다!');
     orderStore.clearOrderDraft();
     isModalOpen.value = false;

@@ -4,6 +4,10 @@
       <h2 class="text-white mb-3">주문 내역 (번호: {{ order.orderNo }})</h2>
 
       <p class="text-white mb-1"><strong>주문 상태:</strong> {{ order.status }}</p>
+      <p class="text-white mb-1"><strong>받는 사람:</strong> {{ order.receiver }}</p>
+      <p class="text-white mb-1"><strong>배송지:</strong> {{ order.zipcode }} {{ order.address1 }} {{ order.address2 }}</p>
+      <p class="text-white mb-1"><strong>연락처:</strong> {{ order.phone }}</p>
+
       <p class="text-white mb-1"><strong>주문 시간:</strong> {{ formatDate(order.createdAt) }}</p>
       <p v-if="order.deletedAt" class="text-white mb-1"><strong>삭제 시간:</strong> {{ formatDate(order.deletedAt) }}</p>
       <p class="text-white mb-3"><strong>총 금액:</strong> {{ order.totalPrice.toLocaleString() }}원</p>
@@ -37,7 +41,9 @@
 
       <div class="mt-4">
         <button @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
-        <button @click="goToOrderList" class="btn btn-secondary">주문 내역</button>
+        <button @click="goToOrderList" class="btn btn-secondary me-2">주문 내역</button>
+          <!-- ✅ 주문 상태가 "주문완료"일 경우에만 취소 가능 -->
+        <button @click="cancelOrder" class="btn btn-secondary me-2">주문 취소</button>
       </div>
     </div>
   </div>
@@ -87,6 +93,18 @@ function formatDate(dateString) {
   const ss = String(date.getSeconds()).padStart(2, '0')
   return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`
 }
+// 취소버튼
+const cancelOrder = async () => {
+  if (!confirm(`주문번호 ${order.value.orderNo} 을(를) 정말 취소하시겠습니까?`)) return;
+
+  try {
+    await orderStore.cancelOrder(order.value.orderNo);
+    alert(`주문번호 ${order.value.orderNo} 가 취소되었습니다.`);
+    router.push('/order'); // 주문 리스트로 이동
+  } catch (err) {
+    alert('주문 취소 실패: ' + (err?.response?.data?.message || err.message || '알 수 없는 오류'));
+  }
+};
 </script>
 
 <style>
