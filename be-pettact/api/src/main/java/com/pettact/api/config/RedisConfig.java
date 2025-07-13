@@ -1,11 +1,14 @@
-package com.pettact.api.websocket.config;
+package com.pettact.api.config;
 
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
@@ -13,10 +16,11 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.pettact.api.notification.dto.NotificationResDTO;
+import com.pettact.api.notification.subscriber.RedisSubscriber;
 import com.pettact.api.pet.dto.PetAbandonmentDto;
-import com.pettact.api.websocket.subscriber.ActiveUsersSubscriber;
-import com.pettact.api.websocket.subscriber.NotificationSubscriber;
 
 @Configuration
 public class RedisConfig {
@@ -24,15 +28,40 @@ public class RedisConfig {
 	// 실시간 알림 연결용
 	@Bean
 	public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory,
-	                                                    NotificationSubscriber notificationSubscriber,
-	                                                    ActiveUsersSubscriber activeUsersSubscriber) {
+	                                                    RedisSubscriber redisSubscriber
+    ) {
 	    RedisMessageListenerContainer container = new RedisMessageListenerContainer();
 	    container.setConnectionFactory(connectionFactory);
-	    container.addMessageListener(notificationSubscriber, new PatternTopic("notifications"));
-	    container.addMessageListener(activeUsersSubscriber, new PatternTopic("activeUsers"));
+	    container.addMessageListener(redisSubscriber, new PatternTopic("notifications"));
 	    return container;
 	}
+	
+	@Bean
+	public RedisTemplate<String, NotificationResDTO> notificationRedisTemplate(
+	    RedisConnectionFactory connectionFactory,
+	    ObjectMapper objectMapper
+	) {
+	    RedisTemplate<String, NotificationResDTO> template = new RedisTemplate<>();
+	    template.setConnectionFactory(connectionFactory);
 
+	    Jackson2JsonRedisSerializer<NotificationResDTO> serializer =
+	        new Jackson2JsonRedisSerializer<>(NotificationResDTO.class);
+	    serializer.setObjectMapper(objectMapper); // ✅ 이거 중요
+
+	    template.setKeySerializer(new StringRedisSerializer());
+	    template.setValueSerializer(serializer);
+	    return template;
+	}
+	
+	@Bean
+	public ObjectMapper objectMapper() {
+	    ObjectMapper mapper = new ObjectMapper();
+	    mapper.registerModule(new JavaTimeModule());
+	    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+	    return mapper;
+	}
+
+	// =================== 캐싱 ===================
     // Redis의 key-value 데이터를 쉽게 다루기 위한 Bean
     // RedisTemplate Bean 등록
 	@Bean

@@ -46,7 +46,9 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         "/default-ui.css",
         
         "/v1/api/abandonment/**",
-        "/v1/pet/abandonment/**"
+        "/v1/pet/abandonment/**",
+        
+        "/v1/notification/subscribe"
     );
     
     @Override

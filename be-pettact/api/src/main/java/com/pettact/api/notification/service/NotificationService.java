@@ -9,8 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettact.api.notification.dto.NotificationReqDTO;
 import com.pettact.api.notification.dto.NotificationResDTO;
 import com.pettact.api.notification.entity.Notification;
+import com.pettact.api.notification.publisher.RedisPublisher;
 import com.pettact.api.notification.repository.NotificationRepository;
-import com.pettact.api.websocket.publisher.NotificationPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,25 +25,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final NotificationPublisher notificationPublisher;
+    private final RedisPublisher notificationPublisher;
     private final ObjectMapper objectMapper;
 
     public void sendNotification(NotificationReqDTO dto) {
         Notification notification = Notification.from(dto);
         notificationRepository.save(notification);
 
+        NotificationResDTO notificationResDTO = NotificationResDTO.from(notification);
+        
+        // 🔽 로그용 문자열 변환
         try {
-            String message = objectMapper.writeValueAsString(notification);
-            notificationPublisher.publish("notifications", message);
+            String message = objectMapper.writeValueAsString(notificationResDTO);
+            System.out.println("[PUBLISH] 알림 전송됨: " + message);
         } catch (Exception e) {
-            throw new RuntimeException("JSON 변환 실패", e);
+            e.printStackTrace();
         }
-    }        
+        
+        notificationPublisher.publish("notifications", notificationResDTO); // JSON으로 변환 ❌ 객체 그대로 ⭕
+    }    
 
     // 특정 사용자의 모든 알림
     @Transactional(readOnly = true)
     public List<NotificationResDTO> getNotificationsByUser(Long userNo) {
-        List<Notification> notifications = notificationRepository.findByReceiverUserNoOrderByCreatedAtDesc(userNo);
+        List<Notification> notifications = notificationRepository.findByReceiverUserNoAndIsDeletedFalseOrderByCreatedAtDesc(userNo);
         return notifications.stream()
                 .map(NotificationResDTO::from)
                 .toList();
@@ -52,7 +57,7 @@ public class NotificationService {
     // 읽지 않은 알림 개수 조회
     @Transactional(readOnly = true)
     public Long getUnreadNotificationCount(Long userNo) {
-        return notificationRepository.countByReceiverUserNoAndIsReadFalse(userNo);
+        return notificationRepository.countByReceiverUserNoAndIsReadFalseAndIsDeletedFalse(userNo);
     }
 
     // 특정 알림 읽음 처리
@@ -70,7 +75,7 @@ public class NotificationService {
     // 모든 알림 읽음 처리
     @Transactional
     public void markAllAsRead(Long userNo) {
-        List<Notification> notifications = notificationRepository.findByReceiverUserNoOrderByCreatedAtDesc(userNo);
+        List<Notification> notifications = notificationRepository.findByReceiverUserNoAndIsReadFalseAndIsDeletedFalse(userNo);
         for (Notification notification : notifications) {
             if (!notification.getIsRead()) {
                 notification.setIsRead(true);
@@ -78,5 +83,23 @@ public class NotificationService {
             }
         }
         notificationRepository.saveAll(notifications);
+    }
+    
+    // soft delete
+    public void softDelete(Long notificationNo, Long userNo) {
+        Notification notification = notificationRepository
+            .findByNotificationNoAndReceiverUserNoAndIsDeletedFalse(notificationNo, userNo)
+            .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다."));
+
+        notification.setDeleted(true); // boolean이면 true, 문자열이면 "Y"
+        notificationRepository.save(notification);
+    }
+    
+    // soft delete all
+    @Transactional
+    public void softDeleteAll(Long userNo) {
+        notificationRepository
+            .findByReceiverUserNoAndIsDeletedFalseOrderByCreatedAtDesc(userNo)
+            .forEach(n -> n.setDeleted(true));
     }
 }

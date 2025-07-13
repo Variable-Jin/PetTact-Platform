@@ -86,6 +86,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(authroize ->
             authroize
+            	.requestMatchers("/v1/notification/subscribe").permitAll()
             	.requestMatchers("/v1/notification/**").authenticated()
             	.requestMatchers("/v1/user/mypage/**").authenticated()
             	.requestMatchers("/v1/user/seller/**").authenticated()

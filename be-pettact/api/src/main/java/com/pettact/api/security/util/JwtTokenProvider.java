@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -92,6 +93,23 @@ public class JwtTokenProvider {
 			log.warn("JWT validation error", e);
 			return false;
 		}
+	}
+
+	public Long getUserNoFromToken(String token) {
+	    try {
+	        Map<String, Object> claims = validateToken(token);
+	        Object userNoObj = claims.get("userNo");
+	        if (userNoObj instanceof Integer) {
+	            return ((Integer) userNoObj).longValue();
+	        } else if (userNoObj instanceof Long) {
+	            return (Long) userNoObj;
+	        } else {
+	            throw new IllegalStateException("userNo 타입 알 수 없음: " + userNoObj);
+	        }
+	    } catch (Exception e) {
+	        log.error("JWT에서 userNo 추출 실패", e);
+	        throw new RuntimeException("JWT에서 userNo 추출 실패", e);
+	    }
 	}
 
 }
