@@ -6,24 +6,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.pettact.api.report.dto.ReportResponseDto;
-import com.pettact.api.report.entity.Report;
-import com.pettact.api.report.service.ReportService;
-import com.pettact.api.security.vo.CustomUserDetails;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.pettact.api.admin.dto.board.AdminBoardDetailDTO;
 import com.pettact.api.admin.dto.board.AdminBoardListDTO;
+import com.pettact.api.admin.dto.report.AdminReportListDTO;
 import com.pettact.api.admin.dto.user.AdminUserDetailDTO;
 import com.pettact.api.admin.dto.user.AdminUserListDTO;
 import com.pettact.api.admin.service.AdminService;
-import com.pettact.api.board.entity.Board;
 import com.pettact.api.code.service.CommonCodeService;
-import com.pettact.api.user.entity.Users;
+import com.pettact.api.common.dto.PageResponseDto;
+import com.pettact.api.report.dto.ReportResponseDto;
+import com.pettact.api.report.entity.Report;
+import com.pettact.api.report.service.ReportService;
+import com.pettact.api.security.vo.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,21 +54,21 @@ public class AdminController {
 	        @RequestParam(value = "status", required = false) String status,
 	        @RequestParam(value = "role", required = false) String role,
 	        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-	        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-	    
+	        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+	        @RequestParam(value = "page", defaultValue = "1") int page,
+	        @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
 	    try {
-	        // LocalDate -> LocalDateTime 변환
-	        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
-	        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
-	        
-	        List<AdminUserListDTO> userList = adminService.getUserList(keyword, status, role, startDateTime, endDateTime);
-	            
-	        return ResponseEntity.ok().body(userList);
+	        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+	        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(23, 59, 59) : null;
+
+	        PageResponseDto<AdminUserListDTO> result = adminService.getUserList(keyword, status, role, startDateTime, endDateTime, page, size);
+	        return ResponseEntity.ok(result);
 	    } catch (Exception e) {
-	        return ResponseEntity.badRequest()
-	            .body("회원 목록을 불러오는 중 오류가 발생했습니다: " + e.getMessage());
+	        return ResponseEntity.badRequest().body("회원 목록을 불러오는 중 오류: " + e.getMessage());
 	    }
 	}
+
 	
 	// 필터 옵션들
 	@GetMapping("/user/list/filters")
@@ -133,14 +140,16 @@ public class AdminController {
 	        @RequestParam(value = "keyword", required = false) String keyword,
 	        @RequestParam(value = "status", required = false) String status,
 	        @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-	        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+	        @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+	        @RequestParam(value = "page", defaultValue = "1") int page,
+	        @RequestParam(value = "size", defaultValue = "10") int size) {
 	    
 	    try {
 	        // LocalDate -> LocalDateTime 변환
 	        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
 	        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 	        
-	        List<AdminUserListDTO> sellerList = adminService.getSellerList(keyword, status, startDateTime, endDateTime);
+	        PageResponseDto<AdminUserListDTO> sellerList = adminService.getSellerList(keyword, status, startDateTime, endDateTime, page, size);
 	        return ResponseEntity.ok().body(sellerList);
 	    } catch (Exception e) {
 	        return ResponseEntity.badRequest()
@@ -150,9 +159,12 @@ public class AdminController {
 	
 	// TODO: 판매자 권한 요청 대기중 목록
 	@GetMapping("/seller/requests")
-	public ResponseEntity<?> getSellerRequests() {
+	public ResponseEntity<?> getSellerRequests(
+	        @RequestParam(value = "page", defaultValue = "1") int page,
+	        @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
 	    try {
-	        List<AdminUserListDTO> requests = adminService.getSellerRequests();
+	    	PageResponseDto<AdminUserListDTO> requests = adminService.getSellerRequests(page, size);
 	        return ResponseEntity.ok().body(requests);
 	    } catch (Exception e) {
 	        return ResponseEntity.badRequest()
@@ -198,13 +210,17 @@ public class AdminController {
 		    @RequestParam(value = "category", required = false) Long categoryNo,
 		    @RequestParam(value = "isDeleted", required = false) Boolean isDeleted,
 		    @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-		    @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-		    
+		    @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+	        @RequestParam(value = "page", defaultValue = "1") int page,
+	        @RequestParam(value = "size", defaultValue = "10") int size
+    ) {	    
 		    try {
 		        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
 		        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 		        
-		        List<AdminBoardListDTO> boardList = adminService.getBoardList(keyword, categoryNo, isDeleted, startDateTime, endDateTime);
+		        PageResponseDto<AdminBoardListDTO> boardList = adminService.getBoardList(keyword, categoryNo, isDeleted,
+		        																		startDateTime, endDateTime,
+		        																		page, size);
 		        
 		        return ResponseEntity.ok().body(boardList);
 		    } catch (Exception e) {
@@ -233,18 +249,21 @@ public class AdminController {
 	// TODO: 권한 체크 관련 로직 -> 기존 스타일에 맞게 변경 plz
 	// 신고 목록 조회
 	@GetMapping("/report")
-	public ResponseEntity<List<ReportResponseDto>> getListReport(
+	public ResponseEntity<PageResponseDto<AdminReportListDTO>> getListReport(
 			@RequestParam(value = "location", required = false) Report.ReportTargetLocation location,
 			@RequestParam(value = "status", required = false) Integer status,
 			@RequestParam(value = "reason", required = false) String reason,
 			@RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-			@RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-
+			@RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+	        @RequestParam(value = "page", defaultValue = "1") int page,
+	        @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
 		if(reason != null && reason.trim().length() < 2) {
 			throw new IllegalArgumentException("검색어는 2글자 이상 입력해주세요");
 		}
 
-		List<ReportResponseDto> responseDto = reportService.getAdminListReport(location, status, reason, startDate, endDate);
+		PageResponseDto<AdminReportListDTO> responseDto 
+				= reportService.getAdminListReport(location, status, reason, startDate, endDate, page, size);
 		return ResponseEntity.ok(responseDto);
 	}
 

@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,22 +25,23 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     List<Report> findByReports(@Param("userNo") Long userNo);
 
     @Query("""
-    		SELECT r FROM Report r
-    		JOIN FETCH r.users u
-    		WHERE (:reportTargetLocation IS NULL OR r.reportTargetLocation = :reportTargetLocation)
-    		AND (:status IS NULL OR r.reportStatus = :status)
-    		AND (:reason IS NULL OR r.reportReason LIKE %:reason%)
-    		AND (:startDate IS NULL OR DATE(r.createdAt) >= :startDate)
-    		AND (:endDate IS NULL OR DATE(r.createdAt) <= :endDate)
-    		ORDER BY r.createdAt DESC
-    		""")
-	List<Report> findAllWithFilters(
-	    @Param("reportTargetLocation") Report.ReportTargetLocation location,
-	    @Param("status") Integer status,
-	    @Param("reason") String reason,
+    	    SELECT r FROM Report r
+    	    WHERE (:reportTargetLocation IS NULL OR r.reportTargetLocation = :reportTargetLocation)
+    	      AND (:reportStatus IS NULL OR r.reportStatus = :reportStatus)
+    	      AND (:reportReason IS NULL OR r.reportReason LIKE %:reportReason%)
+    	      AND (:startDate IS NULL OR r.createdAt >= :startDate)
+    	      AND (:endDate IS NULL OR r.createdAt <= :endDate)
+    	    ORDER BY r.createdAt DESC
+    	""")
+	Page<Report> findAllWithFilters(
+	    @Param("reportTargetLocation") Report.ReportTargetLocation reportTargetLocation,
+	    @Param("reportStatus") Integer reportStatus,
+	    @Param("reportReason") String reportReason,
 	    @Param("startDate") LocalDate startDate,
-	    @Param("endDate") LocalDate endDate
+	    @Param("endDate") LocalDate endDate,
+	    Pageable pageable
 	);
+
 
     @Query("SELECT COUNT(r) FROM Report r WHERE r.createdAt BETWEEN :startDate AND :endDate")
     Long countReportsBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
