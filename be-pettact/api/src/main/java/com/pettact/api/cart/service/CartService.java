@@ -1,8 +1,11 @@
 package com.pettact.api.cart.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,34 +29,32 @@ public class CartService {
     
     
     // 장바구니 상품 목록 조회
-    public List<CartDTO> getCartProduct(Long userNo) {
+    public Page<CartDTO> getCartProduct(Long userNo, int page, int size) {
+    	
+    	Pageable pageable = PageRequest.of(page, size);
         
-    	List<CartEntity> cartList = cartRepository.findByUser_UserNo(userNo);
-    	 System.out.println(">>> 장바구니 조회된 개수: " + cartList.size());
+    	Page<CartEntity> cartPage = cartRepository.findByUser_UserNo(userNo ,pageable);
+
+    	 //System.out.println(">>> 장바구니 조회된 개수: " + cartPage.size());
     	 
     	 
-        return cartRepository.findByUser_UserNo(userNo)
-                .stream()
-                .filter(cart -> cart.getProduct() != null && !cart.getProduct().isDeleted())
-                .map(cart -> {
-                	ProductEntity product = cart.getProduct();
-                    // 여기서 imageUrl 로그 찍기
-                    System.out.println(">>> 상품 정보: productNo=" + product.getProductNo()
-                        + ", productName=" + product.getProductName()
-                        + ", imageUrl=" + product.getImageUrl());
-                    
-                    return CartDTO.builder()
-                    		.cartNo(cart.getCartNo())
-                            .productNo(cart.getProduct().getProductNo())
-                            .productName(cart.getProduct().getProductName())
-                            .productPrice(cart.getProduct().getProductPrice())
-                            .productStock(cart.getProductStock())
-                            .totalPrice(cart.getProduct().getProductPrice() * cart.getProductStock())
-                            .imageUrl(cart.getProduct().getImageUrl())
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
+    	    List<CartDTO> cartDTOList = cartPage.getContent().stream()
+    	            .filter(cart -> cart.getProduct() != null && !cart.getProduct().isDeleted())
+    	            .map(cart -> {
+    	                ProductEntity product = cart.getProduct();
+    	                return CartDTO.builder()
+    	                    .cartNo(cart.getCartNo())
+    	                    .productNo(product.getProductNo())
+    	                    .productName(product.getProductName())
+    	                    .productPrice(product.getProductPrice())
+    	                    .productStock(cart.getProductStock())
+    	                    .totalPrice(product.getProductPrice() * cart.getProductStock())
+    	                    .imageUrl(product.getImageUrl())
+    	                    .build();
+    	            }).toList();
+
+    	        return new PageImpl<>(cartDTOList, pageable, cartPage.getTotalElements());
+    	    }
     
     // 장바구니 상품 삭제
     public void deleteProduct(Users user, Long cartNo) {
@@ -100,7 +101,7 @@ public class CartService {
                 .orElse(CartEntity.builder()
                         .user(user)
                         .product(product)
-                        .productStock(product.getProductStock())
+                        .productStock(0)
                         .productPrice(product.getProductPrice())
                         .build());
 

@@ -17,6 +17,13 @@ public class OrderResponseDTO extends BaseEntity{
     private String status;
     private int totalPrice;
     private List<OrderDetailDTO> products;
-
+    
+    // 🟨 배송 정보 추가
+    private String deliveryName;
+    private String receiver;
+    private String zipcode;
+    private String address1;
+    private String address2;
+    private String phone;
 
 }

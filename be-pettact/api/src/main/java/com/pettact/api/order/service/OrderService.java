@@ -2,9 +2,12 @@ package com.pettact.api.order.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.pettact.api.cart.entity.CartEntity;
 import com.pettact.api.cart.repository.CartRepository;
 import com.pettact.api.core.base.MapperUtil;
 import com.pettact.api.order.dto.OrderDTO;
@@ -15,6 +18,7 @@ import com.pettact.api.order.entity.OrderEntity;
 import com.pettact.api.order.enums.OrderStatus;
 import com.pettact.api.order.repository.OrderDetailRepository;
 import com.pettact.api.order.repository.OrderRepository;
+import com.pettact.api.payment.dto.PaymentRequestDTO;
 import com.pettact.api.product.entity.ProductEntity;
 import com.pettact.api.product.repository.ProductRepository;
 import com.pettact.api.user.entity.Users;
@@ -32,68 +36,132 @@ public class OrderService {
 	
 	private final CartRepository cartRepository;
 	
-	// 주문 상세 정보
-	private void addOrderDetail(OrderEntity orderEntity, List<OrderDetailDTO> list)  {
-		list.stream().forEach(d -> {
-			OrderDetailEntity  orderDetailEntity = mapperUtil.map(d, OrderDetailEntity.class);
-			ProductEntity productEntity = productRepository.findById(d.getProductNo()).get(); 
-			orderDetailEntity.setProduct(productEntity);
-			orderDetailEntity.setProductPrice(productEntity.getProductPrice());
-			orderDetailEntity.setProductStock(productEntity.getProductStock());
-			orderDetailEntity.setOrder(orderEntity);
-			orderEntity.addOrderDetail(orderDetailEntity);
-			//주문상세를 저장한다 
-			orderDetailRepository.save(orderDetailEntity);
-		});
-		//가격을 재계산한다 
-		orderEntity.recalcTotalPrice();
-		//변경된 가격을 저장한다 
-		orderRepository.save(orderEntity);
+    /**
+     * 주문번호와 결제 수단을 받아서 결제 요청용 DTO 생성
+     * 이 메서드는 결제 요청을 위해 주문 정보를 변환하는 역할을 합니다.
+     */
+//    public PaymentRequestDTO createPaymentRequest(Long orderNo, String method) {
+//        // 1. 주문 조회
+//        OrderEntity order = orderRepository.findById(orderNo)
+//                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+//        
+//        // 2. PaymentRequestDTO 빌더로 변환
+//        return PaymentRequestDTO.builder()
+//                .orderId(String.valueOf(order.getOrderNo()))
+//                .amount((long) order.getTotalPrice())
+//                .method(method)
+//                .build();
+//    }
+	
+    // 유저의 모든 주문 조회 메서드 추가
+	public Page<OrderDTO> getOrdersByUser(Users user, Pageable pageable) {
+		Page<OrderEntity> ordersPage  = orderRepository.findByUserAndIsDeletedFalse(user, pageable);
+		
+	    return ordersPage.map(order -> order.of(mapperUtil));
 	}
+	
+	// 주문 상세 정보
+    private void addOrderDetail(OrderEntity orderEntity, List<OrderDetailDTO> list) {
+        for (OrderDetailDTO dto : list) {
+            ProductEntity product = productRepository.findById(dto.getProductNo())
+                    .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+            OrderDetailEntity detail = OrderDetailEntity.builder()
+                    .order(orderEntity)
+                    .product(product)
+                    .productPrice(product.getProductPrice())  // 상품 가격은 DB에서 가져오고
+                    .productStock(dto.getProductStock())      // ✅ 수량은 DTO에서 가져오기
+                    .build();
+
+            orderEntity.addOrderDetail(detail);
+            orderDetailRepository.save(detail); // detail DB에 저장
+        }
+
+        // 총합 다시 계산
+        orderEntity.recalcTotalPrice();
+    }
 	
 	// 주문 등록
 	@Transactional
-	public OrderDTO createOrder(Users user, List<OrderDetailDTO> list) { 
-		Long orderNo = Long.valueOf(0);
-		if (list.size() > 0) {
-			orderNo = list.get(0).getOrderNo();
-		}
+	public OrderDTO createOrder(Users user, OrderDTO.CreateRequest request ) {
+		// 1. 주문 정보 생성
+		OrderEntity orderEntity = OrderEntity.builder()
+				.user(user)
+				.status(OrderStatus.PENDING)
+				// 2. 배송 정보 입력 받기
+				.deliveryName(request.getDeliveryName())
+				.receiver(request.getReceiver())
+				.zipcode(request.getZipcode())
+				.address1(request.getAddress1())
+				.address2(request.getAddress2())
+				.phone(request.getPhone())
+				.build();
 		
-		OrderEntity orderEntity = orderNo == null ? null : orderRepository.findById(orderNo).orElse(null);
-		if(orderEntity == null) {
-		    // 신규 주문 객체 생성
-		    orderEntity = OrderEntity.builder()
-		            .user(user)
-		            .status(OrderStatus.PENDING)
-		            .build();
-		    // 주문 저장
-		   orderRepository.save(orderEntity);
-		}
-
-		//기존 주문에 주문상세 항목 추가 
-		orderEntity.prePersist();
-		addOrderDetail(orderEntity, list);
-		
-        // ✅ 주문된 상품들을 장바구니에서 제거
-        List<Long> productNos = list.stream()
-                .map(OrderDetailDTO::getProductNo)
-                .toList();
-
-        cartRepository.deleteByUserAndProduct_ProductNoIn(user, productNos);
-	    
-		return orderEntity.of(mapperUtil);
-	}
+	orderRepository.save(orderEntity);	
 	
-	// 주문 내역 목록
-	@Transactional(readOnly = true)
-	public List<OrderDTO> getOrdersByUser(Users user) {
-		
-		 // 사용자 기준 주문 목록 조회
-		 return orderRepository.findByUser(user).stream()
-				 .filter(order -> !order.isDeleted())
-				 .map(order -> order.of(mapperUtil)).toList();
-	}
+	// 3 . 최신 장바구니 수량으로 업데이트
+	List<Long> productNos = request.getOrderDetails().stream()
+			.map(OrderDetailDTO::getProductNo)
+			.toList();
 	
+	List<CartEntity> cartList = cartRepository.findByUserAndProduct_ProductNoIn(user, productNos);
+	
+	for(OrderDetailDTO dto : request.getOrderDetails()) {
+		for(CartEntity cart : cartList) {
+			if(cart.getProduct().getProductNo().equals(dto.getProductNo())) {
+				dto.setProductStock(cart.getProductStock());// 최신수량 업데이트
+				break;
+			}
+		}
+	}
+	// 4 . 주문 상세 저장
+	addOrderDetail(orderEntity, request.getOrderDetails());
+	
+	// 5 . 장바구니 삭제
+	cartRepository.deleteByUserAndProduct_ProductNoIn(user, productNos);
+	
+	// 6 . 결과 반환 
+	return orderEntity.of(mapperUtil);
+	}
+//	public OrderDTO createOrder(Users user, List<OrderDetailDTO> list) { 
+//	    Long orderNo = Long.valueOf(0);
+//	    if (list.size() > 0) {
+//	        orderNo = list.get(0).getOrderNo();
+//	    }
+//
+//	    OrderEntity orderEntity = orderNo == null ? null : orderRepository.findById(orderNo).orElse(null);
+//	    if(orderEntity == null) {
+//	        orderEntity = OrderEntity.builder()
+//	                .user(user)
+//	                .status(OrderStatus.PENDING)
+//	                .build();
+//	        orderRepository.save(orderEntity);
+//	    }
+//
+//	    // ✅ 여기서 장바구니에서 최신 수량 조회 후 list 덮어쓰기
+//	    List<Long> productNos = list.stream()
+//	            .map(OrderDetailDTO::getProductNo)
+//	            .toList();
+//
+//	    List<CartEntity> cartList = cartRepository.findByUserAndProduct_ProductNoIn(user, productNos);
+//
+//	    for (OrderDetailDTO dto : list) {
+//	        for (CartEntity cart : cartList) {
+//	            if (cart.getProduct().getProductNo().equals(dto.getProductNo())) {
+//	                dto.setProductStock(cart.getProductStock());  // 최신 수량 반영
+//	                break;
+//	            }
+//	        }
+//	    }
+//
+//	    orderEntity.prePersist();
+//	    addOrderDetail(orderEntity, list);
+//
+//	    cartRepository.deleteByUserAndProduct_ProductNoIn(user, productNos);
+//
+//	    return orderEntity.of(mapperUtil);
+//	}
+
 	// 주문 상세
 	@Transactional(readOnly = true)
 	public OrderResponseDTO getOrderDetail(Long orderNo, Users user) {
@@ -138,8 +206,15 @@ public class OrderService {
 	    }
 
 	    order.softDelete();
-	    order.setStatus(OrderStatus.CANCELLED); // enum에 CANCELLED 상태 추가 필요
-	    orderRepository.save(order);
+	    order.setStatus(OrderStatus.CANCELLED); // 주문 상태 변경
+
+	    // ✅ 주문 상세(OrderDetail)도 함께 취소 처리
+	    for (OrderDetailEntity detail : order.getOrderDetailList()) {
+	    	detail.softDelete();
+	        detail.setStatus(OrderStatus.CANCELLED);
+	    }
+
+	    orderRepository.save(order); // Cascade 설정 시 주문 상세도 함께 저장됨
 	    return "주문 취소가 완료되었습니다.";
 	}
 }

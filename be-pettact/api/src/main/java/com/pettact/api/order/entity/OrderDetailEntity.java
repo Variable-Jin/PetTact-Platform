@@ -3,9 +3,12 @@ package com.pettact.api.order.entity;
 import com.pettact.api.core.base.BaseEntity;
 import com.pettact.api.core.base.MapperUtil;
 import com.pettact.api.order.dto.OrderDetailDTO;
+import com.pettact.api.order.enums.OrderStatus;
 import com.pettact.api.product.entity.ProductEntity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,13 +40,16 @@ public class OrderDetailEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_no")
     private ProductEntity product; // 상품 번호
+    
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     private int productStock; // 수량
 
     private int productPrice; // 단가
     
     public int getTotalPrice() {
-    	return productStock * productPrice;
+    	return productStock * productPrice; // 실제 결제금액
     }
     
     public OrderDetailDTO of(MapperUtil mapperUtil) {
