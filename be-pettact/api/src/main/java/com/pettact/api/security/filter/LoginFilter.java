@@ -48,7 +48,8 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
 		            "userEmail", user.getUserEmail(),
 		            "userNo", user.getUserNo(),
 		            "userNickname", user.getUserNickname(),
-		            "userRole", user.getRoleCode()
+		            "userRole", user.getRoleCode(),
+		            "userStatus", user.getStatusCode()
 		        );
 
 			Map<String, Object> keyMap = Map.of(
@@ -58,7 +59,8 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
 			    		"userEmail", user.getUserEmail(),
 				        "userNo", user.getUserNo(),
 				        "userNickname", user.getUserNickname(),
-				        "userRole", user.getRoleCode()
+				        "userRole", user.getRoleCode(),
+				        "userStatus", user.getStatusCode()
 				    )
 				);
 			//json 객체로 응답 스트림에 keyMap 객체를 출력 한다 

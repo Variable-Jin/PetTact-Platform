@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.pettact.api.code.entity.CommonCode;
 import com.pettact.api.code.service.CommonCodeService;
+import com.pettact.api.user.dto.SocialJoinDTO;
 import com.pettact.api.user.dto.UserJoinDTO;
 import com.pettact.api.user.dto.UserPatchDTO;
 import com.pettact.api.user.entity.Users;
@@ -14,6 +15,7 @@ import com.pettact.api.user.repository.UserRepository;
 import com.pettact.api.verification.EmailService;
 import com.pettact.api.verification.VerificationCodeStore;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,6 +29,7 @@ public class UserService {
 	private final VerificationCodeStore verificationCodeStore;
 	private final EmailService emailService;
 	
+	/* 회원가입 */
     public void join(UserJoinDTO dto) {
         
     	if (isEmailDuplicated(dto.getUserEmail())) {
@@ -41,7 +44,7 @@ public class UserService {
             throw new IllegalArgumentException("이메일 인증이 완료되지 않았습니다.");
         }
 
-        verificationCodeStore.remove(verifiedKey); // 인증 한 번만 사용하도록 제거
+        verificationCodeStore.remove(verifiedKey);
         
         if (isNicknameDuplicated(dto.getUserNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
@@ -60,7 +63,7 @@ public class UserService {
                 .userZipcode(dto.getUserZipcode())
                 .userStreet1(dto.getUserStreet1())
                 .userDetailAddress(dto.getUserDetailAddress())
-                .userHasPet(false)
+                .userHasPet(dto.getUserHasPet())
                 .userEmailChecked(dto.getUserEmailChecked())
                 .userBlacklist(false)
                 .roleCode(role)
@@ -70,17 +73,38 @@ public class UserService {
         userRepository.save(user);
     }
     
-    // 중복확인
+    @Transactional
+    public void updateSocialAdditionalInfo(Long userNo, SocialJoinDTO dto) {
+        Users user = userRepository.findById(userNo)
+                .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다."));
+
+        CommonCode status = commonCodeService.getCodeById("STATUS_ACTIVE");
+        
+        user.setUserName(dto.getUserName());
+        user.setUserNickname(dto.getUserNickname());
+        user.setUserTel(dto.getUserTel());
+        user.setUserBirth(dto.getUserBirth());
+        user.setUserZipcode(dto.getUserZipcode());
+        user.setUserStreet1(dto.getUserStreet1());
+        user.setUserDetailAddress(dto.getUserDetailAddress());
+        user.setUserHasPet(dto.getUserHasPet());
+        user.setUserEmailChecked(dto.getUserEmailChecked());
+        user.setUserBlacklist(false);
+        user.setStatusCode(status);
+
+        userRepository.save(user);
+    }
+
+    /* 중복확인 */
     public boolean isEmailDuplicated(String userEmail) {
     	return userRepository.existsByUserEmail(userEmail);
     }
 
-    // 중복확인
     public boolean isNicknameDuplicated(String userNickname) {
     	return userRepository.existsByUserNickname(userNickname);
     }
     
-    // 이메일 찾기
+    /* email 조회 */
     public String findEmailByNameAndTel(String userName, String userTel) {
         Users user = userRepository.findByUserNameAndUserTel(userName, userTel)
             .orElseThrow(() -> new IllegalArgumentException("일치하는 정보가 없습니다."));
@@ -88,7 +112,7 @@ public class UserService {
         return user.getUserEmail();
     }
     
-    // 비밀번호 재설정 메일 전송
+    /* pwd 재설정 */
     public void sendPasswordResetMail(String userEmail) {
         Users user = userRepository.findByUserEmail(userEmail)
             .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 가입된 사용자가 없습니다."));
@@ -99,7 +123,6 @@ public class UserService {
         emailService.sendPasswordResetLink(userEmail, token);
     }
 
-    // 비밀번호 재설정
     public void updatePassword(String userEmail, String newPassword) {
         Users user = userRepository.findByUserEmail(userEmail)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
@@ -108,7 +131,15 @@ public class UserService {
         userRepository.save(user);
     }
 
-    // 회원정보 수정(patch -> 수정할 항목만 수정)
+    /* 본인확인용 pwd 확인 */
+    public boolean verifyUserPassword(Long userNo, String inputPassword) {
+        Users user = userRepository.findById(userNo)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+        
+        return passwordEncoder.matches(inputPassword, user.getUserPassword());
+    }
+    
+    /* mypage */
     public void patchUserInfo(Long userNo, UserPatchDTO dto) {
         Users user = userRepository.findById(userNo)
             .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
@@ -141,17 +172,41 @@ public class UserService {
 
         userRepository.save(user);
     }
-    
-    // 회원 탈퇴
+
+    /* 탈퇴(soft delete) */
     public void withdrawUser(Long userNo) {
         Users user = userRepository.findById(userNo)
-            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         CommonCode status = commonCodeService.getCodeById("STATUS_WITHDRAW");
 
         user.setStatusCode(status);
         user.softDelete();
-
         userRepository.save(user);
+    }
+
+    /* seller 권한 */
+    public void requestSeller(Long userNo) {
+        Users user = userRepository.findById(userNo)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        CommonCode pendingCode = commonCodeService.getCodeById("STATUS_PENDING");
+
+        if ("ROLE_SELLER".equals(user.getRoleCode())) {
+            throw new IllegalArgumentException("이미 판매자 권한이 있습니다.");
+        }
+        if ("STATUS_PENDING".equals(user.getStatusCode())) {
+            throw new IllegalArgumentException("이미 판매자 승인 요청 중입니다.");
+        }
+
+        user.setStatusCode(pendingCode);
+        userRepository.save(user);
+    }
+
+    public String getSellerRequestStatus(Long userNo) {
+        Users user = userRepository.findById(userNo)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        return user.getStatusCode();
     }
 }

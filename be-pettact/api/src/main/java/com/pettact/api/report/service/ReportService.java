@@ -1,5 +1,7 @@
 package com.pettact.api.report.service;
 
+import com.pettact.api.admin.dto.report.AdminReportListDTO;
+import com.pettact.api.common.dto.PageResponseDto;
 import com.pettact.api.notification.dto.NotificationReqDTO;
 import com.pettact.api.notification.enums.NotificationType;
 import com.pettact.api.notification.enums.TargetType;
@@ -13,6 +15,9 @@ import com.pettact.api.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -74,14 +79,22 @@ public class ReportService {
 
 
     // admin
-    public List<ReportResponseDto> getAdminListReport(Report.ReportTargetLocation location, Integer status, String reason, LocalDate startDate, LocalDate endDate) {
+    public PageResponseDto<AdminReportListDTO> getAdminListReport(
+    	    Report.ReportTargetLocation reportTargetLocation, Integer reportStatus, String reportReason,
+    	    LocalDate startDate, LocalDate endDate, int page, int size
+	) {
+	    Pageable pageable = PageRequest.of(page - 1, size);
+	    Page<Report> reports = reportRepository.findAllWithFilters(
+	        reportTargetLocation, reportStatus, reportReason, startDate, endDate, pageable
+	    );
 
-        List<Report> reports = reportRepository.findAllWithFilters(location, status, reason, startDate, endDate);
+	    List<AdminReportListDTO> dtoList = reports.getContent().stream()
+	        .map(AdminReportListDTO::from)
+	        .toList();
 
-        return reports.stream()
-                .map(ReportResponseDto::fromEntity)
-                .collect(Collectors.toList());
-    }
+	    return new PageResponseDto<>(dtoList, (int) reports.getTotalElements(), page, size);
+	}
+
 
     public ReportResponseDto getReportDetail(Long reportNo) {
         Report report = reportRepository.findById(reportNo)

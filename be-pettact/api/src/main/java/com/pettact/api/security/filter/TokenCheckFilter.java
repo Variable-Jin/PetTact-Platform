@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.pettact.api.security.service.CustomUserDetailsService;
@@ -26,32 +27,28 @@ public class TokenCheckFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
 
-    // 토큰 검사 제외할 url
+    private static final AntPathMatcher pathMatcher = new AntPathMatcher();
+
     private static final List<String> EXCLUDED_PATHS = List.of(
-    	    "/v1/user/login",
-    	    "/v1/user/join",
-    	    "/v1/user/email/send",
-    	    "/v1/user/email/verify",
-    	    "/v1/user/email/verified",
-    	    "/v1/user/email/check",
-    	    "/v1/user/nickname/check",
-    	    "/v1/user/email/find",
-		    "/v1/user/password/send",
-		    "/v1/user/password/verify",
-		    "/v1/user/password/reset",
-    	    "/refreshToken",
-    	    "/login",
-    	    "/oauth2/",
-    	    "/login/oauth2/",
-    	    "/favicon.ico",
-    	    "/default-ui.css",
-    	    "/api/fetch",
-            "/",
-            "/ws-stomp/**",             // SockJS handshake endpoint
-            "/index.html",       // 테스트용 HTML
-            "/app.js"         // JS 파일 (필요시)
-	);
-    
+        "/v1/user/login",
+        "/v1/user/join",
+        "/v1/user/email/**",
+        "/v1/user/nickname/check",
+        "/v1/user/password/**",
+        "/refreshToken",
+        "/login",
+        "/oauth2/**",
+        "/login/oauth2/**",
+        "/favicon.ico",
+        "/default-ui.css",
+        "/v1/api/abandonment/**",
+        "/v1/pet/abandonment/**",
+        "/v1/notification/subscribe",
+        "/product/list",
+        "/v1/payments/confirm",
+        "/ws-stomp" // sockjs 경로도 리스트에 포함
+    );
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -59,26 +56,13 @@ public class TokenCheckFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String path = request.getRequestURI();
-
         log.info("요청 URI: {}", path);
 
-        // 예외 경로는 통과
-//        if (EXCLUDED_PATHS.stream().anyMatch(path::startsWith)) {
-//            log.info("TokenCheckFilter skip: {}", path);
-//            filterChain.doFilter(request, response);
-//            return;
-//        }
-        //sock.js 추가
-        if (path.startsWith("/ws-stomp")) {
-            log.info("SockJS 경로 JWT 검사 제외: {}", path);
+        // JWT 검사 제외 경로 처리
+        if (EXCLUDED_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path))) {
+            log.info("TokenCheckFilter skip (예외 경로): {}", path);
             filterChain.doFilter(request, response);
             return;
-        }
-        
-        if (EXCLUDED_PATHS.contains(path)) {
-        	log.info("TokenCheckFilter skip: {}", path);
-        	filterChain.doFilter(request, response);
-        	return;
         }
 
         try {
@@ -92,20 +76,20 @@ public class TokenCheckFilter extends OncePerRequestFilter {
 
     private void setAuthentication(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
+        log.info("🔑 Authorization Header: {}", header);
 
         if (header == null || !header.startsWith("Bearer ")) {
             throw new RuntimeException("Authorization 헤더가 없습니다.");
         }
 
         String token = header.substring(7); // "Bearer " 제거
-
         Map<String, Object> claims = jwtTokenProvider.validateToken(token);
         String email = (String) claims.get("userEmail");
 
+        log.info("Token claims: {}", claims);
         log.info("인증된 이메일: {}", email);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());

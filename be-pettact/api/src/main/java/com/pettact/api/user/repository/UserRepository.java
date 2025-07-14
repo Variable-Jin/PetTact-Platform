@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,24 +28,41 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 	List<Users> findAllByOrderByCreatedAtDesc();
 	// 회원 검색(회원 이메일, 이름, 닉네임) , 필터링(status_code, role_code, 날짜 로)
 	@Query("""
-			SELECT u FROM Users u
-			WHERE (:keyword IS NULL OR u.userNickname LIKE CONCAT('%', :keyword, '%')
-				OR u.userEmail LIKE CONCAT('%', :keyword, '%')
-				OR u.userName LIKE CONCAT('%', :keyword, '%'))
-			AND (:status IS NULL OR u.statusCode.codeId = :status)
-			AND (:role IS NULL OR u.roleCode.codeId = :role)
-			AND (:startDate IS NULL OR u.createdAt >= :startDate)
-			AND (:endDate IS NULL OR u.createdAt <= :endDate)
+		    SELECT u FROM Users u
+		    WHERE (:keyword IS NULL OR u.userNickname LIKE CONCAT('%', :keyword, '%')
+		        OR u.userEmail LIKE CONCAT('%', :keyword, '%')
+		        OR u.userName LIKE CONCAT('%', :keyword, '%'))
+		    AND (:status IS NULL OR u.statusCode.codeId = :status)
+		    AND (:role IS NULL OR u.roleCode.codeId = :role)
+		    AND (:startDate IS NULL OR u.createdAt >= :startDate)
+		    AND (:endDate IS NULL OR u.createdAt <= :endDate)
+		""")
+		Page<Users> findUsersWithFilters(
+		    @Param("keyword") String keyword,
+		    @Param("status") String status,
+		    @Param("role") String role,
+		    @Param("startDate") LocalDateTime startDate,
+		    @Param("endDate") LocalDateTime endDate,
+		    Pageable pageable
+		);
 
-			ORDER BY u.createdAt DESC
-			""")
-	List<Users> findUsersWithFilters(
+	// 판매자 전용
+	@Query("""
+		    SELECT u FROM Users u
+		    WHERE u.roleCode.codeId = 'ROLE_SELLER'
+		    AND (:keyword IS NULL OR u.userNickname LIKE %:keyword% OR u.userEmail LIKE %:keyword% OR u.userName LIKE %:keyword%)
+		    AND (:status IS NULL OR u.statusCode.codeId = :status)
+		    AND (:startDate IS NULL OR u.createdAt >= :startDate)
+		    AND (:endDate IS NULL OR u.createdAt <= :endDate)
+	""")
+	Page<Users> findSellersWithFilters(
 	    @Param("keyword") String keyword,
 	    @Param("status") String status,
-	    @Param("role") String role,
 	    @Param("startDate") LocalDateTime startDate,
-	    @Param("endDate") LocalDateTime endDate
+	    @Param("endDate") LocalDateTime endDate,
+	    Pageable pageable
 	);
+
 
 	/* 대시보드 */
 	@Query("SELECT COUNT(u) FROM Users u WHERE u.isDeleted = false")
@@ -58,7 +77,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
 	@Query("SELECT COUNT(u) FROM Users u WHERE u.roleCode.codeId = 'ROLE_SELLER'")
 	long countActiveSellers();
 
-    @Query("SELECT COUNT(u) FROM Users u WHERE u.statusCode.codeId = 'STATUS_PENDING'")
+    @Query("SELECT COUNT(u) FROM Users u WHERE u.statusCode.codeId = 'STATUS_PENDING' AND u.isDeleted = false")
     long countPendingSellers();
 
     @Query("SELECT COUNT(u) FROM Users u WHERE DATE(u.createdAt) = CURRENT_DATE " +

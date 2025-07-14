@@ -29,7 +29,7 @@ import lombok.Setter;
 @Builder
 @Entity
 @Table(name = "notifications")
-public class Notification extends BaseEntity {
+public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,7 +65,18 @@ public class Notification extends BaseEntity {
 
     @Column(name = "read_at")
     private LocalDateTime readAt;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+    
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+    
     public static Notification from(NotificationReqDTO dto) {
         return Notification.builder()
                 .senderUserNo(dto.getSenderUserNo())

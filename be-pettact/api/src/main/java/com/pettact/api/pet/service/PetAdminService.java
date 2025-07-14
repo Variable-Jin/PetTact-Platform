@@ -1,8 +1,13 @@
 package com.pettact.api.pet.service;
 
+import java.time.Duration;
+
 import org.modelmapper.ModelMapper;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import com.pettact.api.common.ViewCountService;
+import com.pettact.api.common.scheduler.ViewCountScheduler.ViewCountSyncable;
 import com.pettact.api.pet.dto.PetAbandonmentDto;
 import com.pettact.api.pet.dto.PetOriginFacilityDto;
 import com.pettact.api.pet.dto.PetShelterDto;
@@ -21,19 +26,29 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PetAdminService {
+public class PetAdminService implements ViewCountSyncable<String> {
 
     private final PetAbandonmentRepository abandonmentRepository;
     private final PetFacilityRepository facilityRepository;
     private final PetShelterRepository shelterRepository;
+    private final ViewCountService viewCountService;
+    private final StringRedisTemplate redisTemplate;
     
     private final ModelMapper mapper;
 
     // ------------------ 유기동물 ------------------
 
-    public PetAbandonmentDto detailAbandonment(String desertionNo) {
+    public PetAbandonmentDto detailAbandonment(String desertionNo, String sessionId) {
         PetAbandonmentEntity entity = abandonmentRepository.findByDesertionNo(desertionNo)
             .orElseThrow(() -> new EntityNotFoundException("유기동물 정보 없음"));
+        
+        String preventKey = "pet:viewed:" + sessionId + ":" + desertionNo;
+
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
+            viewCountService.increaseViewCount("pet", desertionNo, 120);
+            redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
+        }
+        
         return mapper.map(entity, PetAbandonmentDto.class);
     }
     
@@ -82,5 +97,11 @@ public class PetAdminService {
         return dto;
     }
 
-
+    // ------------------ 유기동물 조회수 db 갱신 ------------------
+    
+    @Override
+    @Transactional
+    public void updateViewCount(String desertionNo, int count) {
+        abandonmentRepository.updateViewCount(desertionNo, count);
+    }
 }

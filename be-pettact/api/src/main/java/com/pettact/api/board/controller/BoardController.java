@@ -4,6 +4,9 @@ import com.pettact.api.board.service.BoardService;
 import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.board.dto.BoardResponseDto;
 import com.pettact.api.security.vo.CustomUserDetails;
+
+import jakarta.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -50,8 +53,9 @@ public class BoardController {
      */
 
     @GetMapping("/{boardNo}")
-    public ResponseEntity<BoardResponseDto> getBoardByNo(@PathVariable Long boardNo) {
-        BoardResponseDto board = boardService.getBoardByNo(boardNo);
+    public ResponseEntity<BoardResponseDto> getBoardByNo(@PathVariable("boardNo") Long boardNo,  HttpSession session) {
+    	String sessionId = session.getId();
+        BoardResponseDto board = boardService.getBoardByNo(boardNo, sessionId);
         return ResponseEntity.ok(board);
     }
 

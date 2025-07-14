@@ -2,6 +2,8 @@ package com.pettact.api.board.service;
 
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.board.repository.BoardRepository;
+import com.pettact.api.common.ViewCountService;
+import com.pettact.api.common.scheduler.ViewCountScheduler.ViewCountSyncable;
 import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.board.dto.BoardResponseDto;
 import com.pettact.api.Category.entity.BoardCategory;
@@ -12,15 +14,17 @@ import com.pettact.api.reply.service.ReplyService;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.repository.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class BoardService {
+public class BoardService implements ViewCountSyncable<Long> {
     @Autowired
     private BoardRepository boardRepository;
     @Autowired
@@ -31,6 +35,10 @@ public class BoardService {
     private UserRepository userRepository;
     @Autowired
     private BoardRecommendRepository boardRecommendRepository;
+    @Autowired
+    private ViewCountService viewCountService;
+    @Autowired    
+    private StringRedisTemplate redisTemplate;
     @Transactional
     public BoardResponseDto createBoard(BoardCreateDto boardCreateDto,  Long userNo) {
         Users users = userRepository.findById(userNo)
@@ -48,9 +56,15 @@ public class BoardService {
                 .map(BoardResponseDto::getAllBoard)
                 .collect(Collectors.toList());
     }
-    public BoardResponseDto getBoardByNo(Long boardNo) {
+    public BoardResponseDto getBoardByNo(Long boardNo, String sessionId) {
         Board board = boardRepository.findById(boardNo)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
+        String preventKey = "board:viewed:" + sessionId + ":" + boardNo;
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
+            viewCountService.increaseViewCount("board", boardNo, 120);
+            redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
+        }
+        
         List<ReplyResponseDto> replyList = replyService.getAllReplies(boardNo);
         int recommendCount = boardRecommendRepository.countByBoardNo(boardNo);
         BoardResponseDto boardResponseDto = BoardResponseDto.fromEntity(board);
@@ -77,5 +91,13 @@ public class BoardService {
             throw new IllegalArgumentException("해당 사용자가 아닙니다. 삭제를 할 수 없습니다.");
         }
         boardRepository.deleteById(boardNo);
+    }
+    
+    // ------------------ 게시글 조회수 db 갱신------------------
+    
+    @Override
+    @Transactional
+    public void updateViewCount(Long boardNo, int count) {
+    	boardRepository.updateViewCount(boardNo, count);
     }
 }
