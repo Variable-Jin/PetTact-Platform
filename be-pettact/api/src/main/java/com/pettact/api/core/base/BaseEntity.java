@@ -39,6 +39,11 @@ public abstract class BaseEntity implements Serializable {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
