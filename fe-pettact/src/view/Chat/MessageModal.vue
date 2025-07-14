@@ -34,8 +34,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from '@/js/axios';
-import { useChatStore } from '@/js/pinia';
+import axios from 'axios';
 import SearchUserModal from './SearchUserModal.vue';
 import ChatWindow from './ChatRoom.vue';
 
@@ -45,7 +44,7 @@ const chatStore = useChatStore();
 const emit = defineEmits(['close']); 
 
 onMounted(() => {
-  axios.get('/chat/room/my').then(res => {
+  axios.get('/v1/chat/room/my').then(res => {
     chatRooms.value = res.data;
   });
 });
