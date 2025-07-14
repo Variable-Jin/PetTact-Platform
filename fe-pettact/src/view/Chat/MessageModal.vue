@@ -1,9 +1,9 @@
 <template>
-<div class="modal-overlay" @click.self="closeChatModal">
+  <div class="modal-overlay" @click.self="closeChatModal">
     <div class="modal-box">
-      <h4 v-if="!chatStore.roomNo">나의 채팅방</h4>
+      <h4 v-if="!modalStore.roomNo">나의 채팅방</h4>
 
-      <ul v-if="!chatStore.roomNo && chatRooms.length > 0">
+      <ul v-if="!modalStore.roomNo && chatRooms.length > 0">
         <li
           v-for="room in chatRooms"
           :key="room.roomNo"
@@ -13,21 +13,25 @@
           {{ room.name }}
         </li>
       </ul>
-      <p v-else-if="!chatStore.roomNo">참여 중인 채팅방이 없습니다.</p>
+      <p v-else-if="!modalStore.roomNo">참여 중인 채팅방이 없습니다.</p>
 
-      <!--  채팅창 -->
-      <ChatWindow v-if="chatStore.roomNo" :roomNo="chatStore.roomNo" />
+      <!-- 채팅창 -->
+      <ChatRoom v-if="modalStore.roomNo" :roomNo="modalStore.roomNo" />
 
-      <!--  닉네임 검색 -->
-      <button v-if="!chatStore.roomNo" @click="showSearch = true" class="search-btn">
+      <!-- 닉네임 검색 -->
+      <button v-if="!modalStore.roomNo" @click="showSearch = true" class="search-btn">
         닉네임으로 채팅 신청하기
       </button>
-      <SearchUserModal v-if="showSearch" @roomOpen="openRoom" @close="showSearch = false" />
 
-      <!--  닫기 또는 채팅 종료 -->
-      <button class="close-btn" @click="closeModal">
-        {{ chatStore.roomNo ? '채팅방 목록' : '닫기' }}
-      </button>
+      <SearchUserModal
+        v-if="showSearch"
+        @roomOpen="openRoom"
+        @close="showSearch = false"
+      />
+
+    <button class="close-btn" @click="closeModal">
+      {{ modalStore.roomNo ? '채팅방 목록' : '닫기' }}
+    </button>
     </div>
   </div>
 </template>
@@ -35,13 +39,14 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { useModalStore } from '@/js/modalStore';
+import ChatRoom from './ChatRoom.vue';
 import SearchUserModal from './SearchUserModal.vue';
-import ChatWindow from './ChatRoom.vue';
 
-const showSearch = ref(false);
+const modalStore = useModalStore();
 const chatRooms = ref([]);
-const chatStore = useChatStore();
-const emit = defineEmits(['close']); 
+const showSearch = ref(false);
+const emit = defineEmits(['close']);
 
 onMounted(() => {
   axios.get('/v1/chat/room/my').then(res => {
@@ -49,15 +54,17 @@ onMounted(() => {
   });
 });
 
+
+
 function openRoom(roomNo) {
-  chatStore.roomNo = roomNo;
+  modalStore.roomNo = roomNo;
   showSearch.value = false;
 }
 
 function closeModal() {
-  chatStore.reset(); 
+  modalStore.resetChat();
 
-  axios.get('/chat/room/my')
+  axios.get('/v1/chat/room/my')
     .then(res => {
       chatRooms.value = res.data;
     })
@@ -65,9 +72,10 @@ function closeModal() {
       console.error('채팅방 목록 재조회 실패:', err);
     });
 
-  emit('close'); 
+  emit('close');
 }
 </script>
+
 <style scoped>
 .modal-overlay {
   position: fixed;
@@ -83,25 +91,19 @@ function closeModal() {
 }
 
 .modal-box {
-  background-color: black;
+  background-color: white;
+  color: black; /* ✅ 추가 */
   padding: 24px;
   width: 400px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
-.modal-box h4,
-.modal-box h5 {
-  margin-bottom: 16px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-}
 
 .chat-room-item {
   padding: 10px;
   margin-bottom: 8px;
-  background-color: black;
+  background-color: #f5f5f5;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s ease;
