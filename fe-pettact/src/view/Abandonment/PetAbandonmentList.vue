@@ -50,7 +50,7 @@
 
 <script>
 import axios from 'axios'
-import Pagination from '@/components/Paginations.vue'
+import Pagination from '@/components/common/Paginations.vue'
 
 export default {
   components: { Pagination },
