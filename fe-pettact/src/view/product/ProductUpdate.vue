@@ -81,7 +81,13 @@
       </div>
 
       <div class="col-12 d-flex gap-2">
-        <button type="submit" :disabled="isLoading" class="btn btn-secondary">
+        <!-- ✅ 수정 버튼: 셀러이면서 본인 글인 경우만 표시 -->
+        <button
+          v-if="isSeller && isOwner"
+          type="submit"
+          :disabled="isLoading"
+          class="btn btn-secondary"
+        >
           {{ isLoading ? '수정 중...' : '수정하기' }}
         </button>
         <button @click="goToList" type="button" class="btn btn-secondary">상품 목록</button>
@@ -94,17 +100,18 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/product';
 import { useFileStore } from '@/stores/file';
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute();
 const router = useRouter();
 
 const productStore = useProductStore();
+const userStore = useUserStore();
 const fileStore = useFileStore();
 
 const productNo = Number(route.params.id);
@@ -115,6 +122,9 @@ const selectedFiles = ref([]);
 const fileInputRef = ref(null);
 const categories = computed(() => productStore.categories);
 
+// 유저 권한 체크
+const isSeller = computed(() => userStore.user?.userRole === 'ROLE_SELLER')
+const isOwner = computed(() => userStore.user?.userNo === productStore.productDetail?.userNo)
 
 // 상품 상세 데이터로 form 초기화
 const initializeForm = (data) => {

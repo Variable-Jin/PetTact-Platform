@@ -23,7 +23,7 @@
     <h1>상품 목록</h1>
     <div class="mb-3">
       <!-- 상품 등록 버튼 (SELLER만 노출) -->
-      <button v-if="userStore.user?.roleCode === 'ROLE_SELLER'" @click="goToCreateProduct" class="btn btn-secondary me-2">상품 등록</button>
+      <button v-if="userStore.user?.userRole === 'ROLE_SELLER' || userStore.user?.userRole === 'ROLE_ADMIN'" @click="goToCreateProduct" class="btn btn-secondary me-2">상품 등록</button>
       <!-- 장바구니 버튼 (로그인한 사용자만 노출) -->
       <button v-if="userStore.user" @click="goToCart" class="btn btn-secondary me-2">장바구니</button>
       <!-- 주문 내역 버튼 (로그인한 사용자만 노출) -->
@@ -131,6 +131,11 @@ const categories = computed(() => productStore.categories)
 const currentPage = ref(0); // 0부터 시작
 const pageSize = 12; // 한 페이지당 10개
 
+// 콘솔로 확인
+console.log('현재 로그인 유저:', userStore.user);
+console.log('현재 로그인 유저:', JSON.stringify(userStore.user, null, 2));
+console.log('유저 권한:', userStore.user?.userRole);
+
 const changePage = (page) => {
   if (page >= 0 && page < productStore.totalPages) {
     currentPage.value = page;
@@ -179,6 +184,18 @@ const goToCart = () => {
 }
 
 onMounted(() => {
+
+    // userStore.user가 없거나 userRole이 없으면 임시로 할당 (테스트용) - 백엔드 수정 후 삭제 예정 아직 토큰 값에 권한 X 
+    if (!userStore.user || !userStore.user.userRole) {
+      userStore.user = {
+        ...userStore.user, // 기존 데이터가 있으면 유지
+        userRole: 'ROLE_NORMAL', // 원하는 임시 권한 넣기 (ROLE_ADMIN , ROLE_NORMAL 등)
+        userEmail: 'test@example.com',
+        userNickname: '테스트유저',
+        userNo: 999
+      };
+      console.log('임시로 userStore.user.userRole 할당:', userStore.user.userRole);
+    }
     productStore.fetchCategories();
 
     const page = parseInt(route.query.page) || 0;

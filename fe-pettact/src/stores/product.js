@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import api from '@/api';
+import axios from 'axios';
 
 export const useProductStore = defineStore('product', {
   state: () => ({
@@ -16,7 +16,7 @@ export const useProductStore = defineStore('product', {
 
       async fetchCategories() {
         try {
-          const res = await api.get('/v1/product/categories'); // ← 이 경로로 수정
+          const res = await axios.get('/v1/product/categories'); // ← 이 경로로 수정
           console.log('카테고리 API 응답:', res.data);
           this.categories = res.data.items; // ← items 배열만 할당
           console.log('저장된 categories 상태:', this.categories);
@@ -31,7 +31,7 @@ export const useProductStore = defineStore('product', {
       async fetchProductList(keyword = '', categoryNo = '', sort = '', page = 0, size = 10) {
         this.loading = true;
         try {
-          const res = await api.get('/v1/product', {
+          const res = await axios.get('/v1/product', {
             params: {
               keyword: keyword.trim(),
               categoryNo: categoryNo || undefined,
@@ -56,7 +56,7 @@ export const useProductStore = defineStore('product', {
     async fetchProductDetail(productNo) { // 상품 상세
       this.loading = true;
       try {
-        const res = await api.get(`/v1/product/${productNo}`);
+        const res = await axios.get(`/v1/product/${productNo}`);
         this.productDetail = res.data;
       } catch (err) {
         this.error = err;
@@ -80,7 +80,7 @@ async createProduct(productData, files = []) {
       console.log('[FormData]', pair[0], pair[1]);
     }
 
-    const res = await api.post('/v1/product/create', formData, {
+    const res = await axios.post('/v1/product/create', formData, {
     headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -137,7 +137,7 @@ async createProduct(productData, files = []) {
         });
 
         // ✅ 3. API 요청 보내기
-        await api.put(`/v1/product/update/${productNo}`, formData, {
+        await axios.put(`/v1/product/update/${productNo}`, formData, {
         });
 
       } catch (err) {
@@ -151,7 +151,7 @@ async createProduct(productData, files = []) {
     async deleteProduct(productNo) {// 상품 삭제
       this.error = null;
       try {
-        await api.patch(`/v1/product/delete/${productNo}`);
+        await axios.patch(`/v1/product/delete/${productNo}`);
         // 성공 시 상태 초기화
         this.productDetail = null;
       } catch (err) {

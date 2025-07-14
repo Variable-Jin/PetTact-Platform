@@ -16,9 +16,10 @@
       </div>
 
       <!-- 수량 -->
-<div class="col-md-3">
-  <label for="productStock" class="form-label">수량 🔒</label>
-  <input id="productStock" v-model.number="form.productStock" type="number" min="1" max="1" @input="enforceOne" class="form-control" required/></div>
+      <div class="col-md-3">
+        <label for="productStock" class="form-label">수량 🔒</label>
+        <input id="productStock" v-model.number="form.productStock" type="number" min="1" max="1" @input="enforceOne" class="form-control" required/>
+      </div>
 
       <!-- 카테고리 -->
       <div class="col-md-6">
