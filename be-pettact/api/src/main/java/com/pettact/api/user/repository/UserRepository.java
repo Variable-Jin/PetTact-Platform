@@ -67,5 +67,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     
     @Query("SELECT COUNT(u) FROM Users u WHERE u.createdAt BETWEEN :start AND :end")
 	long countUsersBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
+    
+    Optional<Users> findByUserNickname(String userNickname);
+    
 }
