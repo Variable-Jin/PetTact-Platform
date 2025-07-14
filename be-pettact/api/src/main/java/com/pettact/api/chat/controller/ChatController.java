@@ -1,23 +1,27 @@
 package com.pettact.api.chat.controller;
 
-import com.pettact.api.admin.dto.AdminUserDetailDTO;
-import com.pettact.api.chat.dto.ChatMessageDTO;
-import com.pettact.api.chat.dto.ChatRoomDTO;
-import com.pettact.api.chat.entity.ChatMessage;
-import com.pettact.api.chat.service.ChatService;
-import com.pettact.api.security.vo.CustomUserDetails;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import com.pettact.api.chat.dto.ChatMessageDTO;
+import com.pettact.api.chat.dto.ChatRoomDTO;
+import com.pettact.api.chat.service.ChatService;
+import com.pettact.api.security.vo.CustomUserDetails;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController

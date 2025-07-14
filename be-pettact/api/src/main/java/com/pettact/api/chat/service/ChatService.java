@@ -1,6 +1,6 @@
 package com.pettact.api.chat.service;
 
-import com.pettact.api.admin.dto.AdminUserDetailDTO;
+import com.pettact.api.admin.dto.user.AdminUserDetailDTO;
 import com.pettact.api.chat.dto.ChatMessageDTO;
 import com.pettact.api.chat.dto.ChatRoomDTO;
 import com.pettact.api.chat.entity.ChatMessage;
