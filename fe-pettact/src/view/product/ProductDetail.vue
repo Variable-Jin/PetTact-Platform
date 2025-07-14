@@ -26,12 +26,37 @@
 
       <!-- 버튼들 -->
       <div class="d-flex flex-wrap gap-2">
-        <button @click="goToList" class="btn btn-secondary">상품 목록</button>
-        <button @click="goToEdit" class="btn btn-secondary">수정하기</button>
-        <button @click="addToCart" class="btn btn-secondary">장바구니에 추가</button>
-        <button @click="deleteProduct" class="btn btn-secondary">삭제하기</button>
+        <button @click="goToList" class="btn btn-secondary me-2 mb-2">상품 목록</button>
+
+        <!-- 수정 버튼 -->
+        <button
+          v-if="isAdmin || (isSeller && isOwner)"
+          @click="goToEdit"
+          class="btn btn-secondary me-2 mb-2"
+        >
+          수정하기
+        </button>
+
+        <!-- 장바구니 버튼 -->
+        <button
+          v-if="isLoggedIn"
+          @click="addToCart"
+          class="btn btn-secondary me-2 mb-2"
+        >
+          장바구니에 추가
+        </button>
+
+        <!-- 삭제 버튼 -->
+        <button
+          v-if="isAdmin || (isSeller && isOwner)"
+          @click="deleteProduct"
+          class="btn btn-secondary me-2 mb-2"
+        >
+          삭제하기
+        </button>
       </div>
-    </div>
+
+      </div>
 
     <div v-else-if="productStore.loading" class="text-center py-5">⏳ 상품 정보를 불러오는 중...</div>
     <div v-else-if="productStore.error" class="text-center text-danger py-5">❌ 상품 정보를 불러오는데 실패했습니다.</div>
@@ -39,15 +64,24 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted , computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router' 
 import { useProductStore } from '@/stores/product'
 import { useCartStore } from '@/stores/cart'
+import { useUserStore } from '@/stores/user'
+
 
 const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
 const cartStore = useCartStore()
+const userStore = useUserStore()
+
+//버튼 권한 검증
+const isLoggedIn = computed(() => !!userStore.user)
+const isAdmin = computed(() => userStore.user?.userRole === 'ROLE_ADMIN')
+const isSeller = computed(() => userStore.user?.userRole === 'ROLE_SELLER')
+const isOwner = computed(() => userStore.user?.userNo === productStore.productDetail?.userNo)
 
 const productNo = route.params.id
 
