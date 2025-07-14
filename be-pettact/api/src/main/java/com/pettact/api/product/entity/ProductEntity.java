@@ -65,5 +65,8 @@ public class ProductEntity extends BaseEntity {
     @Column(name = "product_view_cnt")
     private int productViewCnt;
 
+    public boolean isActive() {
+        return this.productStatus && !this.isDeleted();
+    }
 }
 

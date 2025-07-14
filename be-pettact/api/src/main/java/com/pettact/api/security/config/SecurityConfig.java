@@ -63,7 +63,8 @@ public class SecurityConfig {
         log.info("------------web configure-------------------");
         return (web) -> web.ignoring()
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
-                .requestMatchers("/ws-stomp/**");
+                .requestMatchers("/ws-stomp/**")
+        		.requestMatchers("/files/**");
     }
     
     @Bean
@@ -97,6 +98,7 @@ public class SecurityConfig {
                 .requestMatchers("/v1/board-categories").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/v1/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결
+                .requestMatchers("/files/**").permitAll()	// TODO: 결제 인증 해결
                 .anyRequest().permitAll()
         );
 

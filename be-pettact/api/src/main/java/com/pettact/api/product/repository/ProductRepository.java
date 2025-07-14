@@ -6,7 +6,11 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.pettact.api.product.entity.ProductEntity;
 import com.pettact.api.user.entity.Users;
@@ -26,6 +30,11 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>{
 	Page<ProductEntity> findByProductCategory_CategoryNoAndIsDeletedFalse(Long categoryNo, Pageable pageable);
 
 	Page<ProductEntity> findByIsDeletedFalse(Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE ProductEntity p SET p.productViewCnt = p.productViewCnt + :count WHERE p.productNo = :productNo")
+    void updateViewCount(@Param("productNo") Long productNo, @Param("count") int count);
 
     // 페이징으로 전체 상품 조회, 최신순 정렬 기본
     //Page<ProductEntity> findAllByDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
