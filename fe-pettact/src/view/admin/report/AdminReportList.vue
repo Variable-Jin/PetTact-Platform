@@ -2,7 +2,6 @@
   <div class="container mt-4">
     <h2 class="mb-4 border-bottom pb-2">신고 관리</h2>
 
-    <!-- 필터 영역 -->
     <div class="card mb-4">
       <div class="card-body">
         <form class="row g-3 align-items-center">
@@ -15,6 +14,7 @@
               <option value="2">반려</option>
             </select>
           </div>
+          <!-- TODO: 하드코딩말고 enum 가져오기, 신고 대상 다 정해지면 -->
           <div class="col-md-4">
             <label class="form-label">대상종류</label>
             <select v-model="filters.location" class="form-select">
@@ -29,7 +29,7 @@
             </select>
           </div>
           <div class="col-md-4 d-grid mt-4">
-            <button type="button" class="btn btn-primary" @click="getReportList">검색</button>
+            <button type="button" class="btn btn-primary" @click="onSearch">검색</button>
           </div>
         </form>
       </div>
@@ -51,7 +51,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="report in reportList" :key="report.reportNo">
+          <tr v-for="(report, index) in pageData.content" :key="report.reportNo">
             <td>{{ report.reportNo }}</td>
             <td>{{ report.reportTargetNo }}</td>
             <td>{{ report.reportTargetLocation }}</td>
@@ -67,6 +67,13 @@
         </tbody>
       </table>
     </div>
+
+    <Pagination
+      :totalElements="pageData.totalElements"
+      :currentPage="pageData.currentPage"
+      :pageSize="pageData.pageSize"
+      @change="onPageChange"
+    />
   </div>
 </template>
 
@@ -74,15 +81,21 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import Pagination from '@/components/common/Pagination.vue'
 
-const reportList = ref([])
 const router = useRouter()
+
+const pageData = ref({
+  content: [],
+  totalElements: 0,
+  currentPage: 1,
+  pageSize: 10
+})
 
 const filters = ref({
   status: '',
   location: ''
 })
-
 
 const statusLabel = (status) => {
   switch(status){
@@ -93,32 +106,41 @@ const statusLabel = (status) => {
   }
 }
 
-const getReportList = async () => {
+const getReportList = async (page = 1) => {
   try {
     const response = await axios.get('/v1/admin/report', {
       params: {
         status: filters.value.status,
-        location: filters.value.location
+        location: filters.value.location,
+        page: page,
+        size: pageData.value.pageSize
       }
     })
-    reportList.value = response.data
+    pageData.value = response.data
   } catch (err) {
     console.error(err)
     alert('신고 목록 조회 실패')
   }
 }
 
+const onSearch = () => {
+  getReportList(1)
+}
+
+const onPageChange = (page) => {
+  getReportList(page)
+}
+
 const formatDateTime = (dateTimeStr) => {
-    if (!dateTimeStr) return ''
-    return dateTimeStr.replace('T', ' ').split('.')[0]
+  if (!dateTimeStr) return ''
+  return dateTimeStr.replace('T', ' ').split('.')[0]
 }
 
 const showDetail = (reportNo) => {
-    router.push({ name: 'adminReportDetail', params: { reportNo } })
+  router.push({ name: 'adminReportDetail', params: { reportNo } })
 }
 
-
 onMounted(() => {
-    getReportList()
+  getReportList()
 })
 </script>
