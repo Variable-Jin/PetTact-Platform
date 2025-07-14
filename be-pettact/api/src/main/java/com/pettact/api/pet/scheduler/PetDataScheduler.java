@@ -13,9 +13,9 @@ public class PetDataScheduler {
 
     private final PetTmpDataService petTmpDataService;
     private final PetDataMergeService petDataMergeService;
-
+ 
     // 초 분 시 순서로 쓰세요
-    @Scheduled(cron = "0 49 18 * * *")
+    @Scheduled(cron = "0 0 3 * * *")
     public void collectAndMergePetData() {
         log.info("유기동물 API 수집 시작");
         petTmpDataService.fetchAllTmpApi();
