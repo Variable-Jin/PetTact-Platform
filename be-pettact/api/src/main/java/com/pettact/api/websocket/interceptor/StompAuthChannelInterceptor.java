@@ -56,8 +56,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             UserPrincipal principal = new UserPrincipal(userNo, userEmail);
             accessor.setUser(principal);
 
-            // 이후 @MessageMapping 핸들러에서
-            // Principal principal 파라미터로 접근 가능
+            accessor.getSessionAttributes().put("userNo", userNo);
+            accessor.getSessionAttributes().put("userEmail", userEmail);
         }
 
         return message;
