@@ -3,8 +3,8 @@
     <h2 class="mb-4">주문 목록</h2>
     
     <div class="mb-3">
-      <button @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
-      <button @click="goToCart" class="btn btn-secondary">장바구니</button>
+      <button v-if="isLoggedIn" @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
+      <button v-if="isLoggedIn" @click="goToCart" class="btn btn-secondary">장바구니</button>
     </div>
 
     <div class="table-responsive">
@@ -44,7 +44,7 @@
             </td>
             <td>{{ order.totalPrice.toLocaleString() }} 원</td>
             <td>
-              <button 
+              <button v-if="isLoggedIn"
                 @click="cancelOrder(order.orderNo)" 
                 :disabled="orderStore.loading" 
                 class="btn btn-secondary btn-sm"
@@ -83,9 +83,16 @@
 import { onMounted, computed } from 'vue'
 import { useOrderStore } from '@/stores/order'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const orderStore = useOrderStore()
 const router = useRouter()
+const userStore = useUserStore()
+
+
+//버튼 권한 검증
+const isLoggedIn = computed(() => !!userStore.user)
+
 const currentPage = computed(() => orderStore.page)
 const totalPages = computed(() => orderStore.totalPages)
 

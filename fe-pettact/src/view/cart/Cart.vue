@@ -4,7 +4,8 @@
 
     <div class="mb-3 d-flex gap-2">
       <button @click="goToList" class="btn btn-secondary">상품 목록</button>
-      <button @click="goToOrderList" class="btn btn-secondary">주문 내역</button>
+      <!-- 로그인된 사용자라면 누구나 주문 내역 보기 가능 -->
+    <button v-if="isLoggedIn" @click="goToOrderList" class="btn btn-secondary">주문 내역</button>
     </div>
 
     <div v-if="cartStore.loading" class="mb-3">불러오는 중...</div>
@@ -91,7 +92,7 @@
 
           <!-- 삭제 -->
           <td class="text-center">
-            <button @click="removeItem(item.cartNo)" class="btn btn-sm btn-outline-secondary">
+            <button v-if="isLoggedIn" @click="removeItem(item.cartNo)" class="btn btn-sm btn-outline-secondary">
               삭제
             </button>
           </td>
@@ -136,14 +137,18 @@
 
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted , computed } from 'vue';
 import { useCartStore } from '@/stores/cart';
-import { useOrderStore } from '@/stores/order'  // order 스토어 임포트
-import { useRouter } from 'vue-router'
+import { useOrderStore } from '@/stores/order';  // order 스토어 임포트
+import { useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
 
 const cartStore = useCartStore();
-const orderStore = useOrderStore()  // order 스토어 인스턴스 생성
-const router = useRouter()
+const orderStore = useOrderStore();  // order 스토어 인스턴스 생성
+const router = useRouter();
+const userStore = useUserStore();
+
+const isLoggedIn = computed(() => !!userStore.user);
 
 // 선택된 cartNo들을 저장하는 배열
 const selectedItems = ref([]);
@@ -154,7 +159,7 @@ const getFormattedPrice = (price) => {
 
 const goToOrderList = () => {
   router.push('/order')
-}
+};
 
 const changePage = (pageNum) => {
   if (pageNum >= 0 && pageNum < cartStore.totalPages) {
@@ -175,11 +180,11 @@ function getImageUrl(imageUrl) {
   if (!imageUrl) return '/default-product.png';
   const baseUrl = 'http://localhost:8080'; // 실제 백엔드 이미지 URL 경로
   return baseUrl + imageUrl;
-}
+};
 
 const goToList = () => {
   router.push('/product') 
-}
+};
 
 const removeItem = async (cartNo) => {
   if (confirm('삭제하시겠습니까?')) {
@@ -234,7 +239,7 @@ const orderSelectedItems = async () => {
     console.error('주문 생성 실패:', error)
     alert('주문서 생성에 실패했습니다.')
   }
-}
+};
 </script>
 
 <style scoped>

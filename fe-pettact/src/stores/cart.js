@@ -1,6 +1,7 @@
 // src/stores/cart.js
 import { defineStore } from 'pinia';
-import api from '@/api';
+
+import axios from 'axios';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
@@ -14,7 +15,7 @@ export const useCartStore = defineStore('cart', {
     async fetchCart(page = 0, size = 5) { // 장바구니 목록
       this.loading = true;
       try {
-        const res = await api.get(`/v1/cart?page=${page}&size=${size}`);
+        const res = await axios.get(`/v1/cart?page=${page}&size=${size}`);
         this.cartItems = res.data.content;
         this.totalPages = res.data.totalPages;
         this.currentPage = res.data.number;
@@ -27,7 +28,7 @@ export const useCartStore = defineStore('cart', {
 
     async addToCart(productNo, productStock) { // 장바구니 상품 추가
       try {
-        await api.post('/v1/cart/add', { productNo, productStock });
+        await axios.post('/v1/cart/add', { productNo, productStock });
         await this.fetchCart(); // 갱신
       } catch (err) {
         this.error = err;
@@ -37,7 +38,7 @@ export const useCartStore = defineStore('cart', {
     
     async updateCartItem(productNo, productStock) { // 장바구니 수량 변경
       try {
-        await api.patch(`/v1/cart/${productNo}`, { productNo, productStock });
+        await axios.patch(`/v1/cart/${productNo}`, { productNo, productStock });
       } catch (err) {
         this.error = err;
         throw err;
@@ -45,7 +46,7 @@ export const useCartStore = defineStore('cart', {
     },
     async deleteCartItem(cartNo) { // 장바구니 삭제
       try {
-        await api.delete(`/v1/cart/delete/${cartNo}`);
+        await axios.delete(`/v1/cart/delete/${cartNo}`);
         // fetchCart() 대신 cartItems에서 직접 제거
         this.cartItems = this.cartItems.filter(item => item.cartNo !== cartNo);
       } catch (err) {

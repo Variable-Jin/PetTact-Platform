@@ -40,10 +40,10 @@
       </ul>
 
       <div class="mt-4">
-        <button @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
-        <button @click="goToOrderList" class="btn btn-secondary me-2">주문 내역</button>
+        <button v-if="isLoggedIn" @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
+        <button v-if="isLoggedIn" @click="goToOrderList" class="btn btn-secondary me-2">주문 내역</button>
           <!-- ✅ 주문 상태가 "주문완료"일 경우에만 취소 가능 -->
-        <button @click="cancelOrder" class="btn btn-secondary me-2">주문 취소</button>
+        <button v-if="isLoggedIn" @click="cancelOrder" class="btn btn-secondary me-2">주문 취소</button>
       </div>
     </div>
   </div>
@@ -54,10 +54,15 @@
 import { computed, onMounted } from 'vue'
 import { useRoute , useRouter } from 'vue-router'
 import { useOrderStore } from '@/stores/order'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()  // 여기 추가!
 const orderStore = useOrderStore()
+const userStore = useUserStore()
+
+//버튼 권한 검증
+const isLoggedIn = computed(() => !!userStore.user)
 
 onMounted(async () => {
   await orderStore.fetchOrderDetail(route.params.orderNo)

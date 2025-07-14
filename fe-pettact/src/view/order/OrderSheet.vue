@@ -68,66 +68,14 @@
       </div>
 
       <!-- 결제 버튼 -->
-      <button @click="openModal" class="btn btn-secondary">결제하기</button>
+      <button v-if="isLoggedIn" @click="submitOrder" class="btn btn-secondary">결제하기</button>
 
       <!-- 이동 버튼 -->
       <div class="d-flex gap-2 mt-3">
-        <button @click="goToCart" class="btn btn-outline-light">장바구니로 돌아가기</button>
-        <button @click="goToProductList" class="btn btn-outline-light">상품 목록으로 이동</button>
+        <button v-if="isLoggedIn" @click="goToCart" class="btn btn-outline-light">장바구니</button>
+        <button v-if="isLoggedIn" @click="goToProductList" class="btn btn-outline-light">상품 목록</button>
       </div>
     </div>
-      <!-- ✅ 개선된 모달 영역 -->
-      <div v-if="isModalOpen" class="modal-backdrop fade show"></div>
-      <div v-if="isModalOpen" class="modal fade show d-block" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content bg-light text-dark shadow-lg border-0 rounded">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title">가상 결제( API 연동X )</h5>
-              <button type="button" class="btn-close btn-close-white" @click="closeModal"></button>
-            </div>
-            <div class="modal-body">
-              <!-- 결제 요약 -->
-              <div class="mb-3">
-                <strong>총 결제금액:</strong>
-                <span class="text-danger fs-5 fw-bold">{{ getFormattedPrice(totalPrice) }}원</span>
-              </div>
-
-              <!-- 카드 정보 입력 -->
-              <div class="mb-3">
-                <label class="form-label">카드번호</label>
-                <input type="text" class="form-control" placeholder="1234-5678-9012-3456" v-model="cardNumber" />
-              </div>
-
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">유효기간</label>
-                  <input type="text" class="form-control" placeholder="MM/YY" v-model="expiry" />
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">CVC</label>
-                  <input type="password" class="form-control" placeholder="***" v-model="cvc" />
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">카드사 선택</label>
-                <select class="form-select" v-model="cardCompany">
-                  <option disabled value="">선택하세요</option>
-                  <option>신한카드</option>
-                  <option>국민카드</option>
-                  <option>현대카드</option>
-                  <option>삼성카드</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button class="btn btn-outline-secondary" @click="closeModal">취소</button>
-              <button class="btn btn-primary" @click="submitOrder">결제 완료</button>
-            </div>
-          </div>
-        </div>
-      </div>
   </div>
   
 </template>
@@ -136,12 +84,17 @@
 import { useOrderStore } from '@/stores/order';
 import { useRouter } from 'vue-router';
 import { ref,computed } from 'vue';
+import { useUserStore } from '@/stores/user'
 
 const orderStore = useOrderStore();
 const router = useRouter();
+const userStore = useUserStore()
+
+//버튼 권한 검증
+const isLoggedIn = computed(() => !!userStore.user)
 
 //===================샘플데이터================
-const addressType = ref('new'); // 기본값: 신규입력
+
 const deliveryName = ref('김철수');
 const receiver = ref('집');
 const zipcode = ref('');
@@ -149,33 +102,15 @@ const address1 = ref('');
 const address2 = ref('');
 const phone = ref('010-1111-1111');
 
-const isModalOpen = ref(false);
-const cardNumber = ref('1234-5678-9012');
-const expiry = ref('12/34');
-const cvc = ref('123');
-const cardCompany = ref('국민카드');
 const totalPrice = computed(() =>
   orderStore.orderDraft.reduce((sum, item) => sum + item.productPrice * item.productStock, 0)
 );
-
-const openModal = () => {
-  if (!receiver.value || !address1.value || !address2.value || !phone.value) {
-    alert('필수 배송 정보를 모두 입력해주세요.');
-    return;
-  }
-  isModalOpen.value = true;
-};
-
-const closeModal = () => {
-  isModalOpen.value = false;
-};
 
 const searchZipcode = () => {
   alert('우편번호 검색 모듈과 연동하세요.');
   zipcode.value = '04000';
   address1.value = '서울시 마포구 예제로 123';
   address2.value = '1층 101호';
-  const phone = ref('010-1111-1111');
 };
 
 const getFormattedPrice = (price) => new Intl.NumberFormat().format(price);
@@ -183,19 +118,78 @@ const getFormattedPrice = (price) => new Intl.NumberFormat().format(price);
 const goToCart = () => router.push('cart');
 const goToProductList = () => router.push('/product');
 
+// ✅ UUID 생성 (간단한 방식)
+function generateUUID() {
+  return 'xxxx-xxxx-xxxx-xxxx'.replace(/[x]/g, () =>
+    ((Math.random() * 16) | 0).toString(16)
+  );
+}
+
+// ✅ TossPayments 로딩 대기
+const waitForToss = () =>
+  new Promise((resolve) => {
+    const check = () => {
+      if (window.TossPayments) {
+        resolve();
+      } else {
+        setTimeout(check, 50);
+      }
+    };
+    check();
+  });
+
 const submitOrder = async () => {
-  
-    if (!cardNumber.value || !expiry.value || !cvc.value || !cardCompany.value) {
-    alert('카드 정보를 모두 입력해주세요.');
+  if (!isLoggedIn.value) {
+  alert('로그인 후 결제를 진행해 주세요.');
+  return;
+}
+  // 1. 필수값 확인
+  if (!receiver.value || !address1.value || !address2.value || !phone.value) {
+    alert('배송 정보를 모두 입력해주세요.');
     return;
   }
 
   try {
+    // 2. 주문 상품 데이터 구성
     const orderDetails = orderStore.orderDraft.map(item => ({
       productNo: item.productNo,
       productStock: item.productStock
     }));
-      await orderStore.createOrder({
+
+    // 3. 주문 ID 생성
+    const orderId = `ORDER-${Date.now()}-${generateUUID()}`; // ✅ 여기서 고유한 주문번호를 생성
+    console.log('✅ 생성된 orderId:', orderId); // 이 부분 중요
+
+    // 4. TossPayments 초기화 대기
+    await waitForToss(); // ✅ TossPayments 로딩 대기
+
+    const toss = window.TossPayments('test_ck_DpexMgkW36oAl1jdPad9VGbR5ozO'); // ✅ Toss 클라이언트 키
+    const successUrl = `${window.location.origin}/order/payment-success?orderId=${orderId}&amount=${totalPrice.value}`;
+    const failUrl = `${window.location.origin}/order/payment-fail`;
+
+    // 5. Toss 결제 요청
+    const result = await toss.requestPayment('카드', {
+      amount: totalPrice.value,
+      orderId,
+      orderName: orderStore.orderDraft[0]?.productName || '장바구니 상품',
+      customerEmail: userStore.user?.email || 'guest@example.com',
+      //successUrl: `${window.location.origin}/order/payment-success?orderId=${orderId}&amount=${totalPrice.value}`
+      //failUrl: `${window.location.origin}/order/payment-fail`
+    });
+      console.log('✅ 생성된 successUrl:', successUrl); // 이 부분도 중요
+      console.log('✅ totalPrice.value:', totalPrice.value)
+      console.log('✅ orderStore.orderDraft:', orderStore.orderDraft)
+
+    // 6. 결제 승인 요청
+    // await orderStore.confirmPayment({
+    //   paymentKey: result.paymentKey,
+    //   orderId,
+    //   amount: totalPrice.value
+    // });
+
+    // 7. 주문 생성
+    await orderStore.createOrder({
+      orderId,
       deliveryName: deliveryName.value,
       receiver: receiver.value,
       zipcode: zipcode.value,
@@ -204,14 +198,15 @@ const submitOrder = async () => {
       phone: phone.value,
       orderDetails: orderDetails
     });
-    //await orderStore.createOrder(orderDetails);
-    alert('주문이 완료되었습니다!');
+
+    alert('결제 및 주문 완료!');
     orderStore.clearOrderDraft();
-    isModalOpen.value = false;
     router.push('/order');
+
   } catch (err) {
-    alert('주문 중 오류 발생');
+    alert('결제 또는 주문 중 오류 발생');
     console.error(err);
   }
 };
+
 </script>
