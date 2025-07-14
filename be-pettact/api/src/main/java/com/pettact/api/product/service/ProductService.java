@@ -1,19 +1,27 @@
 package com.pettact.api.product.service;
 
 import java.nio.file.AccessDeniedException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.pettact.api.common.ViewCountService;
+import com.pettact.api.common.scheduler.ViewCountScheduler.ViewCountSyncable;
 import com.pettact.api.multiFile.dto.FileCreateDto;
 import com.pettact.api.multiFile.dto.FileResponseDto;
 import com.pettact.api.multiFile.entity.MultiFile;
@@ -31,13 +39,14 @@ import com.pettact.api.product.repository.ProductRepository;
 import com.pettact.api.security.vo.CustomUserDetails;
 import com.pettact.api.user.entity.Users;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ProductService {
+public class ProductService implements ViewCountSyncable<Long> {
 
 	private final ProductRepository productRepository;
 	private final ProductCategoryRepository productCategoryRepository;
@@ -45,6 +54,8 @@ public class ProductService {
 	//private final ObjectMapper objectMapper;
 	private final FileRepository fileRepository;
     private final ModelMapper mapper;
+    private final ViewCountService viewCountService;
+    private final StringRedisTemplate redisTemplate;
 	
     // 카테고리 목록 
 	public List<ProductCategoryDTO> getCategoryList() {
@@ -54,14 +65,22 @@ public class ProductService {
     }
 
 	// 상품 상세보기
-	public ProductDetailDTO getProductDetail(Long productNo) {
+	public ProductDetailDTO getProductDetail(Long productNo, String sessionId) {
 
 		ProductEntity product = productRepository.findById(productNo)
 				.orElseThrow(() -> new RuntimeException("해당 상품을 찾을 수 없습니다."));
-
+		
 		if (product.isDeleted()) {
 			throw new RuntimeException("삭제된 상품입니다.");
 		}
+		
+		String preventKey = "product:viewed:" + sessionId + ":" + productNo;
+		
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
+            viewCountService.increaseViewCount("product", productNo, 120);
+            redisTemplate.opsForZSet().incrementScore("product:popular", productNo.toString(), 1);
+            redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
+        }
 
 		List<MultiFile> files = fileService.getFilesByReference(MultiFile.ReferenceTable.PRODUCT, productNo);
 
@@ -298,4 +317,42 @@ public class ProductService {
 
 		return savedProduct.getProductNo(); // 등록된 상품 번호 반환
 	}
+	
+    // ------------------ 상품 조회수 db 갱신 ------------------
+    
+    @Override
+    @Transactional
+    public void updateViewCount(Long productNo, int count) {
+    	productRepository.updateViewCount(productNo, count);
+    }
+    
+    // ------------------ 인기 상품 TOP 10 ------------------    
+    public List<ProductDTO> getPopularProducts(int count) {
+        // 1. Redis ZSet에서 인기 상품 번호를 조회수 높은 순으로 가져오기
+        Set<String> productNos = redisTemplate.opsForZSet()
+            .reverseRange("product:popular", 0, count - 1);
+
+        if (productNos == null || productNos.isEmpty()) return List.of();
+
+        // 2. 문자열 → Long 변환
+        List<Long> ids = productNos.stream()
+            .map(Long::parseLong)
+            .toList();
+
+        // 3. DB 조회 (findAllById는 순서를 보장하지 않음)
+        List<ProductEntity> products = productRepository.findAllById(ids);
+
+        // 4. ID 기준으로 Map 생성해서 순서 보정
+        Map<Long, ProductEntity> productMap = products.stream()
+            .collect(Collectors.toMap(ProductEntity::getProductNo, Function.identity()));
+
+        // 5. ID 순회하며 DTO로 변환, 누락된 상품은 제외
+        return ids.stream()
+            .map(productMap::get)
+            .filter(Objects::nonNull)                     // DB에 없는 상품 제거
+            .filter(ProductEntity::isActive)              // 예: status = true
+            .map(product -> mapper.map(product, ProductDTO.class))
+            .toList();
+    }
+
 }
