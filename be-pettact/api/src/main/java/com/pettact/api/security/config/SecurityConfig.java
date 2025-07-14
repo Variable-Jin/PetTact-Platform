@@ -96,6 +96,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/v1/product/delete/*").hasAuthority("ROLE_SELLER")
                 .requestMatchers("/v1/board-categories").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결
                 .anyRequest().permitAll()
         );
 

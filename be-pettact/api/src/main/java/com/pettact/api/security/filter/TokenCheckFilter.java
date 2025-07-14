@@ -48,7 +48,10 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         "/v1/api/abandonment/**",
         "/v1/pet/abandonment/**",
         
-        "/v1/notification/subscribe"
+        "/v1/notification/subscribe",
+        
+        "/product/list",
+        "/v1/payments/confirm"
     );
     
     @Override
