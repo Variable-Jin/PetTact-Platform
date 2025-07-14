@@ -68,6 +68,13 @@ public class TokenCheckFilter extends OncePerRequestFilter {
 //            filterChain.doFilter(request, response);
 //            return;
 //        }
+        //sock.js 추가
+        if (path.startsWith("/ws-stomp")) {
+            log.info("SockJS 경로 JWT 검사 제외: {}", path);
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         if (EXCLUDED_PATHS.contains(path)) {
         	log.info("TokenCheckFilter skip: {}", path);
         	filterChain.doFilter(request, response);
