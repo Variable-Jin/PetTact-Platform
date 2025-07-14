@@ -5,17 +5,21 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettact.api.multiFile.dto.FileCreateDto;
 import com.pettact.api.multiFile.dto.FileResponseDto;
 import com.pettact.api.multiFile.entity.MultiFile;
 import com.pettact.api.multiFile.repository.FileRepository;
 import com.pettact.api.multiFile.service.FileService;
+import com.pettact.api.product.dto.ProductCategoryDTO;
 import com.pettact.api.product.dto.ProductCreateDTO;
 import com.pettact.api.product.dto.ProductDTO;
 import com.pettact.api.product.dto.ProductDetailDTO;
@@ -36,10 +40,18 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductService {
 
 	private final ProductRepository productRepository;
-	private final ProductCategoryRepository categoryRepository;
+	private final ProductCategoryRepository productCategoryRepository;
 	private final FileService fileService;
-	private final ObjectMapper objectMapper;
+	//private final ObjectMapper objectMapper;
 	private final FileRepository fileRepository;
+    private final ModelMapper mapper;
+	
+    // 카테고리 목록 
+	public List<ProductCategoryDTO> getCategoryList() {
+        return productCategoryRepository.findAll().stream()
+            .map(e -> mapper.map(e, ProductCategoryDTO.class))
+            .toList();
+    }
 
 	// 상품 상세보기
 	public ProductDetailDTO getProductDetail(Long productNo) {
@@ -75,31 +87,37 @@ public class ProductService {
 	}
 
 	// 상품 목록
-	public List<ProductDTO> getAllProduct(String keyword,Long categoryNo) {
-	    List<ProductEntity> productList;
+	public Page<ProductDTO> getAllProduct(String keyword,Long categoryNo,String sort, int page, int size) {
+	    //List<ProductEntity> productList;
 	    
-	    // 키워드와 카테고리가 모두 있는 경우
-	    if ((keyword != null && !keyword.trim().isEmpty()) && categoryNo != null) {
-	        productList = productRepository.findByProductNameContainingIgnoreCaseAndProductCategory_CategoryNoAndIsDeletedFalseOrderByCreatedAtDesc(
-	            keyword.trim(), categoryNo);
+	    // 정렬 기준 설정 (createdAt 기본값)
+	    Sort sortOption = Sort.by(Sort.Direction.DESC, "createdAt");
+
+	    if ("priceAsc".equals(sort)) {
+	        sortOption = Sort.by(Sort.Direction.ASC, "productPrice");
+	    } else if ("priceDesc".equals(sort)) {
+	        sortOption = Sort.by(Sort.Direction.DESC, "productPrice");
 	    }
-	    // 키워드만 있는 경우
-	    else if (keyword != null && !keyword.trim().isEmpty()) {
-	        productList = productRepository.findByProductNameContainingIgnoreCaseAndIsDeletedFalseOrderByCreatedAtDesc(
-	            keyword.trim());
+	    
+	    // 2. Pageable 객체 생성 (페이지 번호는 0부터 시작)
+	    Pageable pageable = PageRequest.of(page, size, sortOption);
+	    
+	    // 3. 조건에 따라 페이징된 결과 호출
+	    Page<ProductEntity> productPage;
+	    
+	    if (keyword != null && !keyword.trim().isEmpty() && categoryNo != null) {
+	        productPage = productRepository.findByProductNameContainingIgnoreCaseAndProductCategory_CategoryNoAndIsDeletedFalse(
+	            keyword.trim(), categoryNo, pageable);
+	    } else if (keyword != null && !keyword.trim().isEmpty()) {
+	        productPage = productRepository.findByProductNameContainingIgnoreCaseAndIsDeletedFalse(keyword.trim(), pageable);
+	    } else if (categoryNo != null) {
+	        productPage = productRepository.findByProductCategory_CategoryNoAndIsDeletedFalse(categoryNo, pageable);
+	    } else {
+	        productPage = productRepository.findByIsDeletedFalse(pageable);
 	    }
-	    // 카테고리만 있는 경우
-	    else if (categoryNo != null) {
-	        productList = productRepository.findByProductCategory_CategoryNoAndIsDeletedFalseOrderByCreatedAtDesc(categoryNo);
-	    }
-	    // 아무것도 없으면 전체 조회
-	    else {
-	        productList = productRepository.findAllByOrderByCreatedAtDesc()
-	                .stream()
-	                .filter(product -> !product.isDeleted())
-	                .collect(Collectors.toList());
-	    }
-	    return productList.stream().map(product -> ProductDTO.builder()
+
+	 // 4. ProductEntity -> ProductDTO 매핑 후 Page<ProductDTO> 반환
+	    return productPage.map(product -> ProductDTO.builder()
 	            .productNo(product.getProductNo())
 	            .productName(product.getProductName())
 	            .productDescription(product.getProductDescription())
@@ -112,24 +130,8 @@ public class ProductService {
 	            .imageUrl(product.getImageUrl() != null && !product.getImageUrl().startsWith("/files/")
 	                    ? "/files/" + product.getImageUrl()
 	                    : product.getImageUrl())
-	            .build()).collect(Collectors.toList());
+	            .build());
 	}
-//		return productList.stream().map(product -> ProductDTO.builder()
-//	            .productNo(product.getProductNo())
-//	            .productName(product.getProductName())
-//	            .productDescription(product.getProductDescription())
-//	            .productPrice(product.getProductPrice())
-//	            .productStock(product.getProductStock())
-//	            .createdAt(product.getCreatedAt())
-//	            .categoryNo(product.getProductCategory().getCategoryNo())
-//	            .categoryName(product.getProductCategory().getCategoryName())
-//	            .status(product.isProductStatus())
-//	            .imageUrl(product.getImageUrl()!= null
-//	                    ? "/files/" + product.getMultiFile().getStoredFileName()
-//	                            : null)  // ✅ 파일 없을 경우 null)
-//	            .build())
-//	        .collect(Collectors.toList());
-//	}
 
 	// 상품 삭제
 	public void deleteProduct(Long productNo, Users user) throws AccessDeniedException {
@@ -149,7 +151,7 @@ public class ProductService {
 	public void updateProduct(Long id, ProductUpdateDTO dto, List<MultipartFile> files, CustomUserDetails user) {
 		ProductEntity product = productRepository.findById(id)
 				.orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
-		ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
+		ProductCategoryEntity category = productCategoryRepository.findById(dto.getCategoryNo())
 				.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
 
 		// 기존 상품 정보 수정
@@ -172,7 +174,7 @@ public class ProductService {
 
 			if (!newImageUrls.contains(fileUrl)) {
 				// 삭제할 이미지
-				System.out.println("if탐");
+				//System.out.println("if탐");
 				fileService.delete(file.getFileNo(), user.getUserEntity().getUserNo());
 			}
 		}
@@ -205,7 +207,6 @@ public class ProductService {
 		        }
 		    }
 		}
-
 		// ✅ 대표 이미지 결정: 새 이미지가 있으면 그것 중 첫 번째로 설정
 		String representativeImageUrl = null;
 
@@ -221,65 +222,23 @@ public class ProductService {
 		productRepository.save(product);
 	}
 
-//	//상품 등록
-//	public void createProduct(String productJson, List<MultipartFile> files, CustomUserDetails user) {
-//		try {
-//			// 1. JSON 파싱
-//			ProductCreateDTO dto = objectMapper.readValue(productJson, ProductCreateDTO.class);
-//			
-//			System.out.println("✅ JSON 파싱 성공: " + dto);//.....
-//
-//			// 2. 카테고리 조회
-//			ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
-//					.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
-//			
-//			System.out.println("✅ 카테고리 조회 성공: " + category.getCategoryName());//......
-//			
-//			// 3. 상품 생성
-//			ProductEntity product = ProductEntity.builder()
-//					.productName(dto.getProductName())
-//					.productDescription(dto.getProductDescription())
-//					.productPrice(dto.getProductPrice())
-//					.productStock(dto.getProductStock())
-//					.productCategory(category)
-//					.productStatus(dto.isProductStatus())
-//					.user(user.getUserEntity())
-//					.build();
-//			
-//			System.out.println("✅ 상품 저장 시도");//.........
-//
-//			// 4. 상품 저장
-//			ProductEntity savedProduct = productRepository.save(product);
-//			
-//			System.out.println("상품 저장됨! productNo=" + savedProduct.getProductNo()); //.
-//
-//			// 5. 파일 저장
-//			if (files != null && !files.isEmpty()) {
-//				for (MultipartFile uploadFile : files) {
-//					FileCreateDto createDto = new FileCreateDto();
-//					createDto.setReferenceTable(MultiFile.ReferenceTable.PRODUCT);
-//					createDto.setReferenceNo(savedProduct.getProductNo());
-//
-//					fileService.createFile(createDto, uploadFile, user.getUser().getUserNo());
-//				}
-//			}
-//
-//		} catch (JsonProcessingException e) {
-//			throw new RuntimeException("JSON 파싱 오류: " + e.getMessage(), e);
-//		}
-//	}
 
 	// 상품 등록
 	public Long createProduct(ProductCreateDTO dto, List<MultipartFile> files, CustomUserDetails user) {
 		// 1. 카테고리 조회
-		ProductCategoryEntity category = categoryRepository.findById(dto.getCategoryNo())
+		ProductCategoryEntity category = productCategoryRepository.findById(dto.getCategoryNo())
 				.orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
 
 		// 2. 상품 엔티티 생성
-		ProductEntity product = ProductEntity.builder().productName(dto.getProductName())
-				.productDescription(dto.getProductDescription()).productPrice(dto.getProductPrice())
-				.productStock(dto.getProductStock()).productCategory(category).productStatus(dto.isProductStatus())
-				.user(user.getUserEntity()).build();
+		ProductEntity product = ProductEntity.builder()
+				.productName(dto.getProductName())
+				.productDescription(dto.getProductDescription())
+				.productPrice(dto.getProductPrice())
+				.productStock(dto.getProductStock())
+				.productCategory(category)
+				.productStatus(dto.isProductStatus())
+				.user(user.getUserEntity())
+				.build();
 
 		// 3. 상품 저장
 		ProductEntity savedProduct = productRepository.save(product);

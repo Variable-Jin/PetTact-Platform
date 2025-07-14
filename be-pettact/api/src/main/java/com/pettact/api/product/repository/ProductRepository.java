@@ -18,14 +18,15 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>{
 	
 	Optional<ProductEntity> findByProductNo(Long productNo);
 	
-	List<ProductEntity> findAllByOrderByCreatedAtDesc();
-	
-	List<ProductEntity> findByProductNameContainingIgnoreCaseAndIsDeletedFalseOrderByCreatedAtDesc(String keyword);
-	
-	List<ProductEntity> findByProductCategory_CategoryNoAndIsDeletedFalseOrderByCreatedAtDesc(Long categoryNo);
-	List<ProductEntity> findByProductNameContainingIgnoreCaseAndProductCategory_CategoryNoAndIsDeletedFalseOrderByCreatedAtDesc(String keyword, Long categoryNo);
+	// ✅ 정렬 가능한 상품 목록 조회용 (getAllProduct에서만 사용)
+	Page<ProductEntity> findByProductNameContainingIgnoreCaseAndProductCategory_CategoryNoAndIsDeletedFalse(String keyword, Long categoryNo, Pageable pageable);
 
-	
+	Page<ProductEntity> findByProductNameContainingIgnoreCaseAndIsDeletedFalse(String keyword, Pageable pageable);
+
+	Page<ProductEntity> findByProductCategory_CategoryNoAndIsDeletedFalse(Long categoryNo, Pageable pageable);
+
+	Page<ProductEntity> findByIsDeletedFalse(Pageable pageable);
+
     // 페이징으로 전체 상품 조회, 최신순 정렬 기본
     //Page<ProductEntity> findAllByDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
     
