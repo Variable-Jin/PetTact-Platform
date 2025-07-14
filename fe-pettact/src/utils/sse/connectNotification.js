@@ -15,7 +15,7 @@ export function connectNotificationSSE(token) {
     const data = JSON.parse(event.data);
     console.log('[SSE] 알림 수신:', data);
 
-    // 📦 store 직접 접근해서 알림 추가
+    // store 직접 접근해서 알림 추가
     const notificationStore = useNotificationStore();
     notificationStore.addNotification(data);
   });

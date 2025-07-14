@@ -56,6 +56,26 @@ export const useNotificationStore = defineStore('notification', {
       this.toastQueue.push(notification);
     },
 
+    async deleteNotification(notificationNo) {
+      try {
+        await axios.patch(`/v1/notification/${notificationNo}/delete`);
+        this.notifications = this.notifications.filter(n => n.notificationNo !== notificationNo);
+        console.log(`[알림 삭제] notificationNo=${notificationNo}`);
+      } catch (err) {
+        console.error('[알림 삭제 실패]', err);
+      }
+    },
+
+    async deleteAllNotifications() {
+      try {
+        await axios.patch('/v1/notification/delete-all');
+        this.notifications = [];
+        this.unreadCount = 0;
+      } catch (err) {
+        console.error('[알림 전체 삭제 실패]', err);
+      }
+    },
+
     popToast() {
       this.toastQueue.shift();
     }
