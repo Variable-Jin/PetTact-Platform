@@ -69,8 +69,8 @@ import { useUserStore } from '@/stores/user';
 
 const userEmail = ref('');
 const userPassword = ref('');
-const saveEmail = ref(false);
 const errorMessage = ref('');
+const saveEmail = ref(false);
 
 const router = useRouter();
 const route = useRoute();
