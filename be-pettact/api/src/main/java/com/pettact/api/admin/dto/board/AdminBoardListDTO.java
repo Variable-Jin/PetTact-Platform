@@ -1,4 +1,4 @@
-package com.pettact.api.admin.dto;
+package com.pettact.api.admin.dto.board;
 
 import java.time.LocalDateTime;
 
@@ -11,26 +11,30 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class AdminBoardDetailDTO {
+public class AdminBoardListDTO {
     private Long boardNo;
     private String boardTitle;
-    private String boardContent;
     private String categoryName;
-    private String writer;
+    private Long userNo;
+    private String userEmail;
+    private String userNickname;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
     private boolean isDeleted;
-
-    public static AdminBoardDetailDTO from(Board board) {
-        return AdminBoardDetailDTO.builder()
+    
+    public static AdminBoardListDTO from(Board board) {
+        return AdminBoardListDTO.builder()
                 .boardNo(board.getBoardNo())
                 .boardTitle(board.getBoardTitle())
-                .boardContent(board.getBoardContent())
                 .categoryName(board.getBoardCategory().getBoardCategoryTitle())
-                .writer(board.getUser().getUserNickname())
+                .userNo(board.getUser().getUserNo())
+                .userEmail(board.getUser().getUserEmail())
+                .userNickname(board.getUser().getUserNickname())
                 .createdAt(board.getCreatedAt())
-                .updatedAt(board.getUpdatedAt())
+                .deletedAt(board.getDeletedAt())
                 .isDeleted(board.isDeleted())
                 .build();
     }
+
 }
+

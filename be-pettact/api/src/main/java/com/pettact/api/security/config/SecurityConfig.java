@@ -1,7 +1,5 @@
 package com.pettact.api.security.config;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -20,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pettact.api.security.filter.LoginFilter;
@@ -40,118 +40,109 @@ import lombok.extern.log4j.Log4j2;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-	private final ObjectMapper objectMapper;
-	private final JwtTokenProvider jwtTokenProvider;
-	private final CustomUserDetailsService CustomUserDetailsService;
-	private final CustomOAuth2UserService customOAuth2UserService;
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    private final ObjectMapper objectMapper;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+//    @Bean
+//    public WebSecurityCustomizer webSecurityCustomizer() {
+//        log.info("------------web configure-------------------");
+//        return (web) -> web.ignoring()
+//                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+//    }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         log.info("------------web configure-------------------");
         return (web) -> web.ignoring()
-                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
+                .requestMatchers("/ws-stomp/**");
     }
-
+    
     @Bean
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
         log.info("------------configure-------------------");
-        //인증관리자 빌더 객체 얻기
+
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-
-        //인증관리자에 userDetailsService와 비밀번호 암호화 객체를 설정한다
-        authenticationManagerBuilder
-        	.userDetailsService(CustomUserDetailsService)
-        	.passwordEncoder(passwordEncoder());
-
-        //인증관리자를 생성한다
+        authenticationManagerBuilder.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
-
-        //http 보안 객체에 인증관리자를 설정한다
         http.authenticationManager(authenticationManager);
 
-        //해당 소스 작성후 : 브라우저에서 /generateToken URL을 실행한다
         final LoginFilter loginFilter = new LoginFilter("/v1/user/login", objectMapper, jwtTokenProvider);
         loginFilter.setAuthenticationManager(authenticationManager);
-
-        //UsernamePasswordAuthenticationFilter 필더 객체 실행 전에 동작할 loginFilter를 설정한다
         http.addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class);
-
-        //UsernamePasswordAuthenticationFilter 필더 객체 실행 전에 동작할 TokenCheckFilter 객체를 생성하여 설정한다
-        http.addFilterBefore(new TokenCheckFilter(jwtTokenProvider, CustomUserDetailsService), UsernamePasswordAuthenticationFilter.class);
-
-        //TokenCheckFilter 필더 객체 실행 전에 동작할 RefreshTokenFilter 객체를 생성하여 설정한다
-        //해당 소스 작성후 : 브라우저에서 /refreshToken URL을 실행한다
+        http.addFilterBefore(new TokenCheckFilter(jwtTokenProvider, customUserDetailsService), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(new RefreshTokenFilter("/refreshToken", objectMapper, jwtTokenProvider), TokenCheckFilter.class);
 
-        http.csrf(csrf -> csrf.disable());
-        //세션을 사용하지 않음
-        http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.csrf(csrf -> csrf.disable())
+        		.cors(cors -> {});
 
-		http.authorizeHttpRequests(authroize ->
-			authroize
-                    .requestMatchers(HttpMethod.GET, "/v1/board").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/v1/board/*").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/v1/board/*/replies").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/v1/board-categories/**").permitAll()
-                    .requestMatchers(
-                        "/v1/user/me",
-                        "/v1/user/me/detail",
-                        "/v1/user/update",
-                        "/v1/user/withdraw",
-                        "/v1/board-categories/**",
-                        "/v1/board/**",
-                        "/v1/replies/**"
-                ).authenticated()
-	        	// TODO: 이거 수정해야함!!! 여기서 페이지마다 권한을 설정하면 됨 - 아래는 권한 설정하는 예시
-				.requestMatchers("/v1/admin/**")
-				.hasAnyAuthority("ROLE_ADMIN") //반드시 해당 권한만 허가  
-				.requestMatchers("/ws/**", "/index.html", "/app.js").permitAll()
-				.anyRequest().permitAll() // 나머지는 비로그인 상태에서도 접근 가능
-			);
+        http.authorizeHttpRequests(authroize ->
+            authroize
+            	.requestMatchers("/v1/notification/subscribe").permitAll()
+            	.requestMatchers("/v1/notification/**").authenticated()
+            	.requestMatchers("/v1/user/mypage/**").authenticated()
+            	.requestMatchers("/v1/user/seller/**").authenticated()
+            	.requestMatchers("/v1/user/social/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/v1/product/create").hasAuthority("ROLE_SELLER")
+                .requestMatchers(HttpMethod.PUT, "/v1/product/update/*").hasAuthority("ROLE_SELLER")
+                .requestMatchers(HttpMethod.POST, "/v1/product/delete/*").hasAuthority("ROLE_SELLER")
+                .requestMatchers("/v1/board-categories").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결
+                .anyRequest().permitAll()
+        );
 
-		// 소셜로그인
         http.oauth2Login(oauth2 -> oauth2
-            .userInfoEndpoint(userInfo -> userInfo
-                .userService(customOAuth2UserService)
-            )
+            .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
             .successHandler((request, response, authentication) -> {
                 CustomOAuth2User oAuthUser = (CustomOAuth2User) authentication.getPrincipal();
                 Users user = oAuthUser.getUser();
 
-                // JWT claim 설정
                 Map<String, Object> claims = Map.of(
-                    "userEmail", user.getUserEmail(),
-                    "userNo", user.getUserNo(),
-                    "userNickname", user.getUserNickname(),
-                    "userRole", user.getRoleCode()
+                        "userEmail", user.getUserEmail(),
+                        "userNo", user.getUserNo(),
+                        "userNickname", user.getUserNickname(),
+                        "userRole", user.getRoleCode(),
+                        "userStatus", user.getStatusCode()
                 );
 
                 String accessToken = jwtTokenProvider.generateToken(claims, 7);
                 String refreshToken = jwtTokenProvider.generateToken(claims, 10);
 
-    		    String redirectUrl = "http://localhost:5173/oauth2/success"
-    		            + "?accessToken=" + accessToken
-    		            + "&refreshToken=" + refreshToken;
+                String redirectUrl = "http://localhost:5173/oauth2/success"
+                        + "?accessToken=" + accessToken
+                        + "&refreshToken=" + refreshToken;
 
-    		        response.sendRedirect(redirectUrl);
+                response.sendRedirect(redirectUrl);
             })
             .failureHandler((request, response, exception) -> {
-                String errorMessage = "소셜 로그인 실패";
-
-                if (exception instanceof OAuth2AuthenticationException oAuth2Ex) {
-                    errorMessage = oAuth2Ex.getError().getDescription();
-                }
-
                 String redirectUrl = "http://localhost:5173/user/login?error=EMAIL_ALREADY_EXISTS";
                 response.sendRedirect(redirectUrl);
             })
         );
-        
+
         return http.build();
-	}
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOriginPatterns("*")
+                        .allowedMethods("*")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+            }
+        };
+    }
 }

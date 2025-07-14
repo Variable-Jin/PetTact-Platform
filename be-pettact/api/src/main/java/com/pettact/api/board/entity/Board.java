@@ -40,6 +40,9 @@ public class Board extends BaseEntity {
 
     @Column(name = "board_content", nullable = false, columnDefinition = "TEXT")
     private String boardContent;
+    
+    @Column(name = "board_view_cnt")
+    private int boardViewCnt;
 
 
 //    public Board(Long boardWriterNo, String boardTitle, String boardContent, BoardCategory boardCategory) {

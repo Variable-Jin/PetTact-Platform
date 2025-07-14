@@ -2,6 +2,8 @@ package com.pettact.api.notification.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.pettact.api.notification.entity.Notification;
 import com.pettact.api.notification.enums.NotificationType;
 import com.pettact.api.notification.enums.TargetType;
@@ -24,7 +26,13 @@ public class NotificationResDTO {
     private String notificationContent;
     private Long targetId;
     private TargetType targetType;
+    @JsonProperty("isRead")
     private boolean isRead;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
+    private LocalDateTime readAt;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")
     private LocalDateTime createdAt;
 
     public static NotificationResDTO from(Notification notification) {

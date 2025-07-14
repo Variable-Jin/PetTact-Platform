@@ -1,20 +1,32 @@
 package com.pettact.api.admin.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.pettact.api.admin.dto.AdminBoardDetailDTO;
-import com.pettact.api.admin.dto.AdminBoardListDTO;
-import com.pettact.api.admin.dto.AdminUserDetailDTO;
-import com.pettact.api.admin.dto.AdminUserListDTO;
+import com.pettact.api.admin.dto.board.AdminBoardDetailDTO;
+import com.pettact.api.admin.dto.board.AdminBoardListDTO;
+import com.pettact.api.admin.dto.report.AdminReportListDTO;
+import com.pettact.api.admin.dto.user.AdminUserDetailDTO;
+import com.pettact.api.admin.dto.user.AdminUserListDTO;
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.board.repository.BoardRepository;
 import com.pettact.api.code.entity.CommonCode;
 import com.pettact.api.code.service.CommonCodeService;
+import com.pettact.api.common.dto.PageResponseDto;
+import com.pettact.api.notification.dto.NotificationReqDTO;
+import com.pettact.api.notification.enums.NotificationType;
+import com.pettact.api.notification.enums.TargetType;
+import com.pettact.api.notification.service.NotificationService;
+import com.pettact.api.report.Repository.ReportRepository;
+import com.pettact.api.report.entity.Report;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
 
@@ -26,23 +38,32 @@ public class AdminService {
 	private final UserRepository userRepository;
 	private final CommonCodeService commonCodeService;
 	private final BoardRepository boardRepository;
+	private final NotificationService notificationService;
+	private final ReportRepository reportRepository;
 	
 	// 회원 목록 조회
-    public List<AdminUserListDTO> getUserList(String keyword, String status, String role,
-            							LocalDateTime startDate, LocalDateTime endDate) {
+	public PageResponseDto<AdminUserListDTO> getUserList(
+	        String keyword, String status, String role,
+	        LocalDateTime startDate, LocalDateTime endDate,
+	        int page, int size) {
 
-    	List<Users> users = userRepository.findUsersWithFilters(
-		(keyword == null || keyword.isBlank()) ? null : keyword,
-		(status == null || status.isBlank()) ? null : status,
-		(role == null || role.isBlank()) ? null : role,
-		startDate,
-		endDate
-		);
-		
-		return users.stream()
-					.map(AdminUserListDTO::from)
-					.collect(Collectors.toList());
+	    Pageable pageable = PageRequest.of(page - 1, size); // 0-based
+
+	    Page<Users> result = userRepository.findUsersWithFilters(
+	        (keyword == null || keyword.isBlank()) ? null : keyword,
+	        (status == null || status.isBlank()) ? null : status,
+	        (role == null || role.isBlank()) ? null : role,
+	        startDate, endDate, pageable
+	    );
+
+	    List<AdminUserListDTO> dtoList = result.getContent()
+	                                           .stream()
+	                                           .map(AdminUserListDTO::from)
+	                                           .toList();
+
+	    return new PageResponseDto<>(dtoList, (int) result.getTotalElements(), page, size);
 	}
+
 
     // 회원 정보 상세보기
 	public AdminUserDetailDTO getUserDetail(Long userNo) {
@@ -87,55 +108,86 @@ public class AdminService {
 	}
 	
 	// 판매자 목록 조회
-	public List<AdminUserListDTO> getSellerList(String keyword, String status,
-											LocalDateTime startDateTime, LocalDateTime endDateTime) {
-	    // ROLE_SELLER로 필터링된 사용자만 조회하기 위해 하드코딩해놓음
-	    String role = "ROLE_SELLER";
-
-	    List<Users> sellers = userRepository.findUsersWithFilters(
-	        keyword,
-	        status,
-	        role,
-	        startDateTime,
-	        endDateTime
+	public PageResponseDto<AdminUserListDTO> getSellerList(
+		    String keyword, String status,
+		    LocalDateTime startDateTime, LocalDateTime endDateTime,
+		    int page, int size
+	) {
+	    Pageable pageable = PageRequest.of(page - 1, size);
+	    Page<Users> sellers = userRepository.findSellersWithFilters(
+	        keyword, status, startDateTime, endDateTime, pageable
 	    );
-	    
-	    return sellers.stream()
-	                  .map(AdminUserListDTO::from)
-	                  .toList();
+
+	    List<AdminUserListDTO> dtoList = sellers.getContent().stream()
+	        .map(AdminUserListDTO::from)
+	        .toList();
+
+	    return new PageResponseDto<>(dtoList, (int) sellers.getTotalElements(), page, size);
 	}
 
+
+
+	// 판매자 권한 요청 대기중 목록
+	public PageResponseDto<AdminUserListDTO> getSellerRequests(int page, int size) {
+	    Pageable pageable = PageRequest.of(page - 1, size);
+	    Page<Users> requests = userRepository.findUsersWithFilters(
+	        null, "STATUS_PENDING", "ROLE_USER", null, null, pageable
+	    );
+
+	    List<AdminUserListDTO> dtoList = requests.getContent().stream()
+	        .map(AdminUserListDTO::from)
+	        .toList();
+
+	    return new PageResponseDto<>(dtoList, (int) requests.getTotalElements(), page, size);
+	}
+	
 	// 판매자 권한 승인
-	public boolean approveSellerByUserNo(Long userNo) {
+	public boolean approveSellerByUserNo(Long userNo, Long adminUserNo) {
 	    Users user = userRepository.findById(userNo)
 	            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
 
+	    CommonCode sellerRoleCode = commonCodeService.getCodeById("ROLE_SELLER");
+	    CommonCode activeStatusCode = commonCodeService.getCodeById("STATUS_ACTIVE");
+
 	    if ("ROLE_SELLER".equals(user.getRoleCode())) {
-	        return false; // 이미 판매자
+	        throw new IllegalArgumentException("이미 판매자 권한이 있습니다.");
 	    }
 
-	    CommonCode sellerRole = commonCodeService.getCodeById("ROLE_SELLER");
-	    user.setRoleCode(sellerRole);
+	    user.setRoleCode(sellerRoleCode);
+	    user.setStatusCode(activeStatusCode);
 	    userRepository.save(user);
+
+	    NotificationReqDTO dto = NotificationReqDTO.of(
+	        adminUserNo,
+	        userNo,
+	        NotificationType.APPROVAL,
+	        userNo,
+	        TargetType.USER,
+	        "판매자 권한 승인 완료",
+	        "판매자 권한이 성공적으로 승인되었습니다."
+	    );
+
+	    notificationService.sendNotification(dto);
 
 	    return true;
 	}
 
 	// 게시물 목록 조회
-	public List<AdminBoardListDTO> getBoardList(String keyword, Long categoryNo, Boolean isDeleted,
-            LocalDateTime startDateTime, LocalDateTime endDateTime) {
+	public PageResponseDto<AdminBoardListDTO> getBoardList(
+		    String keyword, Long categoryNo, Boolean isDeleted,
+		    LocalDateTime startDateTime, LocalDateTime endDateTime,
+		    int page, int size
+	) {
+	    Pageable pageable = PageRequest.of(page - 1, size);
+	    Page<Board> boardList = boardRepository.findBoardsWithFilters(
+	        keyword, categoryNo, isDeleted, startDateTime, endDateTime, pageable
+	    );
 
-		List<Board> board = boardRepository.findBoardsWithFilters(
-			(keyword == null || keyword.isBlank()) ? null : keyword,
-			(categoryNo == null) ? null : categoryNo,
-			(isDeleted == null) ? null : isDeleted,
-			startDateTime,
-			endDateTime
-		);
-		
-		return board.stream()
-					.map(AdminBoardListDTO::from)
-					.collect(Collectors.toList());
+	    List<AdminBoardListDTO> dtoList = boardList.getContent().stream()
+	        .map(AdminBoardListDTO::from)
+	        .toList();
+
+	    return new PageResponseDto<>(dtoList, (int) boardList.getTotalElements(), page, size);
 	}
 
 	public AdminBoardDetailDTO getBoardDetail(Long boardNo) {
@@ -147,8 +199,6 @@ public class AdminService {
 
 	    return AdminBoardDetailDTO.from(board);
 	}
-
-
 
 	
 }

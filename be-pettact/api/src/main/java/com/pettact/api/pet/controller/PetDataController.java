@@ -1,5 +1,6 @@
 package com.pettact.api.pet.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pettact.api.common.dto.PageResponseDto;
 import com.pettact.api.pet.dto.PetAbandonmentDto;
 import com.pettact.api.pet.dto.PetFacilityDto;
 import com.pettact.api.pet.dto.PetOriginFacilityDto;
@@ -101,7 +103,7 @@ public class PetDataController {
         @RequestParam(value = "orgNm", required = false) String orgNm,
         @RequestParam(value = "careRegNo", required = false) String careRegNo,
         @RequestParam(name = "page", defaultValue = "1") int page,
-        @RequestParam(name = "size", defaultValue = "10") int size
+        @RequestParam(name = "size", defaultValue = "10") int size 
     ) {
         Page<PetAbandonmentDto> result = petDataService.getAbandonmentList(upKindCd, kindCd, orgNm, page, size);
         return ResponseEntity.ok(Map.of(
@@ -111,5 +113,19 @@ public class PetDataController {
         ));
     }
 
-
+    @GetMapping("/abandonment/ending-soon")
+    public PageResponseDto<PetAbandonmentDto> getEndingSoonAbandonments(
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        return petDataService.getEndingSoonAbandonments(page, size);
+    }
+    
+    // ------------------ main page 노출용  ------------------
+    @GetMapping("/abandonment/ending-soon/main")
+    public List<PetAbandonmentDto> getEndingSoonAbandonmentsForMain(
+    	    @RequestParam(value = "count", defaultValue = "5") int count
+    ) {
+	    return petDataService.getEndingSoonAbandonmentsForMain(count);
+	}
 }

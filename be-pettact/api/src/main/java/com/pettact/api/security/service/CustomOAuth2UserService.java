@@ -45,8 +45,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             .orElseThrow(() -> new IllegalStateException("기본 권한 코드 없음"));
         
         // 상태
-        CommonCode status = commonCodeRepository.findById("STATUS_ACTIVE")
-            .orElseThrow(() -> new IllegalStateException("기본 상태 코드 없음"));
+        CommonCode status = commonCodeRepository.findById("STATUS_SOCIAL_PENDING")
+        	    .orElseThrow(() -> new IllegalStateException("소셜 추가 정보 상태 코드 없음"));
         
         Optional<Users> existing = userRepository.findByUserEmail(email);
         

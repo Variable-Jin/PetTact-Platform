@@ -22,5 +22,6 @@ public class UserInfoDTO {
     private String userZipcode;
     private String userStreet1;
     private String userDetailAddress;
-//    private Boolean hasPet; TODO:직접 수정?
+    
+    
 }

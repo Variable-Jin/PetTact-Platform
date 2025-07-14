@@ -14,14 +14,24 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.pettact.api.admin.dto.BoardStatsDTO;
-import com.pettact.api.admin.dto.DailyUserStatsDTO;
-import com.pettact.api.admin.dto.DashboardStatsDTO;
-import com.pettact.api.admin.dto.UserRegStatsDTO;
+import com.pettact.api.admin.dto.board.AdminBoardListDTO;
+import com.pettact.api.admin.dto.dashboard.DashboardStatsDTO;
+import com.pettact.api.admin.dto.dashboard.board.BoardCountCategoryDTO;
+import com.pettact.api.admin.dto.dashboard.board.BoardDailyStatsDTO;
+import com.pettact.api.admin.dto.dashboard.board.BoardStatsDTO;
+import com.pettact.api.admin.dto.dashboard.report.ReportDailyStatsDTO;
+import com.pettact.api.admin.dto.dashboard.user.DailyUserStatsDTO;
+import com.pettact.api.admin.dto.dashboard.user.UserRegStatsDTO;
+import com.pettact.api.board.entity.Board;
 import com.pettact.api.board.repository.BoardRepository;
+import com.pettact.api.report.Repository.ReportRepository;
 import com.pettact.api.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -31,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminDashboardService {
 	private final UserRepository userRepository;
 	private final BoardRepository boardRepository;
+	private final ReportRepository reportRepository;
 	
 	// 전체 사용자 통계
 	public DashboardStatsDTO getDashboardStats() {
@@ -90,4 +101,76 @@ public class AdminDashboardService {
 
         return BoardStatsDTO.of(total, newToday, deletedToday);
     }
+
+    // 카테고리별 게시글 비율
+    public List<BoardCountCategoryDTO> getBoardCountByCategory() {
+        List<Board> boards = boardRepository.findAllWithCategory();
+
+        Map<String, Long> grouped = boards.stream()
+            .collect(Collectors.groupingBy(
+                b -> b.getBoardCategory().getBoardCategoryTitle(),
+                Collectors.counting()
+            ));
+
+        return grouped.entrySet().stream()
+            .map(e -> BoardCountCategoryDTO.from(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
+    }
+    
+    // 일별 게시물 통계
+    public List<BoardDailyStatsDTO> getDailyBoardStats(int days) {
+        List<BoardDailyStatsDTO> statsList = new ArrayList<>();
+
+        for (int i = days - 1; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+            LocalDateTime startDate = date.atStartOfDay();
+            LocalDateTime endDate = date.atTime(23, 59, 59);
+
+            Long count = boardRepository.countBoardsBetween(startDate, endDate);
+
+            statsList.add(BoardDailyStatsDTO.of(date, count));
+        }
+
+        return statsList;
+    }
+    
+    // 일별 신고 통계
+    public List<ReportDailyStatsDTO> getDailyReportStats(int days) {
+        List<ReportDailyStatsDTO> statsList = new ArrayList<>();
+
+        for (int i = days - 1; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+            LocalDateTime startDate = date.atStartOfDay();
+            LocalDateTime endDate = date.atTime(23, 59, 59);
+
+            Long count = reportRepository.countReportsBetween(startDate, endDate);
+
+            statsList.add(ReportDailyStatsDTO.of(date, count));
+        }
+
+        return statsList;
+    }
+    
+    // 판매자 승인 대기 수 
+    public Long getPendingSellerCount() {
+        return userRepository.countPendingSellers();
+    }
+
+    // 최근 삭제된 게시물 통계
+    public List<AdminBoardListDTO> getRecentDeletedBoards(Boolean todayOnly, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        List<Board> boards;
+
+        if (Boolean.TRUE.equals(todayOnly)) {
+            boards = boardRepository.findTodayDeletedBoards(pageable);
+        } else {
+            boards = boardRepository.findRecentDeletedBoards(pageable);
+        }
+
+        return boards.stream()
+            .map(AdminBoardListDTO::from)
+            .collect(Collectors.toList());
+    }
+
+
 }
