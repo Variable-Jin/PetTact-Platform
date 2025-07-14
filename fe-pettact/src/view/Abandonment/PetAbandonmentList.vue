@@ -1,6 +1,7 @@
 <template>
   <div>
     <h2>유기동물 검색</h2>
+    <button @click="openChatModal" style="margin-left: 10px;">💬 채팅 보기</button>
 
     <div class="filters">
       <select v-model="selectedUpKindCd" @change="fetchKinds">
@@ -51,6 +52,7 @@
 <script>
 import axios from 'axios'
 import Pagination from '@/components/common/Paginations.vue'
+import { useModalStore } from '@/js/modalStore'
 
 export default {
   components: { Pagination },
@@ -78,6 +80,10 @@ export default {
     this.fetchSido()
   },
   methods: {
+    openChatModal() {
+      const modalStore = useModalStore()
+      modalStore.openMessageModal()
+    },
     DetailView(desertionNo) {
       this.$router.push(`/abandonment/${desertionNo}`)
     },
