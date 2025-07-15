@@ -54,6 +54,12 @@ public class MultiFile extends BaseEntity {
     @Column(name = "image_url")
     private String imageUrl;
 
+    public MultiFile(ReferenceTable referenceTable, Long referenceNo) {
+        super();
+        this.referenceTable = referenceTable;
+        this.referenceNo = referenceNo;
+    }
+
 
     public enum ReferenceTable {
         BOARD,

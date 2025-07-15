@@ -12,10 +12,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pettact.api.chat.dto.ChatMessageDTO;
+import com.pettact.api.chat.dto.ChatReadDto;
 import com.pettact.api.chat.dto.ChatRoomDTO;
 import com.pettact.api.chat.service.ChatService;
 import com.pettact.api.security.vo.CustomUserDetails;
@@ -38,6 +40,21 @@ public class ChatController {
         chatService.handleIncomingMessage(messageDTO, sessionAttributes);
     }
 
+    @PostMapping("/read")
+    public ResponseEntity<?> updateLastRead(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @RequestBody ChatReadDto dto) {
+
+        chatService.updateLastRead(
+            user.getUserEntity().getUserNo(),
+            dto.getRoomNo(),
+            dto.getLastMessageId()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    
     @GetMapping("/room/my")
     public List<ChatRoomDTO> getMyChatRooms(@AuthenticationPrincipal CustomUserDetails user) {
         return chatService.getMyChatRooms(user);

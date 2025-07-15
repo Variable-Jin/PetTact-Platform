@@ -16,7 +16,7 @@ public class ReportCreateDto {
     private Long userNo;
     private Report.ReportTargetLocation reportTargetLocation;
     private Long reportTargetNo;
-    private String reportReason;
+    private Report.ReportReason reportReason;
     private String reportDescription;
 
 

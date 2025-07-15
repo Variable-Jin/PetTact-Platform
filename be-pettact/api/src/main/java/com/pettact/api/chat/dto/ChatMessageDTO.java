@@ -11,12 +11,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChatMessageDTO {
 	
-    private Long messageId;
+	private Long messageId; 
+
     private Long roomNo;
 
     private Long senderUserNo;
     private String senderNickname;
 
     private String message;
-    private Boolean isMine;
 }

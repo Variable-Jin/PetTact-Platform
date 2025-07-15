@@ -37,6 +37,10 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 	    Pageable pageable
 	);
 
+    // 카테고리에서 게시글 total 조회
+    @Query("SELECT COUNT(b) FROM Board b WHERE b.boardCategory.boardCategoryNo = :categoryNo")
+    int countByCategoryNo(@Param("categoryNo") Long categoryNo);
+
 	// 게시물 상세보기
     @EntityGraph(attributePaths = {"boardCategory", "user"})
     Board findByBoardNo(Long boardNo);

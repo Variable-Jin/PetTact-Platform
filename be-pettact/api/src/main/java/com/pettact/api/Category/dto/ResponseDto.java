@@ -15,6 +15,7 @@ public class ResponseDto {
     private Long boardCategoryNo;
     private String boardCategoryTitle;
     private String boardCategoryDescription;
+    private String boardAllowedRole;
     private Boolean boardAllowImage;
     private Boolean boardAllowAttachment;
     private Boolean boardAllowReply;
@@ -22,6 +23,7 @@ public class ResponseDto {
     private Integer boardMaxFileSize;
     private Integer boardMaxImageCount;
     private String editorType;
+    private int totalBoards;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -31,6 +33,7 @@ public class ResponseDto {
                 saved.getBoardCategoryNo(),
                 saved.getBoardCategoryTitle(),
                 saved.getBoardCategoryDescription(),
+                saved.getBoardAllowedRole(),
                 saved.getBoardAllowImage(),
                 saved.getBoardAllowAttachment(),
                 saved.getBoardAllowReply(),
@@ -38,6 +41,7 @@ public class ResponseDto {
                 saved.getBoardMaxFileSize(),
                 saved.getBoardMaxImageCount(),
                 saved.getEditorType(),
+                0,
                 saved.getCreatedAt(),
                 saved.getUpdatedAt()
         );

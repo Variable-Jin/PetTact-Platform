@@ -3,6 +3,7 @@ package com.pettact.api.board.dto;
 
 import com.pettact.api.board.entity.Board;
 import com.pettact.api.Category.dto.ResponseDto;
+import com.pettact.api.file.dto.FileDto;
 import com.pettact.api.reply.dto.ReplyResponseDto;
 import lombok.*;
 
@@ -18,6 +19,7 @@ public class BoardResponseDto {
 
     private Long boardNo;
     private Long userNo;
+    private String userNickname;
     private ResponseDto responseDto;
     private String boardTitle;
     private String boardContent;
@@ -27,12 +29,14 @@ public class BoardResponseDto {
     private LocalDateTime deletedAt;
     private List<ReplyResponseDto> replies = new ArrayList<>();
     private int recommendCount;
+    private List<FileDto> files;
 
 
     public static BoardResponseDto fromEntity(Board savedBoard) {
         return new BoardResponseDto(
                 savedBoard.getBoardNo(),
                 savedBoard.getUser().getUserNo(),
+                savedBoard.getUser().getUserNickname(),
                 ResponseDto.fromEntity(savedBoard.getBoardCategory()),
                 savedBoard.getBoardTitle(),
                 savedBoard.getBoardContent(),
@@ -41,7 +45,8 @@ public class BoardResponseDto {
                 savedBoard.isDeleted(),
                 savedBoard.getDeletedAt(),
                 new ArrayList<>(),
-                0
+                0,
+                new ArrayList<>()
         );
     }
 
@@ -49,6 +54,7 @@ public class BoardResponseDto {
         return new BoardResponseDto(
                 board.getBoardNo(),
                 board.getUser().getUserNo(),
+                board.getUser().getUserNickname(),
                 ResponseDto.fromEntity(board.getBoardCategory()),
                 board.getBoardTitle(),
                 board.getBoardContent(),
@@ -57,7 +63,8 @@ public class BoardResponseDto {
                 board.isDeleted(),
                 board.getDeletedAt(),
                 null,
-                0
+                0,
+                new ArrayList<>()
         );
     }
 }

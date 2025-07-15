@@ -85,8 +85,9 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
         		.cors(cors -> {});
 
-        http.authorizeHttpRequests(authroize ->
-            authroize
+        http.authorizeHttpRequests(authorize ->
+                authorize
+                .requestMatchers("/v1/multifile/image/**").permitAll()
             	.requestMatchers("/v1/notification/subscribe").permitAll()
             	.requestMatchers("/v1/notification/**").authenticated()
             	.requestMatchers("/v1/user/mypage/**").authenticated()

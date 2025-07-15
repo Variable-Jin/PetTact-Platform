@@ -23,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -54,11 +56,11 @@ public class FileController {
             @RequestPart("file") MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-    	
+
     	log.info("[FILE-CONTROLLER] params: referenceTable={}, referenceNo={}, fileName={}, file is null?={}, userDetails is null?={}",
                 referenceTableStr, referenceNo, fileName, file == null, userDetails == null);
 
-    	
+
         // String → Enum 변환
         MultiFile.ReferenceTable referenceTable = MultiFile.ReferenceTable.valueOf(referenceTableStr);
 
