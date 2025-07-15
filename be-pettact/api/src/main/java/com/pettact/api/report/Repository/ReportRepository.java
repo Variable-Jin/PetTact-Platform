@@ -28,7 +28,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     	    SELECT r FROM Report r
     	    WHERE (:reportTargetLocation IS NULL OR r.reportTargetLocation = :reportTargetLocation)
     	      AND (:reportStatus IS NULL OR r.reportStatus = :reportStatus)
-    	      AND (:reportReason IS NULL OR r.reportReason LIKE %:reportReason%)
+    	      AND (:reportReason IS NULL OR r.reportReason = :reportReason)
     	      AND (:startDate IS NULL OR r.createdAt >= :startDate)
     	      AND (:endDate IS NULL OR r.createdAt <= :endDate)
     	    ORDER BY r.createdAt DESC
@@ -36,7 +36,7 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 	Page<Report> findAllWithFilters(
 	    @Param("reportTargetLocation") Report.ReportTargetLocation reportTargetLocation,
 	    @Param("reportStatus") Integer reportStatus,
-	    @Param("reportReason") String reportReason,
+	    @Param("reportReason") Report.ReportReason reportReason,
 	    @Param("startDate") LocalDate startDate,
 	    @Param("endDate") LocalDate endDate,
 	    Pageable pageable
