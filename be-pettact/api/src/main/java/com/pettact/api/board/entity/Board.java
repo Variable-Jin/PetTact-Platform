@@ -42,16 +42,7 @@ public class Board extends BaseEntity {
     private String boardContent;
     
     @Column(name = "board_view_cnt")
-    private int boardViewCnt;
-
-
-//    public Board(Long boardWriterNo, String boardTitle, String boardContent, BoardCategory boardCategory) {
-//        super();
-//        this.boardWriterNo = boardWriterNo;
-//        this.boardTitle = boardTitle;
-//        this.boardContent = boardContent;
-//        this.boardCategory = boardCategory;
-//    }
+    private int boardViewCnt=0;
 
 
     public Board(String boardTitle, String boardContent, BoardCategory boardCategory, Users user) {

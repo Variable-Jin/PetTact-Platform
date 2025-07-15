@@ -33,8 +33,9 @@ public class Report extends BaseEntity {
     @Column(name = "REPORT_TARGET_NO")
     private Long reportTargetNo;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "REPORT_REASON")
-    private String reportReason;
+    private ReportReason reportReason;
 
     @Column(name = "REPORT_DESCRIPTION")
     private String reportDescription;
@@ -50,7 +51,7 @@ public class Report extends BaseEntity {
 
 
 
-    public Report(Users users, ReportTargetLocation reportTargetLocation, Long reportTargetNo, String reportReason, String reportDescription, Integer reportStatus) {
+    public Report(Users users, ReportTargetLocation reportTargetLocation, Long reportTargetNo, ReportReason reportReason, String reportDescription, Integer reportStatus) {
         super();
         this.users = users;
         this.reportTargetLocation = reportTargetLocation;
@@ -58,6 +59,26 @@ public class Report extends BaseEntity {
         this.reportReason = reportReason;
         this.reportDescription = reportDescription;
         this.reportStatus = reportStatus;
+    }
+
+    public enum ReportReason {
+        SPAM("스팸홍보/도배입니다"),
+        INAPPROPRIATE("음란물입니다"),
+        FALSE_INFO("불법정보를 포함하고 있습니다"),
+        HARMFUL_TO_MINORS("청소년에게 유해한 내용입니다"),
+        PRIVACY_VIOLATION("욕설/생명경시/혐오/차별적 표현입니다"),
+        PERSONAL_INFO("개인정보가 노출되었습니다"),
+        ILLEGAL("불쾌한 표현이 있습니다");
+
+        private final String description;
+
+        ReportReason(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
 
