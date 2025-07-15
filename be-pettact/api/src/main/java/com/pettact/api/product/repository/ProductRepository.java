@@ -39,4 +39,10 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>{
     // 페이징으로 전체 상품 조회, 최신순 정렬 기본
     //Page<ProductEntity> findAllByDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
     
+    // my
+    Page<ProductEntity> findByUser_UserNoAndIsDeletedFalse(Long userNo, Pageable pageable);
+    Page<ProductEntity> findByUser_UserNoAndProductNameContainingIgnoreCaseAndIsDeletedFalse(Long userNo, String keyword, Pageable pageable);
+    Page<ProductEntity> findByUser_UserNoAndProductCategory_CategoryNoAndIsDeletedFalse(Long userNo, Long categoryNo, Pageable pageable);
+    Page<ProductEntity> findByUser_UserNoAndProductNameContainingIgnoreCaseAndProductCategory_CategoryNoAndIsDeletedFalse(Long userNo, String keyword, Long categoryNo, Pageable pageable);
+
 }
