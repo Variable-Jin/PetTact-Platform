@@ -355,4 +355,50 @@ public class ProductService implements ViewCountSyncable<Long> {
             .toList();
     }
 
+    // 
+    public Page<ProductDTO> getMyProducts(Long userNo, String keyword, Long categoryNo, String sort, int page, int size) {
+        Sort sortOption = Sort.by(Sort.Direction.DESC, "createdAt");
+
+        if ("priceAsc".equals(sort)) {
+            sortOption = Sort.by(Sort.Direction.ASC, "productPrice");
+        } else if ("priceDesc".equals(sort)) {
+            sortOption = Sort.by(Sort.Direction.DESC, "productPrice");
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sortOption);
+
+        Page<ProductEntity> productPage;
+
+        if (keyword != null && !keyword.trim().isEmpty() && categoryNo != null) {
+            productPage = productRepository
+                .findByUser_UserNoAndProductNameContainingIgnoreCaseAndProductCategory_CategoryNoAndIsDeletedFalse(
+                    userNo, keyword.trim(), categoryNo, pageable);
+        } else if (keyword != null && !keyword.trim().isEmpty()) {
+            productPage = productRepository
+                .findByUser_UserNoAndProductNameContainingIgnoreCaseAndIsDeletedFalse(
+                    userNo, keyword.trim(), pageable);
+        } else if (categoryNo != null) {
+            productPage = productRepository
+                .findByUser_UserNoAndProductCategory_CategoryNoAndIsDeletedFalse(userNo, categoryNo, pageable);
+        } else {
+            productPage = productRepository
+                .findByUser_UserNoAndIsDeletedFalse(userNo, pageable);
+        }
+
+        return productPage.map(product -> ProductDTO.builder()
+            .productNo(product.getProductNo())
+            .productName(product.getProductName())
+            .productDescription(product.getProductDescription())
+            .productPrice(product.getProductPrice())
+            .productStock(product.getProductStock())
+            .createdAt(product.getCreatedAt())
+            .categoryNo(product.getProductCategory().getCategoryNo())
+            .categoryName(product.getProductCategory().getCategoryName())
+            .status(product.isProductStatus())
+            .imageUrl(product.getImageUrl() != null && !product.getImageUrl().startsWith("/files/")
+                ? "/files/" + product.getImageUrl()
+                : product.getImageUrl())
+            .build());
+    }
+
 }

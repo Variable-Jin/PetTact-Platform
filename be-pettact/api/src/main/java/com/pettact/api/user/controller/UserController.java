@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pettact.api.common.dto.PageResponseDto;
+import com.pettact.api.product.dto.ProductDTO;
+import com.pettact.api.product.service.ProductService;
 import com.pettact.api.report.dto.ReportResponseDto;
 import com.pettact.api.report.service.ReportService;
 import com.pettact.api.security.vo.CustomUserDetails;
@@ -44,6 +48,7 @@ public class UserController {
     private final EmailService emailService;
     private final VerificationCodeStore verificationCodeStore;
     private final ReportService reportService;
+    private final ProductService productService;
 
     /* 회원가입 */
     @PostMapping("/join")
@@ -306,4 +311,19 @@ public class UserController {
         ReportResponseDto dto = reportService.getMyReport(reportNo, userDetails.getUserEntity().getUserNo());
         return ResponseEntity.ok(dto);
     }
+
+    /* my product */
+	@GetMapping("/mypage/my-products")
+	public ResponseEntity<PageResponseDto<ProductDTO>> getMyProducts(
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+	        @RequestParam(name = "keyword", required = false) String keyword,
+	        @RequestParam(name = "categoryNo", required = false) Long categoryNo,
+	        @RequestParam(name = "sort", required = false) String sort,
+	        @RequestParam(name = "page", defaultValue = "0") int page,
+	        @RequestParam(name = "size", defaultValue = "10") int size
+    ) {
+		Long userNo = userDetails.getUserEntity().getUserNo();
+	    Page<ProductDTO> myProducts = productService.getMyProducts(userNo, keyword, categoryNo, sort, page, size);
+	    return ResponseEntity.ok(PageResponseDto.from(myProducts));
+	}
 }
