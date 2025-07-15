@@ -34,7 +34,7 @@ public class NotificationService {
 
         NotificationResDTO notificationResDTO = NotificationResDTO.from(notification);
         
-        // 🔽 로그용 문자열 변환
+        // 로그용 문자열 변환
         try {
             String message = objectMapper.writeValueAsString(notificationResDTO);
             System.out.println("[PUBLISH] 알림 전송됨: " + message);
@@ -42,7 +42,7 @@ public class NotificationService {
             e.printStackTrace();
         }
         
-        notificationPublisher.publish("notifications", notificationResDTO); // JSON으로 변환 ❌ 객체 그대로 ⭕
+        notificationPublisher.publish("notifications", notificationResDTO);
     }    
 
     // 특정 사용자의 모든 알림
