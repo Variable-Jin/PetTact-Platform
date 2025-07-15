@@ -35,7 +35,12 @@
                   @deleted="handleDelete"
                 />
               </div>
-              <div v-else class="text-muted">등록한 상품이 없습니다.</div>
+              <div v-else class="text-muted">
+                등록한 상품이 없습니다.
+                <div class="mt-3">
+                  <button @click="goToProductForm" class="btn btn-primary">상품 등록하기</button>
+                </div>
+              </div>
 
               <!-- ✅ 페이징 컴포넌트 -->
               <Pagination
