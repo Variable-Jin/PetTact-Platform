@@ -17,6 +17,9 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
+### STS-dev 환경설정 파일 제외 ###
+/src/main/resources/application-dev.*
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
