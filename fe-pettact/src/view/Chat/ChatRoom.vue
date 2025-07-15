@@ -1,125 +1,3 @@
-<script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import { useModalStore } from '@/js/modalStore';
-import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
-import axios from 'axios';
-
-const props = defineProps({
-  roomNo: {
-    type: Number,
-    required: true
-  }
-});
-
-const modalStore = useModalStore();
-const message = ref('');
-const chatBox = ref(null);
-
-// 토큰 가져오기
-function getBearerToken() {
-  const token = localStorage.getItem('accessToken');
-  return token ? `Bearer ${token}` : null;
-}
-
-// 메시지 불러오기
-function fetchMessages(roomNo) {
-  console.log('[fetchMessages] roomNo:', roomNo);
-  axios.get(`/v1/chat/message/${roomNo}`, {
-    headers: {
-      Authorization: getBearerToken()
-    }
-  })
-  .then(res => {
-    console.log('[fetchMessages] 메시지 수신:', res.data);
-    modalStore.messages = res.data;
-  })
-  .catch(err => {
-    console.error('메시지 불러오기 실패:', err);
-  });
-}
-
-// WebSocket 연결
-function connect(roomNo) {
-  console.log('[connect] STOMP 연결 시도');
-  modalStore.roomNo = roomNo;
-
-  const socket = new SockJS('/ws-stomp');
-  const stompClient = new Client({
-    webSocketFactory: () => socket,
-    connectHeaders: {
-      Authorization: getBearerToken(),
-    },
-    reconnectDelay: 5000,
-    heartbeatIncoming: 10000,
-    heartbeatOutgoing: 10000,
-    onConnect: () => {
-      console.log('✅ STOMP 연결 성공');
-      modalStore.connected = true;
-      modalStore.setClient(stompClient);
-
-      stompClient.subscribe(`/topic/chat/room/${roomNo}`, (msg) => {
-        const data = JSON.parse(msg.body);
-        console.log('[subscribe] 새 메시지 수신:', data);
-        modalStore.addMessage(data);
-      });
-    },
-    onStompError: (frame) => {
-      console.error('❌ STOMP 에러:', frame);
-    },
-    onWebSocketError: (event) => {
-      console.error('❌ WebSocket 연결 실패:', event);
-    }
-  });
-
-  stompClient.activate();
-}
-
-// 메시지 전송
-function sendMessage() {
-  console.log('[sendMessage] 전송 시도:', message.value, modalStore.connected);
-
-  if (!modalStore.connected || !message.value.trim()) {
-    console.warn('⚠️ 전송 조건 불충족');
-    return;
-  }
-
-  modalStore.stompClient?.publish({
-    destination: '/app/chat/message', // 💡 @MessageMapping("/chat/message") 기준
-    body: JSON.stringify({
-      roomNo: modalStore.roomNo,
-      message: message.value,
-    }),
-    headers: {
-      Authorization: getBearerToken()
-    }
-  });
-
-  console.log('[sendMessage] 메시지 전송 완료');
-  message.value = '';
-}
-
-// 메시지 변경 시 자동 스크롤
-watch(() => modalStore.messages.length, async () => {
-  await nextTick();
-  if (chatBox.value) {
-    chatBox.value.scrollTop = chatBox.value.scrollHeight;
-  }
-});
-
-onMounted(async () => {
-  console.log('[onMounted] 컴포넌트 마운트됨');
-  await fetchMessages(props.roomNo);
-  connect(props.roomNo);
-});
-
-onBeforeUnmount(() => {
-  console.log('[onBeforeUnmount] 연결 종료');
-  modalStore.stompClient?.deactivate();
-});
-</script>
-
-
 <template>
   <div class="chat-room">
     <div ref="chatBox" class="chat-messages">
@@ -145,62 +23,248 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
+<script setup>
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import { useModalStore } from '@/js/modalStore';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
+
+const props = defineProps({
+  roomNo: {
+    type: Number,
+    required: true
+  }
+});
+
+const modalStore = useModalStore();
+const message = ref('');
+const chatBox = ref(null);
+let stompClient = null;
+
+// JWT 디코드
+function getUserInfoFromToken() {
+  const token = localStorage.getItem('accessToken');
+  return token ? jwtDecode(token) : null;
+}
+
+// 메시지 불러오기 + 읽음 처리
+async function fetchMessages(roomNo) {
+  try {
+    const res = await axios.get(`/v1/chat/message/${roomNo}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      }
+    });
+
+    const userNo = getUserInfoFromToken()?.userNo;
+    modalStore.messages = res.data.map(msg => ({
+      ...msg,
+      isMine: msg.senderUserNo === userNo
+    }));
+
+    const lastId = modalStore.messages.at(-1)?.messageId;
+    if (lastId) {
+      await axios.post('/v1/chat/read', {
+        roomNo,
+        lastMessageId: lastId
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+    }
+
+  } catch (err) {
+    console.error('메시지 불러오기 실패:', err);
+  }
+}
+
+// 웹소켓 연결
+function connect(roomNo) {
+  const token = localStorage.getItem('accessToken');
+  const userNo = getUserInfoFromToken()?.userNo;
+
+  const socket = new SockJS('/ws-stomp');
+  stompClient = new Client({
+    webSocketFactory: () => socket,
+    connectHeaders: {
+      Authorization: `Bearer ${token}`
+    },
+    reconnectDelay: 5000,
+    onConnect: () => {
+      console.log('✅ STOMP 연결 성공');
+      modalStore.connected = true;
+      modalStore.setClient(stompClient);
+
+      stompClient.subscribe(`/topic/chat/room/${roomNo}`, async (msg) => {
+        const data = JSON.parse(msg.body);
+        data.isMine = data.senderUserNo === userNo;
+
+        modalStore.addMessage(data);
+
+        // ✅ 수신한 메시지가 내 것이 아니라면 즉시 읽음 처리
+        if (!data.isMine && data.messageId) {
+          try {
+            await axios.post('/v1/chat/read', {
+              roomNo,
+              lastMessageId: data.messageId
+            }, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+          } catch (err) {
+            console.error('읽음 처리 실패:', err);
+          }
+        }
+      });
+    },
+    onStompError: (frame) => {
+      console.error('❌ STOMP 에러:', frame);
+    },
+    onWebSocketError: (event) => {
+      console.error('❌ WebSocket 연결 실패:', event);
+    }
+  });
+
+  stompClient.activate();
+}
+
+// 메시지 전송
+function sendMessage() {
+  if (!modalStore.connected || !message.value.trim()) return;
+
+  stompClient?.publish({
+    destination: '/app/chat/message',
+    body: JSON.stringify({
+      roomNo: modalStore.roomNo,
+      message: message.value
+    }),
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+    }
+  });
+
+  message.value = '';
+}
+
+// 자동 스크롤
+watch(() => modalStore.messages.length, async () => {
+  await nextTick();
+  if (chatBox.value) {
+    chatBox.value.scrollTop = chatBox.value.scrollHeight;
+  }
+});
+
+onMounted(() => {
+  fetchMessages(props.roomNo);
+  connect(props.roomNo);
+});
+
+onBeforeUnmount(() => {
+  stompClient?.deactivate();
+});
+</script>
+
 <style scoped>
 .chat-room {
   display: flex;
   flex-direction: column;
   height: 400px;
+  background-color: #e5ddd5;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
-  background-color: #f7f7f7;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .chat-message {
-  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
+  max-width: 70%;
 }
 
 .chat-message.me {
+  align-self: flex-end;
   align-items: flex-end;
 }
 
 .chat-message.other {
+  align-self: flex-start;
   align-items: flex-start;
 }
 
 .sender {
   font-size: 12px;
-  color: #555;
+  color: #666;
+  margin-bottom: 4px;
 }
 
 .bubble {
-  padding: 8px 12px;
-  background-color: #dcf8c6;
-  border-radius: 12px;
-  max-width: 70%;
+  position: relative;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  background-color: #ffffff;
+  color: #000;
   word-break: break-word;
 }
 
-.chat-message.other .bubble {
-  background-color: #eee;
+.chat-message.me .bubble {
+  background-color: #9fe6a0;
+  color: #000;
+}
+
+.chat-message.other .bubble::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: -6px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-right: 6px solid #ffffff;
+  border-bottom: 6px solid transparent;
+}
+
+.chat-message.me .bubble::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: -6px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-left: 6px solid #9fe6a0;
+  border-bottom: 6px solid transparent;
 }
 
 .chat-input {
   display: flex;
   border-top: 1px solid #ccc;
-  padding: 8px;
+  padding: 10px;
+  background-color: #f0f0f0;
 }
 
 .chat-input input {
   flex: 1;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 10px;
+  border-radius: 20px;
   border: 1px solid #ccc;
+  font-size: 14px;
+  outline: none;
+  background-color: #fff;
   margin-right: 8px;
 }
 
@@ -209,7 +273,8 @@ onBeforeUnmount(() => {
   background-color: #4caf50;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 20px;
+  font-size: 14px;
   cursor: pointer;
 }
 
