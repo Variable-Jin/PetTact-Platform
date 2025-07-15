@@ -4,6 +4,8 @@ import com.pettact.api.Category.dto.CreateDto;
 import com.pettact.api.Category.dto.ResponseDto;
 import com.pettact.api.Category.entity.BoardCategory;
 import com.pettact.api.Category.repository.CategoryRepository;
+import com.pettact.api.board.repository.BoardRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,8 @@ public class CategoryService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private BoardRepository boardRepository;
 
     public ResponseDto createCategory(CreateDto createDto) {
         /*
@@ -40,6 +44,16 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    public ResponseDto getCategoryDetail(Long boardCategoryNo) {
+        BoardCategory category = categoryRepository.findById(boardCategoryNo)
+                .orElseThrow(()-> new IllegalArgumentException("카테고리 찾을 수 없습니다."));
+
+        int totalBoards = boardRepository.countByCategoryNo(boardCategoryNo);
+        ResponseDto responseDto = ResponseDto.fromEntity(category);
+        responseDto.setTotalBoards(totalBoards);
+        return responseDto;
+    }
+
     // 수정 예정
     public ResponseDto getCategoryByNo(Long boardCategoryNo) {
         BoardCategory category = categoryRepository.findById(boardCategoryNo)
@@ -47,6 +61,7 @@ public class CategoryService {
         return ResponseDto.fromEntity(category);
     }
 
+    @Transactional
     public ResponseDto updateCategory(Long boardCategoryNo, CreateDto createDto) {
         BoardCategory category = categoryRepository.findById(boardCategoryNo)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다. No: " + boardCategoryNo));

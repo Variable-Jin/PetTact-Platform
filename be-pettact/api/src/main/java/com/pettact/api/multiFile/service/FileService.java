@@ -106,17 +106,17 @@ public class FileService {
 //        multiFile.setFileMimeType(file.getContentType());
 //
 //        MultiFile saved = fileRepository.save(multiFile);
-        
-        
+
+
         String storedFileName = store(file); // 저장된 파일명만 받아오기
         String fullFilePath = uploadPath + "/" + storedFileName;
         System.out.println(">>> store() 함수 반환 storedFileName: " + storedFileName);
         System.out.println(">>> fullFilePath 값: " + fullFilePath);
-        
-        
+
+
         MultiFile multiFile = fileCreateDto.toEntity();
         System.out.println(">>> MultiFile 생성 - referenceNo: " + multiFile.getReferenceNo());
-        
+
         multiFile.setUserNo(userNo);
 
         // 순서 계산
@@ -131,14 +131,14 @@ public class FileService {
         multiFile.setFileSize((int) file.getSize());
         multiFile.setCreatedAt(LocalDateTime.now());
         multiFile.setFileMimeType(file.getContentType());
-        
+
         System.out.println(">>> MultiFile 필드 세팅 후 저장 전 값들 - filePath: " + multiFile.getFilePath() + ", storedFileName: " + multiFile.getStoredFileName());
 
         MultiFile saved = fileRepository.save(multiFile);
-        
+
         System.out.println("✅ 저장된 MultiFile 엔티티 - filePath: " + saved.getFilePath() + ", storedFileName: " + saved.getStoredFileName());
-        
-        
+
+
         System.out.println("✅ 저장된 storedFileName: " + saved.getStoredFileName());
         FileResponseDto dto = FileResponseDto.fromEntity(saved);
         System.out.println("✅ FileResponseDto 반환: " + dto);
@@ -220,6 +220,4 @@ public class FileService {
         }
         fileRepository.deleteById(fileNo);
     }
-
-
 }

@@ -3,15 +3,23 @@ package com.pettact.api.board.controller;
 import com.pettact.api.board.service.BoardService;
 import com.pettact.api.board.dto.BoardCreateDto;
 import com.pettact.api.board.dto.BoardResponseDto;
+import com.pettact.api.file.dto.FileDto;
+import com.pettact.api.file.entity.File;
+import com.pettact.api.file.service.MultiFileService;
 import com.pettact.api.security.vo.CustomUserDetails;
 
 import jakarta.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 // 구분할지 말지
@@ -22,18 +30,45 @@ public class BoardController {
 
     @Autowired
     private BoardService boardService;
+    @Autowired
+    private MultiFileService multiFileService;
 
     /*
      * POST /v1/board
      * 게시글 생성
      */
+//
+//    @PostMapping
+//    public ResponseEntity<BoardResponseDto> createBoard(@RequestBody BoardCreateDto boardCreateDto,
+//                                                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+//        Long userNo = userDetails.getUserEntity().getUserNo();
+//        BoardResponseDto boardResponseDto = boardService.createBoard(boardCreateDto, userNo);
+//        return ResponseEntity.ok(boardResponseDto);
+//    }
 
     @PostMapping
-    public ResponseEntity<BoardResponseDto> createBoard(@RequestBody BoardCreateDto boardCreateDto,
-                                                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<BoardResponseDto> createBoard(
+            @RequestPart("data") BoardCreateDto boardCreateDto,
+            @RequestPart(value = "files", required = false) MultipartFile[] files, // 파일 추가
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
         Long userNo = userDetails.getUserEntity().getUserNo();
-        BoardResponseDto boardResponseDto = boardService.createBoard(boardCreateDto, userNo);
-        return ResponseEntity.ok(boardResponseDto);
+
+        // 1. 게시글 생성
+        BoardResponseDto boardResponse = boardService.createBoard(boardCreateDto, userNo);
+
+        // 2. 파일이 있으면 업로드
+        if (files != null && files.length > 0) {
+            List<FileDto> uploadedFiles = multiFileService.createFiles(
+                    File.ReferenceTable.BOARD,
+                    boardResponse.getBoardNo(),
+                    files,
+                    userNo
+            );
+            boardResponse.setFiles(uploadedFiles);
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(boardResponse);
     }
 
     /*
@@ -56,6 +91,9 @@ public class BoardController {
     public ResponseEntity<BoardResponseDto> getBoardByNo(@PathVariable("boardNo") Long boardNo,  HttpSession session) {
     	String sessionId = session.getId();
         BoardResponseDto board = boardService.getBoardByNo(boardNo, sessionId);
+        List<FileDto> files = multiFileService.getFilesByReference(File.ReferenceTable.BOARD,
+                boardNo);
+        board.setFiles(files);
         return ResponseEntity.ok(board);
     }
 
@@ -65,13 +103,22 @@ public class BoardController {
      */
 
     @PutMapping("/{boardNo}")
-    public ResponseEntity<BoardResponseDto> updateBoard
-            (@PathVariable Long boardNo, @RequestBody BoardCreateDto boardCreateDto,
-             @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<BoardResponseDto> updateBoard(
+            @PathVariable Long boardNo,
+            @RequestPart("data") BoardCreateDto boardCreateDto,
+            @RequestPart(value = "files", required = false) MultipartFile[] files,
+            @RequestParam(value = "deletedFileIds", required = false) List<Long> deletedFileIds,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
         Long userNo = userDetails.getUserEntity().getUserNo();
-        BoardResponseDto boardResponseDto = boardService.updateBoard(boardNo, boardCreateDto, userNo);
+
+        BoardResponseDto boardResponseDto = boardService.updateBoard(
+                boardNo, boardCreateDto, userNo, files, deletedFileIds
+        );
+
         return ResponseEntity.ok(boardResponseDto);
     }
+
 
     /*
      * DELETE v1/board/{boardNo}

@@ -84,8 +84,9 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
         		.cors(cors -> {});
 
-        http.authorizeHttpRequests(authroize ->
-            authroize
+        http.authorizeHttpRequests(authorize ->
+                authorize
+                    .requestMatchers("/v1/multifile/image/**").permitAll()
             	.requestMatchers("/v1/notification/subscribe").permitAll()
             	.requestMatchers("/v1/notification/**").authenticated()
             	.requestMatchers("/v1/user/mypage/**").authenticated()
@@ -96,8 +97,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/v1/product/delete/*").hasAuthority("ROLE_SELLER")
                 .requestMatchers("/v1/board-categories").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/v1/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결
-                .anyRequest().permitAll()
+                .requestMatchers(HttpMethod.POST, "/v1/payments/**").permitAll()	// TODO: 결제 인증 해결,
+                    .anyRequest().permitAll()
         );
 
         http.oauth2Login(oauth2 -> oauth2

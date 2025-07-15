@@ -1,43 +1,111 @@
+// import { defineStore } from 'pinia';
+// import { ref } from 'vue';
+// import axios from 'axios';
+// import { connectNotificationSSE, disconnectNotificationSSE } from '@/utils/sse/connectNotification';
+
+// export const useUserStore = defineStore('user', {
+//   state: () => ({
+//     user: ref(null),
+//     accessToken: ref(localStorage.getItem('accessToken')),
+//   }),
+//   actions: {
+//     async login(email, password) {
+//       const res = await axios.post('/v1/user/login', {
+//         userEmail: email,
+//         userPassword: password,
+//       });
+
+//       this.accessToken = res.data.accessToken;
+//       localStorage.setItem('accessToken', this.accessToken);
+
+//       await this.fetchUser();
+
+//       connectNotificationSSE(this.accessToken, (data) => {
+//         alert(`${data.notificationTitle}`);
+//       });
+//     },
+
+//     async fetchUser() {
+//       if (!this.accessToken) return;
+//       try {
+//         const res = await axios.get('/v1/user/me', {
+//           headers: {
+//             Authorization: `Bearer ${this.accessToken}`,
+//           },
+//         });
+//         this.user = res.data;
+//       } catch (err) {
+//         console.error('유저 정보 조회 실패', err);
+//         this.logout();
+//       }
+//     },
+
+//     logout() {
+//       this.user = null;
+//       this.accessToken = null;
+//       localStorage.removeItem('accessToken');
+//       disconnectNotificationSSE();
+//     },
+//   },
+// });
 import { defineStore } from 'pinia';
-import { useStorage } from '@vueuse/core';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
+import { connectNotificationSSE, disconnectNotificationSSE } from '@/utils/sse/connectNotification';
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    user: useStorage('user', null),
-    accessToken: useStorage('accessToken', null),
+    user: null,
+    accessToken: localStorage.getItem('accessToken'),
   }),
+  
+  getters: {
+    isLoggedIn: (state) => !!state.accessToken,
+    isAdmin: (state) => state.user?.userRole === 'ROLE_ADMIN',
+  },
+  
   actions: {
-    async login(email, password) {
-      const res = await axios.post('/v1/user/login', { userEmail: email, userPassword: password });
-      this.accessToken = res.data.accessToken;
-      this.user = res.data.user;
-
-      localStorage.setItem('accessToken', this.accessToken);
+    // NavBar에서 호출하는 함수 추가
+    restoreUserFromToken() {
+      const token = localStorage.getItem('accessToken')
+      if (token) {
+        this.accessToken = token
+        this.fetchUser() // 토큰으로 사용자 정보 가져오기
+      }
     },
 
-    restoreUserFromToken() {
-      if (this.accessToken) {
-        try {
-          const decoded = jwtDecode(this.accessToken);
+    async login(email, password) {
+      try {
+        const res = await axios.post('/v1/user/login', {
+          userEmail: email,
+          userPassword: password,
+        });
 
-          // 디버깅 로그 추가
-          console.log('Decoded JWT:', decoded);
-          console.log('UserNo from token:', decoded.userNo);
+        this.accessToken = res.data.accessToken;
+        localStorage.setItem('accessToken', this.accessToken);
 
-          this.user = {
-            userEmail: decoded.userEmail,
-            userNo: decoded.userNo,
-            userNickname: decoded.userNickname,
-            userRole: decoded.userRole,
-          };
+        await this.fetchUser();
 
-          // 설정 후 확인
-          console.log('User after setting:', this.user);
-        } catch (e) {
-          console.error('Failed to decode JWT', e);
-        }
+        connectNotificationSSE(this.accessToken, (data) => {
+          alert(`${data.notificationTitle}`);
+        });
+      } catch (error) {
+        console.error('로그인 실패:', error);
+        throw error;
+      }
+    },
+
+    async fetchUser() {
+      if (!this.accessToken) return;
+      try {
+        const res = await axios.get('/v1/user/me', {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        });
+        this.user = res.data;
+      } catch (err) {
+        console.error('유저 정보 조회 실패', err);
+        this.logout();
       }
     },
 
@@ -45,6 +113,7 @@ export const useUserStore = defineStore('user', {
       this.user = null;
       this.accessToken = null;
       localStorage.removeItem('accessToken');
+      disconnectNotificationSSE();
     },
   },
 });
