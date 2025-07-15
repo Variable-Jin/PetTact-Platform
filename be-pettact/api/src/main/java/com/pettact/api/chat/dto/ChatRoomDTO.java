@@ -15,10 +15,12 @@ public class ChatRoomDTO {
 	private String user1Nickname;
 	private Long user2No;
 	private String user2Nickname;
+	private Long unreadCount;
 	
 	//방조회
-	public ChatRoomDTO(Long roomNo, String name) {
+	public ChatRoomDTO(Long roomNo, String name, Long unreadCount) {
 	    this.roomNo = roomNo;
 	    this.name = name;
+	    this.unreadCount = unreadCount;
 	}
 }

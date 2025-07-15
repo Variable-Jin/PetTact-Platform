@@ -3,9 +3,11 @@ package com.pettact.api.chat.service;
 import com.pettact.api.admin.dto.user.AdminUserDetailDTO;
 import com.pettact.api.chat.dto.ChatMessageDTO;
 import com.pettact.api.chat.dto.ChatRoomDTO;
-import com.pettact.api.chat.entity.ChatMessage;
-import com.pettact.api.chat.entity.ChatRoom;
+import com.pettact.api.chat.entity.ChatMessageEntity;
+import com.pettact.api.chat.entity.ChatReadEntity;
+import com.pettact.api.chat.entity.ChatRoomEntity;
 import com.pettact.api.chat.repository.ChatMessageRepository;
+import com.pettact.api.chat.repository.ChatReadRepository;
 import com.pettact.api.chat.repository.ChatRoomRepository;
 import com.pettact.api.security.vo.CustomUserDetails;
 import com.pettact.api.user.entity.Users;
@@ -29,6 +31,7 @@ public class ChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatReadRepository chatReadRepository;
     private final UserRepository userRepository;
 
     public void handleIncomingMessage(ChatMessageDTO messageDTO, Map<String, Object> sessionAttributes) {
@@ -41,22 +44,19 @@ public class ChatService {
         Users userData = userRepository.findById(userNo)
                 .orElseThrow(() -> new RuntimeException("해당 사용자를 찾을 수 없습니다."));
 
-        log.info("채팅 수신 → 방번호: {}, 보낸 사람: {}, 내용: {}",
-                messageDTO.getRoomNo(), userNo, messageDTO.getMessage());
-
-        ChatRoom room = chatRoomRepository.findById(messageDTO.getRoomNo())
+        ChatRoomEntity room = chatRoomRepository.findById(messageDTO.getRoomNo())
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 채팅방입니다."));
 
-        ChatMessage entity = ChatMessage.builder()
-                .roomNo(room.getRoomNo())
+        ChatMessageEntity entity = ChatMessageEntity.builder()
+                .chatRoom(room) 
                 .sender(userData)
                 .message(messageDTO.getMessage())
                 .build();
 
         chatMessageRepository.save(entity);
-        messageDTO.setSenderNickname(userData.getUserNickname()); 
+        messageDTO.setMessageId(entity.getChatMessageNo()); 
+        messageDTO.setSenderNickname(userData.getUserNickname());
         messageDTO.setSenderUserNo(userNo);
-        messageDTO.setIsMine(true);
         messagingTemplate.convertAndSend("/topic/chat/room/" + room.getRoomNo(), messageDTO);
     }
 
@@ -66,15 +66,14 @@ public class ChatService {
     }
 
     public List<ChatMessageDTO> getMessagesByRoom(Long roomNo, Long userNo) {
-        List<ChatMessage> messages = chatMessageRepository.findByRoomNoOrderByCreatedAtAsc(roomNo);
+        List<ChatMessageEntity> messages = chatMessageRepository.findByChatRoomRoomNoOrderByCreatedAtAsc(roomNo);
 
         return messages.stream().map(m -> ChatMessageDTO.builder()
                 .messageId(m.getChatMessageNo())
-                .roomNo(m.getRoomNo())
+                .roomNo(m.getChatRoom().getRoomNo())
                 .senderUserNo(m.getSender().getUserNo())
                 .senderNickname(m.getSender().getUserNickname())
                 .message(m.getMessage())
-                .isMine(m.getSender().getUserNo().equals(userNo))
                 .build())
             .collect(Collectors.toList());
     }
@@ -86,9 +85,9 @@ public class ChatService {
             throw new IllegalArgumentException("자기 자신과는 채팅할 수 없습니다.");
         }
 
-        Optional<ChatRoom> existing = chatRoomRepository.findRoomByUsers(user1No, user2No);
+        Optional<ChatRoomEntity> existing = chatRoomRepository.findRoomByUsers(user1No, user2No);
         if (existing.isPresent()) {
-            ChatRoom room = existing.get();
+            ChatRoomEntity room = existing.get();
             return ResponseEntity.ok(ChatRoomDTO.builder()
                     .roomNo(room.getRoomNo())
                     .name(room.getName())
@@ -104,12 +103,12 @@ public class ChatService {
         Users user2 = userRepository.findById(user2No)
                 .orElseThrow(() -> new RuntimeException("받는 사용자 없음"));
 
-        ChatRoom newRoom = new ChatRoom();
+        ChatRoomEntity newRoom = new ChatRoomEntity();
         newRoom.setUser1(user1);
         newRoom.setUser2(user2);
         newRoom.setName(user1.getUserNickname() + " & " + user2.getUserNickname());
 
-        ChatRoom saved = chatRoomRepository.save(newRoom);
+        ChatRoomEntity saved = chatRoomRepository.save(newRoom);
 
         ChatRoomDTO result = ChatRoomDTO.builder()
                 .roomNo(saved.getRoomNo())
@@ -121,6 +120,19 @@ public class ChatService {
                 .build();
 
         return ResponseEntity.ok(result);
+    }
+
+    public void updateLastRead(Long userNo, Long roomNo, Long lastMessageId) {
+        if (lastMessageId == null) {
+            log.warn("lastMessageId가 null입니다. 읽음 처리 생략 - userNo={}, roomNo={}", userNo, roomNo);
+            return;
+        }
+        ChatReadEntity read = chatReadRepository.findByRoomNoAndUserNo(roomNo, userNo)
+            .orElse(new ChatReadEntity(roomNo, userNo, 0L));
+        if (lastMessageId > read.getLastReadMessageNo()) {
+            read.setLastReadMessageNo(lastMessageId);
+            chatReadRepository.save(read);
+        }
     }
 
     public ResponseEntity<?> getUserDetailByNickname(String nickname) {

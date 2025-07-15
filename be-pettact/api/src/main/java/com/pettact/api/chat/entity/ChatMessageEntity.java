@@ -22,19 +22,20 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor  
 @AllArgsConstructor
-public class ChatMessage extends BaseEntity {
+public class ChatMessageEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long chatMessageNo;
 
-    private Long roomNo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_no", nullable = false)
+    private ChatRoomEntity chatRoom;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender", nullable = false)
     private Users sender;
     
     private String message;
-    private String readStatus; 
     
     
 
