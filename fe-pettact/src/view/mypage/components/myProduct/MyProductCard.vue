@@ -1,7 +1,7 @@
 <template>
     <div class="border-bottom py-3">
         <!-- 상단: 등록일 + 상세보기 -->
-        <div class="d-flex justify-content-between align-items-center mb-2" style="width: 800px;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
             <div class="text-muted small">등록일: {{ formatDate(product.createdAt) }}</div>
             <div>
                 <button class="btn btn-sm btn-link text-decoration-none p-0" @click="goToDetail">
