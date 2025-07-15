@@ -31,6 +31,7 @@ import com.pettact.api.product.dto.ProductUpdateDTO;
 import com.pettact.api.product.service.ProductService;
 import com.pettact.api.security.vo.CustomUserDetails;
 
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,8 +57,9 @@ public class ProductController {
 	
 	// 상품 상세보기 
 	@GetMapping("/{productNo}")
-	public ResponseEntity <ProductDetailDTO> getProductDetail(@PathVariable("productNo") Long productNo) {
-	    ProductDetailDTO myProduct = productService.getProductDetail(productNo);
+	public ResponseEntity <ProductDetailDTO> getProductDetail(@PathVariable("productNo") Long productNo, HttpSession session) {
+		String sessionId = session.getId();
+	    ProductDetailDTO myProduct = productService.getProductDetail(productNo, sessionId);
 	    return ResponseEntity.ok(myProduct);
 	}
 
@@ -125,5 +127,11 @@ public class ProductController {
         }
         Long productNo = productService.createProduct(dto, files, user);
         return ResponseEntity.ok(Map.of("productNo", productNo));
+    }
+    
+    // ------------------ 인기 상품 TOP 10 ------------------
+    @GetMapping("/popular")
+    public List<ProductDTO> getPopularProducts(@RequestParam(value = "count" , defaultValue = "5") int count) {
+        return productService.getPopularProducts(count);
     }
 }
