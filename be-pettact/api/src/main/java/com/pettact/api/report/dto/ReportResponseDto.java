@@ -21,7 +21,7 @@ public class ReportResponseDto {
     private String userNickname;
     private Report.ReportTargetLocation reportTargetLocation;
     private Long reportTargetNo;
-    private String reportReason;
+    private Report.ReportReason reportReason;
     private String reportDescription;
     private Integer reportStatus;
     private LocalDateTime createdAt;    // 신고 접수 시간
