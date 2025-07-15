@@ -232,16 +232,29 @@ const updateCategory = async () => {
 
   try {
     const categoryNo = route.params.categoryNo
-    const res = await axios.patch(`/v1/board-categories/${categoryNo}`, category.value)
-    
+    console.log('🔎 categoryNo:', categoryNo)
+    // const res = await axios.patch(/v1/board-categories/${categoryNo}, category.value)
+    const res = await axios.patch(`/v1/board-categories/${categoryNo}`, {
+    boardCategoryTitle: category.value.boardCategoryTitle,
+    boardCategoryDescription: category.value.boardCategoryDescription,
+    boardAllowedRole: category.value.boardAllowedRole,
+    boardAllowAttachment: category.value.boardAllowAttachment,
+    boardAllowImage: category.value.boardAllowImage,
+    boardAllowReply: category.value.boardAllowReply,
+    boardAllowRecommend: category.value.boardAllowRecommend,
+    boardMaxFileSize: category.value.boardMaxFileSize,
+    boardMaxImageCount: category.value.boardMaxImageCount,
+    editorType: category.value.editorType
+    })
+
     resultMessage.value = '카테고리가 성공적으로 수정되었습니다.'
     resultType.value = 'success'
-    
+
     // 3초 후 상세 페이지로 이동
     setTimeout(() => {
       router.push({ name: 'BoardCategoryDetail', params: { categoryNo } })
     }, 2000)
-    
+
   } catch (err) {
     console.error('카테고리 수정 실패:', err)
     resultMessage.value = '카테고리 수정 중 오류가 발생했습니다.'
