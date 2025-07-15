@@ -2,7 +2,7 @@
   <div>
     <div class="mb-4 d-flex align-items-center justify-content-between">
       <div>
-        <h5 class="mb-0">일별 신고 접수 수</h5>
+        <h5 class="mb-0">일별 신규 사용자</h5>
         <small class="text-muted">최근 {{ selectedPeriod }}일간 추이</small>
       </div>
       <div class="d-flex align-items-center">
@@ -14,7 +14,7 @@
     </div>
 
     <div class="chart-container" style="height: 400px; position: relative;">
-      <Bar :data="chartData" :options="chartOptions" />
+      <Line :data="chartData" :options="chartOptions" />
     </div>
 
     <!-- 통계 요약 -->
@@ -22,24 +22,24 @@
       <div class="col-md-3">
         <div class="card border-0 bg-light">
           <div class="card-body text-center p-3">
-            <div class="h5 mb-1 text-danger">{{ totalReports }}</div>
-            <div class="small text-muted">총 신고 건수</div>
+            <div class="h5 mb-1 text-primary">{{ totalUsers }}</div>
+            <div class="small text-muted">총 신규 사용자</div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card border-0 bg-light">
           <div class="card-body text-center p-3">
-            <div class="h5 mb-1 text-warning">{{ avgReports }}</div>
-            <div class="small text-muted">일평균 신고</div>
+            <div class="h5 mb-1 text-success">{{ avgUsers }}</div>
+            <div class="small text-muted">일평균 신규 사용자</div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card border-0 bg-light">
           <div class="card-body text-center p-3">
-            <div class="h5 mb-1 text-info">{{ maxReports }}</div>
-            <div class="small text-muted">최대 일일 신고</div>
+            <div class="h5 mb-1 text-info">{{ maxUsers }}</div>
+            <div class="small text-muted">최대 일일 사용자</div>
           </div>
         </div>
       </div>
@@ -58,18 +58,20 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
-import { Bar } from 'vue-chartjs'
+import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
   Tooltip,
   Legend,
-  BarElement,
+  LineElement,
   CategoryScale,
-  LinearScale
+  LinearScale,
+  PointElement,
+  Filler
 } from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
+ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler)
 
 const selectedPeriod = ref(7) // 기본값 7일
 const availablePeriods = [7, 14, 30]
@@ -95,7 +97,7 @@ const chartOptions = ref({
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
       titleColor: '#ffffff',
       bodyColor: '#ffffff',
-      borderColor: '#ff6384',
+      borderColor: '#36a2eb',
       borderWidth: 1,
       cornerRadius: 8,
       displayColors: false,
@@ -104,7 +106,7 @@ const chartOptions = ref({
           return `${context[0].label.replace('-', '월 ').replace('-', '일')}`
         },
         label: function(context) {
-          return `신고 건수: ${context.parsed.y.toLocaleString()}건`
+          return `신규 사용자: ${context.parsed.y.toLocaleString()}명`
         }
       }
     }
@@ -138,7 +140,7 @@ const chartOptions = ref({
           size: 12
         },
         callback: function(value) {
-          return value.toLocaleString() + '건'
+          return value.toLocaleString() + '명'
         }
       }
     }
@@ -146,31 +148,31 @@ const chartOptions = ref({
 })
 
 // 통계 계산
-const totalReports = computed(() => {
-  return currentData.value.reduce((sum, item) => sum + (item.reportCount || 0), 0)
+const totalUsers = computed(() => {
+  return currentData.value.reduce((sum, item) => sum + (item.newUsers || 0), 0)
 })
 
-const avgReports = computed(() => {
+const avgUsers = computed(() => {
   if (currentData.value.length === 0) return 0
-  return Math.round(totalReports.value / currentData.value.length)
+  return Math.round(totalUsers.value / currentData.value.length)
 })
 
-const maxReports = computed(() => {
+const maxUsers = computed(() => {
   if (currentData.value.length === 0) return 0
-  return Math.max(...currentData.value.map(item => item.reportCount || 0))
+  return Math.max(...currentData.value.map(item => item.newUsers || 0))
 })
 
 const growth = computed(() => {
   if (currentData.value.length < 2) return 0
-  const today = currentData.value[currentData.value.length - 1]?.reportCount || 0
-  const yesterday = currentData.value[currentData.value.length - 2]?.reportCount || 0
+  const today = currentData.value[currentData.value.length - 1]?.newUsers || 0
+  const yesterday = currentData.value[currentData.value.length - 2]?.newUsers || 0
   if (yesterday === 0) return 0
   return Math.round(((today - yesterday) / yesterday) * 100)
 })
 
 const growthClass = computed(() => {
-  if (growth.value > 0) return 'text-danger' // 신고는 증가하면 안 좋음
-  if (growth.value < 0) return 'text-success' // 신고는 감소하면 좋음
+  if (growth.value > 0) return 'text-success'
+  if (growth.value < 0) return 'text-danger'
   return 'text-muted'
 })
 
@@ -189,13 +191,13 @@ const generateLabels = (days) => {
 }
 
 const mapDataToLabels = (dataset, labels) => {
-  const map = Object.fromEntries(dataset.map(d => [d.date.slice(5), d.reportCount]))
+  const map = Object.fromEntries(dataset.map(d => [d.date.slice(5), d.newUsers]))
   return labels.map(label => map[label] ?? 0)
 }
 
 const fetchData = async () => {
   try {
-    const res = await axios.get('/v1/admin/dashboard/report/daily', { 
+    const res = await axios.get('/v1/admin/dashboard/user/daily', { 
       params: { days: selectedPeriod.value } 
     })
     const data = res.data
@@ -207,16 +209,21 @@ const fetchData = async () => {
     chartData.value = {
       labels: labels,
       datasets: [{
-        label: '신고 건수',
+        label: '신규 사용자',
         data: chartDataValues,
-        backgroundColor: 'rgba(255, 99, 132, 0.7)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 2,
-        borderRadius: 4,
-        borderSkipped: false,
-        hoverBackgroundColor: 'rgba(255, 99, 132, 0.9)',
-        hoverBorderColor: 'rgba(255, 99, 132, 1)',
-        hoverBorderWidth: 3
+        borderColor: '#36a2eb',
+        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#36a2eb',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: '#36a2eb',
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBorderWidth: 2
       }]
     }
   } catch (error) {
@@ -245,8 +252,8 @@ onMounted(() => {
 }
 
 .form-select:focus {
-  border-color: #ff6384;
-  box-shadow: 0 0 0 0.2rem rgba(255, 99, 132, 0.25);
+  border-color: #36a2eb;
+  box-shadow: 0 0 0 0.2rem rgba(54, 162, 235, 0.25);
 }
 
 .card {
