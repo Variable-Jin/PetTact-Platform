@@ -5,6 +5,7 @@
     <div class="card mb-4">
       <div class="card-body">
         <form class="row g-3 align-items-center">
+          <!-- status -->
           <div class="col-md-4">
             <label class="form-label">상태</label>
             <select v-model="filters.status" class="form-select">
@@ -14,20 +15,35 @@
               <option value="2">반려</option>
             </select>
           </div>
-          <!-- TODO: 하드코딩말고 enum 가져오기, 신고 대상 다 정해지면 -->
+          <!-- targetLocation -->
           <div class="col-md-4">
             <label class="form-label">대상종류</label>
-            <select v-model="filters.location" class="form-select">
-              <option value="">대상 전체</option>
-              <option value="BOARD">게시글</option>
-              <option value="REPLY">댓글</option>
-              <option value="PRODUCT">상품</option>
-              <option value="CART">장바구니</option>
-              <option value="ORDER">주문</option>
-              <option value="PET">동물</option>
-              <option value="USER">회원</option>
+              <select v-model="filters.location" class="form-select">
+                <option value="">대상 전체</option>
+                <option
+                  v-for="loc in reportLocations"
+                  :key="loc.code"
+                  :value="loc.code"
+                >
+                  {{ loc.label }}
+                </option>
+              </select>
+          </div>
+          <!-- reason -->
+          <div class="col-md-4">
+            <label class="form-label">신고 사유</label>
+            <select v-model="filters.reason" class="form-select">
+              <option value="">사유 전체</option>
+              <option
+                v-for="reason in reportReasons"
+                :key="reason.code"
+                :value="reason.code"
+              >
+                {{ reason.description }}
+              </option>
             </select>
           </div>
+
           <div class="col-md-4 d-grid mt-4">
             <button type="button" class="btn btn-primary" @click="onSearch">검색</button>
           </div>
@@ -94,8 +110,12 @@ const pageData = ref({
 
 const filters = ref({
   status: '',
-  location: ''
+  location: '',
+  reason: ''
 })
+
+const reportLocations = ref([])
+const reportReasons = ref([])
 
 const statusLabel = (status) => {
   switch(status){
@@ -106,12 +126,26 @@ const statusLabel = (status) => {
   }
 }
 
+const fetchEnums = async () => {
+  try {
+    const [locationsRes, reasonsRes] = await Promise.all([
+      axios.get('/v1/report/locations'),
+      axios.get('/v1/report/reasons')
+    ])
+    reportLocations.value = locationsRes.data
+    reportReasons.value = reasonsRes.data
+  } catch (err) {
+    console.error('enum 로딩 실패:', err)
+  }
+}
+
 const getReportList = async (page = 1) => {
   try {
     const response = await axios.get('/v1/admin/report', {
       params: {
         status: filters.value.status,
         location: filters.value.location,
+        reason: filters.value.reason,
         page: page,
         size: pageData.value.pageSize
       }
@@ -141,6 +175,7 @@ const showDetail = (reportNo) => {
 }
 
 onMounted(() => {
+  fetchEnums()
   getReportList()
 })
 </script>
