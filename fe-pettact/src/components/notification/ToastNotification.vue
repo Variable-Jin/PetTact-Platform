@@ -1,17 +1,30 @@
 <template>
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div v-for="(noti, index) in toasts" :key="index"
-            class="toast show align-items-center text-bg-light border-0 mb-2 shadow-sm" role="alert"
-            @click="handleClick(noti, index)" style="cursor: pointer;">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <strong>{{ noti.notificationTitle }}</strong><br />
-                    <small>{{ noti.notificationContent }}</small>
-                </div>
-                <button type="button" class="btn-close me-2 m-auto" @click.stop="removeToast(index)"></button>
-            </div>
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div
+      v-for="(noti, index) in toasts"
+      :key="index"
+      class="toast show align-items-start text-bg-light border-0 mb-2 shadow-sm noti-toast"
+      role="alert"
+      @click="handleClick(noti, index)"
+      :class="{ read: noti.isRead }"
+      style="cursor: pointer"
+    >
+      <div class="d-flex">
+        <div class="toast-body">
+          <div class="d-flex">
+            <strong>{{ noti.notificationTitle }}</strong>
+            <span v-if="!noti.isRead" class="new-dot ms-2 mt-1"></span>
+          </div>
+          <small class="text-muted">{{ noti.notificationContent }}</small>
         </div>
+        <button
+          type="button"
+          class="btn-close me-2 m-auto"
+          @click.stop="removeToast(index)"
+        ></button>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup>
@@ -72,9 +85,28 @@ watch(toasts, (newVal) => {
 });
 </script>
 
-
 <style scoped>
 .toast-container {
-    max-width: 300px;
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: right;
+  margin-top: 120px;
+}
+
+.noti-toast.read {
+  opacity: 0.7;
+}
+
+.toast-body {
+  font-size: 14px;
+}
+
+.new-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #007bff;
+  border-radius: 50%;
+  display: inline-block;
 }
 </style>

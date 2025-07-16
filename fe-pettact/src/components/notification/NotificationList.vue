@@ -1,6 +1,6 @@
 <template>
   <div class="container mt-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
       <h4>실시간 알림 목록</h4>
       <div>
         <button class="btn btn-sm btn-outline-secondary me-2" @click="markAll">모두 읽음</button>
@@ -8,21 +8,27 @@
       </div>
     </div>
 
+    <div v-if="notificationStore.notifications.length === 0" class="text-muted">
+      알림이 없습니다.
+    </div>
+
     <ul class="list-group">
       <li
         v-for="noti in notificationStore.notifications"
         :key="noti.notificationNo"
-        class="list-group-item d-flex justify-content-between align-items-center"
-        :class="{ 'list-group-item-light': noti.isRead }"
-        @click="handleClick(noti)"
-        style="cursor: pointer"
+        class="list-group-item noti-entry d-flex justify-content-between align-items-start"
+        :class="{ read: noti.isRead }"
       >
-        <div>
-          <strong>{{ noti.notificationTitle }} · {{ formatDate(noti.createdAt) }}</strong><br />
-          <small>{{ noti.notificationContent }}</small>
+        <div class="flex-grow-1 noti-click-area" @click="handleClick(noti)">
+          <div class="d-flex align-items-center">
+            <span class="noti-title">{{ noti.notificationTitle }}</span>
+            <span v-if="!noti.isRead" class="new-dot"></span>
+          </div>
+          <div class="noti-content text-muted small mt-1">{{ noti.notificationContent }}</div>
+          <div class="noti-time text-muted small text-end">{{ formatDate(noti.createdAt) }}</div>
         </div>
-        <span v-if="!noti.isRead" class="badge bg-danger">NEW</span>
-        <button class="btn btn-sm btn-outline-danger" @click.stop="deleteNoti(noti.notificationNo)">X</button>
+
+        <button class="btn btn-sm btn-close delete-btn ms-2" @click.stop="deleteNoti(noti.notificationNo)"></button>
       </li>
     </ul>
   </div>
@@ -32,9 +38,9 @@
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { useNotificationStore } from '@/stores/notification';
 import { useUserStore } from '@/stores/user';
-import dayjs from 'dayjs';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -65,11 +71,13 @@ const handleClick = async (noti) => {
       }
       break;
     case 'REPLY':
-      router.push({ path: `/board/post/${targetId}` });
-      // router.push({ path: `/board/post/${targetId}`, query: { focus: 'reply' } });
+      router.push(`/board/post/${targetId}`);
       break;
     case 'REPORT':
       router.push({ name: 'myReportDetail', params: { reportNo: targetId } });
+      break;
+    case 'USER':
+      router.push({ name: 'myMarket' });
       break;
     default:
       console.warn('알 수 없는 알림 타입:', targetType);
@@ -94,7 +102,50 @@ const deleteNoti = async (id) => {
 </script>
 
 <style scoped>
-.list-group-item-light {
+.noti-entry {
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.noti-entry.read {
   background-color: #f8f9fa;
+  color: #aaa;
+}
+
+.noti-title {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.noti-content {
+  font-size: 13px;
+  color: #666;
+}
+
+.noti-time {
+  font-size: 12px;
+  color: #aaa;
+  text-align: right;
+}
+
+.new-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #007bff;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 6px;
+}
+
+.delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.noti-entry:hover .delete-btn {
+  opacity: 1;
 }
 </style>
