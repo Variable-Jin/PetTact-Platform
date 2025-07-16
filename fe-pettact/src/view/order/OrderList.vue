@@ -1,11 +1,18 @@
 <template>
   <div class="container py-4">
     <h2 class="mb-4">주문 목록</h2>
-    
+    <div v-if="user" class="mb-4 p-3 bg-light rounded">
+      <ul class="mb-0">
+        <li><strong>이메일:</strong> {{ user.userEmail }}</li>
+        <li><strong>닉네임:</strong> {{ user.userNickname }}</li>
+        <!-- <li><strong>권한:</strong> {{ user.value.userRole }}</li> -->
+      </ul>
+    </div>
     <div class="mb-3">
       <button v-if="isLoggedIn" @click="goToList" class="btn btn-secondary me-2">상품 목록</button>
       <button v-if="isLoggedIn" @click="goToCart" class="btn btn-secondary">장바구니</button>
     </div>
+
 
     <div class="table-responsive">
       <table class="table table-striped table-bordered align-middle">
@@ -88,6 +95,7 @@ import { useUserStore } from '@/stores/user'
 const orderStore = useOrderStore()
 const router = useRouter()
 const userStore = useUserStore()
+const user = computed(() => userStore.user)
 
 
 //버튼 권한 검증
@@ -111,8 +119,14 @@ const goToList = () => {
 }
 
 onMounted(async () => {
-  await orderStore.fetchOrders()
-})
+  try {
+    await userStore.fetchUser();
+    console.log('✅ 사용자 정보:', userStore.user); // ← 여기!
+    await orderStore.fetchOrders();
+  } catch (err) {
+    console.error('회원 또는 주문 정보 로딩 실패:', err);
+  }
+});
 
 const orders = computed(() => orderStore.orderList)
 

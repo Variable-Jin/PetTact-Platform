@@ -17,12 +17,13 @@ const orderStore = useOrderStore()
 onMounted(async () => {
   const paymentKey = route.query.paymentKey
   const orderId = route.query.orderId
+  const orderNo = route.query.orderNo
   const amount = Number(route.query.amount)
 
-    console.log('✅ 결제 승인 파라미터:', { paymentKey, orderId, amount })
+    console.log('✅ 결제 승인 파라미터:', { paymentKey, orderId, orderNo, amount })
 
     try {
-      const result = await orderStore.confirmPayment({ paymentKey, orderId, amount })
+      const result = await orderStore.confirmPayment({ paymentKey, orderId, orderNo, amount })
       console.log('✅ 결제 승인 완료:', result)
       router.push('/order/payment-complete')
     } catch (err) {

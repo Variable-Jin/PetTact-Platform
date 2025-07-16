@@ -40,7 +40,7 @@ const startPayment = async () => {
 
     const tossResult = await tossPayments.requestPayment('카드', {
       amount: 5000,
-      orderId: dynamicOrderId,
+      orderNo: dynamicOrderNo,
       orderName: '테스트 상품',
       customerEmail: 'test@example.com',
       successUrl: 'http://localhost:5173/order/payment-success',
@@ -49,7 +49,7 @@ const startPayment = async () => {
 
     const confirmResponse = await orderStore.confirmPayment({
       paymentKey: tossResult.paymentKey,
-      orderId: dynamicOrderId,
+      orderNo: dynamicOrder,
       amount: 5000,
     })
 

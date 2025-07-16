@@ -3,8 +3,8 @@
     <div v-if="order">
       <h2 class="text-white mb-3">주문 내역 (번호: {{ order.orderNo }})</h2>
 
-      <p class="text-white mb-1"><strong>주문 상태:</strong> {{ order.status }}</p>
-      <p class="text-white mb-1"><strong>받는 사람:</strong> {{ order.receiver }}</p>
+      <p class="text-white mb-1"><strong>주문 상태: </strong>{{ getStatusText(order.status) }}</p>
+      <p class="text-white mb-1"><strong>받는 사람: </strong> {{ order.receiver }}</p>
       <p class="text-white mb-1"><strong>배송지:</strong> {{ order.zipcode }} {{ order.address1 }} {{ order.address2 }}</p>
       <p class="text-white mb-1"><strong>연락처:</strong> {{ order.phone }}</p>
 
@@ -20,8 +20,8 @@
           :key="item.orderDetailNo" 
           class="d-flex align-items-center mb-3 text-white"
         >
-          <img 
-            v-if="item.imageUrl" 
+          <img
+            v-if="item.imageUrl"
             :src="getImageUrl(item.imageUrl)" 
             alt="상품 이미지" 
             class="me-3 rounded" 
@@ -61,14 +61,18 @@ const router = useRouter()  // 여기 추가!
 const orderStore = useOrderStore()
 const userStore = useUserStore()
 
+
 //버튼 권한 검증
 const isLoggedIn = computed(() => !!userStore.user)
 
 onMounted(async () => {
+  await userStore.fetchUser(); // 🔹 사용자 정보 불러오기
   await orderStore.fetchOrderDetail(route.params.orderNo)
 })
 
 const order = computed(() => orderStore.orderDetail)
+const user = computed(() => userStore.user) // 사용자 정보 접근
+
 
 const goToOrderList = () => {
   router.push('/order')
@@ -77,6 +81,19 @@ const goToOrderList = () => {
 
 const goToList = () => {
   router.push('/product') 
+}
+
+function getStatusText(status) {
+  switch (status) {
+    case 'PENDING':
+      return '결제 대기'
+    case 'COMPLETE':
+      return '주문 완료'
+    case 'CANCELLED':
+      return '주문 취소'
+    default:
+      return status || '-'
+  }
 }
 
 // 이미지 URL 기본 경로 붙이는 함수

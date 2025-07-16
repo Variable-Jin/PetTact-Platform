@@ -1,5 +1,5 @@
 <template>
-  <div class="container py-4 text-white">
+  <div class="container py-4 text-black">
     <h2 class="mb-4">주문서</h2>
 
     <div v-if="!orderStore.orderDraft.length" class="alert alert-warning">
@@ -8,7 +8,7 @@
 
     <div v-else>
       <!-- 상품 목록 테이블 -->
-      <table class="table table-bordered text-white">
+      <table class="table table-bordered text-black">
         <thead>
           <tr>
             <th>상품명</th>
@@ -72,8 +72,8 @@
 
       <!-- 이동 버튼 -->
       <div class="d-flex gap-2 mt-3">
-        <button v-if="isLoggedIn" @click="goToCart" class="btn btn-outline-light">장바구니</button>
-        <button v-if="isLoggedIn" @click="goToProductList" class="btn btn-outline-light">상품 목록</button>
+        <button v-if="isLoggedIn" @click="goToCart" class="btn btn-secondary-light">장바구니</button>
+        <button v-if="isLoggedIn" @click="goToProductList" class="btn btn-secondary-light">상품 목록</button>
       </div>
     </div>
   </div>
@@ -101,6 +101,7 @@ const zipcode = ref('');
 const address1 = ref('');
 const address2 = ref('');
 const phone = ref('010-1111-1111');
+const addressType = ref('existing');
 
 const totalPrice = computed(() =>
   orderStore.orderDraft.reduce((sum, item) => sum + item.productPrice * item.productStock, 0)
@@ -170,34 +171,37 @@ const submitOrder = async () => {
     // 5. Toss 결제 요청
     const result = await toss.requestPayment('카드', {
       amount: totalPrice.value,
-      orderId,
+      orderId: orderId,
       orderName: orderStore.orderDraft[0]?.productName || '장바구니 상품',
       customerEmail: userStore.user?.email || 'guest@example.com',
-      //successUrl: `${window.location.origin}/order/payment-success?orderId=${orderId}&amount=${totalPrice.value}`
-      //failUrl: `${window.location.origin}/order/payment-fail`
+      successUrl: successUrl,
+      failUrl: failUrl
     });
       console.log('✅ 생성된 successUrl:', successUrl); // 이 부분도 중요
+      console.log('✅ 생성된 failUrl:', failUrl); // 이 부분도 중요
       console.log('✅ totalPrice.value:', totalPrice.value)
       console.log('✅ orderStore.orderDraft:', orderStore.orderDraft)
 
-    // 6. 결제 승인 요청
+    //6. 결제 승인 요청
     // await orderStore.confirmPayment({
     //   paymentKey: result.paymentKey,
     //   orderId,
     //   amount: totalPrice.value
     // });
-
-    // 7. 주문 생성
-    await orderStore.createOrder({
-      orderId,
-      deliveryName: deliveryName.value,
-      receiver: receiver.value,
-      zipcode: zipcode.value,
-      address1: address1.value,
-      address2: address2.value,
-      phone: phone.value,
-      orderDetails: orderDetails
-    });
+// 7. 주문 생성
+const orderNo = orderResponse.orderNo;
+//localStorage.setItem('orderNo', orderNo);
+const orderResponse = await orderStore.createOrder({
+  orderId: orderId,
+  orderNo: orderNo,
+  deliveryName: deliveryName.value,
+  receiver: receiver.value,
+  zipcode: zipcode.value,
+  address1: address1.value,
+  address2: address2.value,
+  phone: phone.value,
+  orderDetails: orderDetails
+});
 
     alert('결제 및 주문 완료!');
     orderStore.clearOrderDraft();

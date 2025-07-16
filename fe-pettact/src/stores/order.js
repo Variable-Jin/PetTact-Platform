@@ -17,24 +17,24 @@ export const useOrderStore = defineStore('order', {
   actions: {
 
     // ✅ 결제 승인 요청
-    async confirmPayment({ paymentKey, orderId, amount }) {
-      this.loading = true
-      try {
-        const res = await axios.post('/v1/payments/confirm', {
-          paymentKey,
-          orderId,
-          amount,
-        })
-        this.paymentResult = res.data
-        return res.data
-      } catch (err) {
-        console.error('❌ 결제 실패 전체 응답:', err.response)
-        this.error = err.response?.data?.message || '결제 실패'
-        throw err
-      } finally {
-        this.loading = false
-      }
-    },
+    async confirmPayment({ paymentKey, orderId, orderNo, amount }) {
+          console.log("📤 confirmPayment 인자:", { paymentKey, orderId, orderNo, amount });
+
+          try {
+            const res = await axios.post('/v1/payments/confirm', {
+              paymentKey,
+              orderId,
+              orderNo,
+              amount
+            });
+
+            console.log("✅ 백엔드 응답:", res.data);
+            return res.data;
+          } catch (err) {
+            console.error("❌ 백엔드 오류 응답:", err.response);
+            throw err;
+          }
+        },
 
         // ✅ 주문 임시 데이터 설정
     setOrderDraft(items) {
@@ -89,18 +89,6 @@ export const useOrderStore = defineStore('order', {
         this.loading = false
       }
     },
-    // async createOrder(orderDetails) {
-    //   this.loading = true
-    //   try {
-    //     const res = await api.post('/v1/order', orderDetails)
-    //     return res.data
-    //   } catch (err) {
-    //     this.error = err
-    //     throw err
-    //   } finally {
-    //     this.loading = false
-    //   }
-    // },
 
     async cancelOrder(orderNo) {
       this.loading = true

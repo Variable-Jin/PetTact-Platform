@@ -1,5 +1,10 @@
 <template>
   <div class="cart-view container py-4 text-white">
+    <div class="mb-3 text-white">
+      <p v-if="user">
+        👤 사용자: {{ user.userNickname }} ({{ user.userEmail }})
+      </p>
+    </div>
     <h2 class="mb-4">장바구니</h2>
 
     <div class="mb-3 d-flex gap-2">
@@ -149,6 +154,7 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const isLoggedIn = computed(() => !!userStore.user);
+const user = computed(() => userStore.user)
 
 // 선택된 cartNo들을 저장하는 배열
 const selectedItems = ref([]);
@@ -202,7 +208,9 @@ const removeItem = async (cartNo) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await userStore.fetchUser();
+  console.log('👤 유저 정보:', userStore.user);
   cartStore.fetchCart().then(() => {
     console.log(cartStore.cartItems);
   });
