@@ -6,6 +6,7 @@ import com.pettact.api.board.dto.BoardResponseDto;
 import com.pettact.api.file.dto.FileDto;
 import com.pettact.api.file.entity.File;
 import com.pettact.api.file.service.MultiFileService;
+import com.pettact.api.product.dto.ProductDTO;
 import com.pettact.api.security.vo.CustomUserDetails;
 
 import jakarta.servlet.http.HttpSession;
@@ -131,5 +132,14 @@ public class BoardController {
         Long userNo = userDetails.getUserEntity().getUserNo();
         boardService.deleteBoard(boardNo, userNo);
         return ResponseEntity.noContent().build();
+    }
+    
+    // ------------------ 인기 게시글 TOP 10 ------------------
+    @GetMapping("/popular")
+    public List<BoardResponseDto> getPopularBoards(
+        @RequestParam(value = "categoryNo", required = false) Long categoryNo,
+        @RequestParam(value = "count", defaultValue = "10") int count
+    ) {
+        return boardService.getPopularBoards(categoryNo, count);
     }
 }
