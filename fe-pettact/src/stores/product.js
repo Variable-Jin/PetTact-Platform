@@ -65,20 +65,22 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-async createProduct(productData, files = []) {
-  this.loading = true;
-  try {
-    const formData = new FormData();
-    formData.append('product', new Blob([JSON.stringify(productData)], { type: 'application/json' }));
+    async createProduct(productData, files = []) {
+      this.loading = true;
+      try {
+        const formData = new FormData();
+        formData.append('product', new Blob([JSON.stringify(productData)], { type: 'application/json' }));
 
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
+        console.log("JSON PRODUCTDATA", JSON.stringify(productData))
 
-        // ✅👀 여기에서 FormData 디버깅 로그 출력
-    for (let pair of formData.entries()) {
-      console.log('[FormData]', pair[0], pair[1]);
-    }
+        files.forEach((file) => {
+          formData.append('files', file);
+        });
+
+            // ✅👀 여기에서 FormData 디버깅 로그 출력
+        for (let pair of formData.entries()) {
+          console.log('[FormData]', pair[0], pair[1]);
+        }
 
     const res = await axios.post('/v1/product/create', formData, {
     headers: {

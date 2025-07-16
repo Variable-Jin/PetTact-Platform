@@ -6,16 +6,22 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted ,computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrderStore } from '@/stores/order'
 import { useUserStore } from '@/stores/user'
+
 
 const router = useRouter()
 const orderStore = useOrderStore()
 const userStore = useUserStore()
 
 const isLoggedIn = computed(() => !!userStore.user)
+
+onMounted(async () => {
+  await userStore.fetchUser()
+  console.log('👤 사용자 정보:', userStore.user)
+})
 
 const create = async () => {
   if (!isLoggedIn.value) {
@@ -24,8 +30,9 @@ const create = async () => {
   }
 
   const orderRequest = {
+    userNo: user.userNo,  // ✅ 사용자 번호 추가
     deliveryName: '우리집',
-    receiver: '홍길동',
+    receiver: user.userNickname || '홍길동', // 사용자 이름으로 대체 가능
     zipcode: '04000',
     address1: '서울시 마포구',
     address2: '101호',

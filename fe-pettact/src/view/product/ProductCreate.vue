@@ -66,10 +66,12 @@
 import { ref, onMounted, computed } from 'vue'; // ← computed 추가
 import { useRouter } from 'vue-router';
 import { useProductStore } from '@/stores/product';
+import { useUserStore } from '@/stores/user'
 //import { useFileStore } from '@/stores/file'; // ✅ 파일 스토어 추가
 
 const router = useRouter();
 const productStore = useProductStore();
+const userStore = useUserStore(); // ✅ 추가
 //const fileStore = useFileStore(); // ✅ 파일 스토어 인스턴스
 
 const form = ref({
@@ -150,8 +152,19 @@ const submitForm = async () => {
   }
 };
 
-onMounted(() => {
-productStore.fetchCategories(); // 마운트 시 카테고리 불러오기
+onMounted(async () => {
+  await userStore.fetchUser();
+
+  console.log('유저 정보:', userStore.user);          // 유저 데이터 확인
+  console.log('유저 역할:', userStore.user?.userRole); // 역할 값 확인
+
+  const role = userStore.user?.userRole;
+  if (role !== 'ROLE_SELLER' && role !== 'ROLE_ADMIN') {
+    alert('접근 권한이 없습니다.');
+    router.push('/');
+    return;
+  }
+  productStore.fetchCategories();
 });
 
 </script>
