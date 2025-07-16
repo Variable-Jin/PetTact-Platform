@@ -131,7 +131,9 @@ public class ProductController {
     
     // ------------------ 인기 상품 TOP 10 ------------------
     @GetMapping("/popular")
-    public List<ProductDTO> getPopularProducts(@RequestParam(value = "count" , defaultValue = "5") int count) {
-        return productService.getPopularProducts(count);
+    public List<ProductDTO> getPopularProducts(
+    		@RequestParam(value = "categoryNo", required = false) Long categoryNo,
+    		@RequestParam(value = "count" , defaultValue = "5") int count) {
+        return productService.getPopularProducts(categoryNo, count);
     }
 }
