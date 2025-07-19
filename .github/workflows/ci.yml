@@ -25,6 +25,6 @@ jobs:
 
       - name: Build with Gradle
         run: |
-    cd be-pettact/api
-    ./gradlew clean build
+          cd be-pettact/api
+          ./gradlew clean build
 
