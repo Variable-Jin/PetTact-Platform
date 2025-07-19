@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +32,10 @@ public class CartService {
     // 장바구니 상품 목록 조회
     public Page<CartDTO> getCartProduct(Long userNo, int page, int size) {
     	
-    	Pageable pageable = PageRequest.of(page, size);
+        // 최근 등록된 상품이 먼저 오도록 정렬
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    	
+    	//Pageable pageable = PageRequest.of(page, size);
         
     	Page<CartEntity> cartPage = cartRepository.findByUser_UserNo(userNo ,pageable);
 

@@ -58,10 +58,6 @@ public class ProductEntity extends BaseEntity {
     @Column(name = "image_url")
     private String imageUrl;
     
-//    @OneToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "product_no", referencedColumnName = "REFERENCE_NO", insertable = false, updatable = false)
-//    private MultiFile multiFile;
-    
     @Column(name = "product_view_cnt")
     private int productViewCnt;
 

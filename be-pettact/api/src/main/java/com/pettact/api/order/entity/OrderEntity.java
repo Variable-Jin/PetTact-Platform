@@ -41,7 +41,7 @@ public class OrderEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderNo;
     
-    @Column(name = "order_id", unique = true)
+    @Column(name = "order_id")
     private String orderId; //결제 아이디
     
     @ManyToOne(fetch = FetchType.LAZY)
