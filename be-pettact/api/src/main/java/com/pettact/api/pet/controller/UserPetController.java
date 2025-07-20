@@ -32,9 +32,7 @@ public class UserPetController {
     // 반려동물 등록
     @PostMapping
     public ResponseEntity<UserPetDto> save(@AuthenticationPrincipal CustomUserDetails user, @RequestBody UserPetDto dto) {
-    	System.out.println(user.getUserEntity().getUserNo());
         dto.setUserNo(user.getUserEntity().getUserNo());
-        
         UserPetDto saved = userPetService.save(dto);
         return ResponseEntity.ok(saved);
     }
