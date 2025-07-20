@@ -90,6 +90,7 @@ public class UserPetService {
         dto.setPetWeight(entity.getPetWeight());
         dto.setPetImageUrl(entity.getPetImageUrl());
         dto.setCreatedAt(entity.getCreatedAt());
+        dto.setSpecialNotes(entity.getSpecialNotes());
         return dto;
     }
 
@@ -111,7 +112,8 @@ public class UserPetService {
         pet.setIsNeutered(dto.getIsNeutered());
         pet.setPetBirth(dto.getPetBirth());
         pet.setRfidNo(dto.getRfidNo());
-
+        pet.setSpecialNotes(dto.getSpecialNotes());
+        
         if (dto.getKindCd() != null) {
             PetKindEntity kind = petKindRepository.findById(dto.getKindCd())
                 .orElseThrow(() -> new EntityNotFoundException("해당 품종 정보 없음"));
