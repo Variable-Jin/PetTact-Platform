@@ -43,6 +43,7 @@ public class UserPetService {
             .petBirth(dto.getPetBirth())
             .petWeight(dto.getPetWeight())
             .petImageUrl(dto.getPetImageUrl())
+            .specialNotes(dto.getSpecialNotes())
             .build();
 
         UserPetEntity saved = userPetRepository.save(entity);

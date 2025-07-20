@@ -31,4 +31,6 @@ public class UserPetDto {
     private String petImageUrl; // 반려동물 사진 URL
 
     private LocalDateTime createdAt;  // 등록일
+    
+    private String specialNotes; // 특이사항
 }
