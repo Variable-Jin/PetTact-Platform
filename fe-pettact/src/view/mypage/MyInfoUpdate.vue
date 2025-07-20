@@ -16,7 +16,7 @@
         <div class="input-group nickname-group">
           <label for="userNickname">닉네임 <span class="text-danger">*</span></label>
           <div class="nickname-input-button">
-            <input type="text" id="userNickname" v-model="form.userNickname" class="input-field" />
+            <input type="text" id="userNickname" v-model="form.userNickname" class="input-field" ref="nicknameInput" />
             <button type="button" class="nickname-verify-button" @click="checkNickname">
               중복 확인
             </button>
@@ -42,33 +42,31 @@
           <label for="userStreet1">주소 <span class="text-danger">*</span></label>
           <div class="address-input-button">
             <button type="button" class="address-search-button" @click="openPostcode">
-              주소 검색
+              우편번호 검색
             </button>
-            <input
-              type="text"
-              id="userStreet1"
-              v-model="form.userStreet1"
-              class="input-field"
-              readonly
-            />
+            <input type="text" id="userZipcode" v-model="form.userZipcode" class="input-field" readonly />
           </div>
         </div>
 
+        <!-- 주소 -->
+        <div class="input-group">
+          <label for="userDetailAddress">주소</label>
+          <input type="text" id="userStreet1" v-model="form.userStreet1" class="input-field" readonly />
+        </div>
         <!-- 상세주소 -->
         <div class="input-group">
           <label for="userDetailAddress">상세주소</label>
-          <input
-            type="text"
-            id="userDetailAddress"
-            v-model="form.userDetailAddress"
-            class="input-field"
-          />
+          <input type="text" id="userDetailAddress" v-model="form.userDetailAddress" class="input-field" />
+        </div>
+
+        <div v-if="error" class="text-danger" style="font-size: 14px; margin-top: -12px;">
+          {{ error }}
         </div>
 
         <!-- 버튼 -->
         <div class="action-buttons">
-            <button type="submit" class="form-button btn-submit">저장</button>
-            <button type="button" class="form-button btn-cancel" @click="router.push({ name: 'myInfo' })">취소</button>
+          <button type="submit" class="form-button btn-submit">저장</button>
+          <button type="button" class="form-button btn-cancel" @click="router.push({ name: 'myInfo' })">취소</button>
         </div>
 
       </form>
@@ -82,6 +80,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
 const form = ref({
   userNickname: '',
   userTel: '',
@@ -89,54 +88,79 @@ const form = ref({
   userStreet1: '',
   userDetailAddress: ''
 })
+
+const initialForm = ref({})
 const userEmail = ref('')
 const userBirth = ref('')
 const error = ref('')
 const success = ref('')
 const nicknameAvailable = ref(null)
+const nicknameInput = ref(null)
 
 onMounted(async () => {
   try {
     const res = await axios.get('/v1/user/mypage/myInfo')
     const data = res.data
+
     userEmail.value = data.userEmail
     userBirth.value = data.userBirth
+
     form.value.userNickname = data.userNickname
     form.value.userTel = data.userTel
     form.value.userZipcode = data.userZipcode
     form.value.userStreet1 = data.userStreet1
     form.value.userDetailAddress = data.userDetailAddress
+
+    initialForm.value = { ...form.value }
   } catch (err) {
     console.error(err)
     error.value = '회원 정보를 불러오는데 실패했습니다.'
   }
 })
 
+// 닉네임 입력 감지 → 중복확인 상태 초기화
 watch(() => form.value.userNickname, () => {
   nicknameAvailable.value = null
 })
 
+// 닉네임 중복 확인
 const checkNickname = async () => {
-  nicknameAvailable.value = null
   if (!form.value.userNickname) {
     alert('닉네임을 입력하세요.')
     return
   }
+
   try {
     const res = await axios.get(`/v1/user/nickname/check?nickname=${form.value.userNickname}`)
-    nicknameAvailable.value = !res.data
+    nicknameAvailable.value = !res.data // 사용 가능하면 true
   } catch (err) {
     console.error(err)
     error.value = '닉네임 중복 확인 실패'
   }
 }
 
+// 우편번호 API
+const openPostcode = () => {
+  new window.daum.Postcode({
+    oncomplete: function (data) {
+      form.value.userZipcode = data.zonecode
+      form.value.userStreet1 = data.address
+      document.getElementById("userDetailAddress").focus()
+    }
+  }).open()
+}
+
+// 저장 처리
 const handleUpdate = async () => {
   error.value = ''
   success.value = ''
 
-  if (!nicknameAvailable.value) {
+  const nicknameChanged = form.value.userNickname !== initialForm.value.userNickname
+
+  // 닉네임을 수정했는데 중복 확인 안했을 경우
+  if (nicknameChanged && nicknameAvailable.value !== true) {
     error.value = '닉네임 중복확인을 해주세요.'
+    nicknameInput.value?.focus()
     return
   }
 
@@ -149,6 +173,7 @@ const handleUpdate = async () => {
     error.value = err.response?.data || '수정 실패'
   }
 }
+
 </script>
 
 <style scoped>
@@ -162,6 +187,7 @@ const handleUpdate = async () => {
   display: flex;
   justify-content: center;
 }
+
 .edit-wrapper {
   width: 100%;
   max-width: none;
@@ -169,30 +195,36 @@ const handleUpdate = async () => {
   flex-direction: column;
   gap: 24px;
 }
+
 .edit-header h1 {
   text-align: center;
   font-size: 24px;
   font-weight: 700;
   color: black;
 }
+
 .edit-form {
   display: flex;
   flex-direction: column;
   gap: 26px;
 }
+
 .nickname-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .nickname-input-button {
   display: flex;
   gap: 10px;
   align-items: center;
 }
+
 .nickname-input-button .input-field {
   flex: 7;
 }
+
 .nickname-input-button .nickname-verify-button {
   flex: 3;
   height: 50px;
@@ -206,27 +238,33 @@ const handleUpdate = async () => {
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
 .nickname-input-button .nickname-verify-button:hover {
   background: #0066cc;
 }
+
 .nickname-status {
   font-size: 13px;
   padding-left: 4px;
 }
+
 .address-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-bottom: 20px;
 }
+
 .address-input-button {
   display: flex;
   gap: 10px;
   align-items: center;
 }
+
 .address-input-button .input-field {
   flex: 7;
 }
+
 .address-search-button {
   flex: 3;
   height: 50px;
@@ -241,14 +279,17 @@ const handleUpdate = async () => {
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
 .address-search-button:hover {
   background-color: #0066cc;
 }
+
 .input-group {
   display: flex;
   flex-direction: column;
   gap: 25px;
 }
+
 .input-field {
   width: 100%;
   height: 50px;
@@ -264,6 +305,7 @@ const handleUpdate = async () => {
   color: black;
   box-sizing: border-box;
 }
+
 .input-field:focus,
 .input-field.focused {
   outline: 1px solid #008be6;
@@ -307,4 +349,3 @@ const handleUpdate = async () => {
   background: #c82333;
 }
 </style>
-
