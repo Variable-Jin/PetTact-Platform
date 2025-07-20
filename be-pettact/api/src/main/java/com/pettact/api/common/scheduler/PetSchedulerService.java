@@ -35,7 +35,7 @@ public class PetSchedulerService {
      * 오늘 ~ +2일까지 종료 예정 공고 리스트를 Redis에 TTL 1일로 저장
      */
     
-    @Scheduled(cron = "20 11 18 * * *")
+    @Scheduled(cron = "0 0 4 * * *")
     public void cacheEndingSoonPets() {
         log.info("[Scheduler] 공고 종료 임박 유기동물 캐싱 시작");
 
