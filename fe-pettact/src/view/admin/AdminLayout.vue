@@ -307,8 +307,6 @@
   </div>
 </template>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-
 <script>
 export default {
   name: 'AdminLayout',
@@ -323,6 +321,27 @@ export default {
           content: '안녕하세요! 문의사항이 있습니다.',
           time: '14:30'
         },
+        {
+          id: 2,
+          type: 'admin',
+          content: '안녕하세요! 무엇을 도와드릴까요?',
+          time: '14:32'
+        },
+        {
+          id: 3,
+          type: 'user',
+          content: '판매자 등록은 어떻게 하나요?',
+          time: '14:33'
+        },
+        {
+          id: 4,
+          type: 'admin',
+          content: '판매자 등록은 마이페이지에서 신청하실 수 있습니다.',
+          time: '14:35'
+        }
+      ]
+    };
+  },
   mounted() {
     this.$nextTick(() => {
       this.initCharts();
@@ -330,116 +349,6 @@ export default {
   },
   methods: {
     initCharts() {
-      // 도넛 차트 초기화
-      const categoryCtx = document.getElementById('categoryChart');
-      if (categoryCtx) {
-        new Chart(categoryCtx, {
-          type: 'doughnut',
-          data: {
-            labels: ['일반 게시물', '상품 리뷰', 'Q&A', '공지사항'],
-            datasets: [{
-              data: [564, 358, 197, 128],
-              backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
-              borderWidth: 0,
-              cutout: '65%'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              }
-            }
-          }
-        });
-      }
-
-      // 사용자 차트
-      const userCtx = document.getElementById('userChart');
-      if (userCtx) {
-        new Chart(userCtx, {
-          type: 'line',
-          data: {
-            labels: ['월', '화', '수', '목', '금', '토', '일'],
-            datasets: [{
-              label: '신규 사용자',
-              data: [12, 19, 15, 25, 22, 30, 18],
-              borderColor: '#007bff',
-              backgroundColor: 'rgba(0, 123, 255, 0.1)',
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: '#007bff',
-              pointBorderColor: '#ffffff',
-              pointBorderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: {
-                  color: 'rgba(0,0,0,0.05)'
-                }
-              },
-              x: {
-                grid: {
-                  display: false
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                display: false
-              }
-            }
-          }
-        });
-      }
-
-      // 게시글 차트
-      const postCtx = document.getElementById('postChart');
-      if (postCtx) {
-        new Chart(postCtx, {
-          type: 'bar',
-          data: {
-            labels: ['월', '화', '수', '목', '금', '토', '일'],
-            datasets: [{
-              label: '게시글 수',
-              data: [45, 52, 38, 67, 55, 72, 48],
-              backgroundColor: '#28a745',
-              borderRadius: 4,
-              borderSkipped: false
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: {
-                  color: 'rgba(0,0,0,0.05)'
-                }
-              },
-              x: {
-                grid: {
-                  display: false
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                display: false
-              }
-            }
-          }
-        });
-      }
-
       // 신고 차트
       const reportCtx = document.getElementById('reportChart');
       if (reportCtx) {
@@ -484,28 +393,6 @@ export default {
         });
       }
     },
-        {
-          id: 2,
-          type: 'admin',
-          content: '안녕하세요! 무엇을 도와드릴까요?',
-          time: '14:32'
-        },
-        {
-          id: 3,
-          type: 'user',
-          content: '판매자 등록은 어떻게 하나요?',
-          time: '14:33'
-        },
-        {
-          id: 4,
-          type: 'admin',
-          content: '판매자 등록은 마이페이지에서 신청하실 수 있습니다.',
-          time: '14:35'
-        }
-      ]
-    }
-  },
-  methods: {
     toggleChat() {
       this.chatVisible = !this.chatVisible;
     },
@@ -535,7 +422,7 @@ export default {
       }
     }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -635,7 +522,7 @@ export default {
 .page-title {
   margin: 0;
   color: #2c3e50;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
 }
 
@@ -679,7 +566,8 @@ export default {
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 2fr 2fr;
+  grid-template-rows: auto auto;
   gap: 2rem;
   margin-bottom: 2rem;
 }
