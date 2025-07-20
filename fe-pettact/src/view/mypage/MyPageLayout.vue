@@ -6,9 +6,8 @@
         <div class="welcome-section">
           <h2 class="greeting">
             반가워요!
-            <span class="username">{{
-              userInfo?.userNickname || "사용자님"
-            }}</span>
+            <span class="username">{{ userNickname }}</span>
+             님
           </h2>
         </div>
 
@@ -63,6 +62,14 @@
       </div>
     </div>
 </template>
+
+<script setup>
+import { useUserStore } from '@/stores/user';
+import { computed } from 'vue';
+
+const userStore = useUserStore();
+const userNickname = computed(() => userStore.user?.userNickname || '사용자님');
+</script>
 
 <style scoped>
 .mypage-container {
