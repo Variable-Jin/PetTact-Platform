@@ -106,7 +106,7 @@ public class BoardController {
 
     @PutMapping("/{boardNo}")
     public ResponseEntity<BoardResponseDto> updateBoard(
-            @PathVariable Long boardNo,
+            @PathVariable("boardNo") Long boardNo,
             @RequestPart("data") BoardCreateDto boardCreateDto,
             @RequestPart(value = "files", required = false) MultipartFile[] files,
             @RequestParam(value = "deletedFileIds", required = false) List<Long> deletedFileIds,
