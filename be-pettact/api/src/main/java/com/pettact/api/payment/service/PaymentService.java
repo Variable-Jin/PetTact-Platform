@@ -41,9 +41,12 @@ public class PaymentService {
 
             System.out.println("▶️ tossPaymentClient.confirmPayment 호출 완료");
             System.out.println("tossResponse amount = " + tossResponse.getAmount());
+            System.out.println("tossResponse.getOrderId().substring = " + tossResponse.getOrderId().substring(8));
+            OrderEntity order = orderRepository.findByOrderNo(Long.parseLong(tossResponse.getOrderId().substring(8)))
+            		.orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
 
             // 2. 응답으로 받은 데이터로 Entity 생성
-            PaymentEntity payment = PaymentEntity.fromTossResponse(tossResponse);
+            PaymentEntity payment = PaymentEntity.fromTossResponse(tossResponse, order);
             
             System.out.println("🛰️ Toss API 응답 amount: " + tossResponse.getAmount());
 
@@ -53,8 +56,8 @@ public class PaymentService {
             System.out.println("▶️ paymentRepository.save 완료, 저장된 payment id: " + payment.getId());
 
             // ✅ 3. 주문과 연동 - 여기 추가!
-            OrderEntity order = orderRepository.findByOrderNo(request.getOrderNo())
-            	    .orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
+//            OrderEntity order = orderRepository.findByOrderNo(request.getOrderNo())
+//            	    .orElseThrow(() -> new RuntimeException("주문이 존재하지 않습니다."));
             order.setPayment(payment);
             payment.setOrder(order); // ❗이 코드가 필요할 수 있음
             orderRepository.save(order); // payment_id 저장됨

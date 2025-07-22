@@ -70,7 +70,7 @@ public class ReplyController {
      */
 
     @PatchMapping("/replies/{replyNo}")
-    public ResponseEntity<ReplyResponseDto> updateReply(@PathVariable Long replyNo, @RequestBody ReplyRequestDto replyRequestDto,
+    public ResponseEntity<ReplyResponseDto> updateReply(@PathVariable("replyNo") Long replyNo, @RequestBody ReplyRequestDto replyRequestDto,
                                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userNo = userDetails.getUserEntity().getUserNo();
         ReplyResponseDto updatedDto = replyService.updateReply(replyNo, replyRequestDto, userNo);
@@ -83,7 +83,7 @@ public class ReplyController {
      */
 
     @DeleteMapping("/replies/{replyNo}")
-    public ResponseEntity<Void> deleteReply(@PathVariable Long replyNo,
+    public ResponseEntity<Void> deleteReply(@PathVariable("replyNo") Long replyNo,
                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Long userNo = userDetails.getUserEntity().getUserNo();

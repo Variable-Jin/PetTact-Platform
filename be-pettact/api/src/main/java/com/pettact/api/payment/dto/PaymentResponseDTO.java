@@ -13,7 +13,7 @@ import lombok.Data;
 public class PaymentResponseDTO {
 	
     private String paymentKey;
-    private String orderId;
+    private Long orderNo;
     private Long amount;
     private String method;
     private String status;
@@ -24,7 +24,7 @@ public class PaymentResponseDTO {
     public static PaymentResponseDTO fromEntity(PaymentEntity payment) {
         return PaymentResponseDTO.builder()
                 .paymentKey(payment.getPaymentKey())
-                .orderId(payment.getOrderId())
+                .orderNo(payment.getOrder().getOrderNo())
                 .amount(payment.getAmount())
                 .method(payment.getMethod())
                 .status(payment.getStatus())

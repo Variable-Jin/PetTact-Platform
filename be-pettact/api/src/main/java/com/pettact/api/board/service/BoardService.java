@@ -97,6 +97,19 @@ public class BoardService implements ViewCountSyncable<Long> {
         String preventKey = "board:viewed:" + sessionId + ":" + boardNo;
         if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
             viewCountService.increaseViewCount("board", boardNo, 120);
+
+            // ✅ 인기글 랭킹 반영
+            String today = LocalDate.now().toString();
+            Long categoryId = board.getBoardCategory().getBoardCategoryNo();
+
+            String globalKey = "board:popular:" + today;
+            redisTemplate.opsForZSet().incrementScore(globalKey, boardNo.toString(), 1);
+            redisTemplate.expire(globalKey, Duration.ofDays(8));
+
+            String categoryKey = "board:popular:" + categoryId + ":" + today;
+            redisTemplate.opsForZSet().incrementScore(categoryKey, boardNo.toString(), 1);
+            redisTemplate.expire(categoryKey, Duration.ofDays(8));
+
             redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
         }
 

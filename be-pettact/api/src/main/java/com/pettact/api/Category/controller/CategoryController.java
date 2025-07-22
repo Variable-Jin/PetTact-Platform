@@ -87,7 +87,7 @@ public class CategoryController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{boardCategoryNo}")
-    public ResponseEntity<ResponseDto> updatedCategory(@PathVariable Long boardCategoryNo,
+    public ResponseEntity<ResponseDto> updatedCategory(@PathVariable("boardCategoryNo") Long boardCategoryNo,
                                                        @RequestBody CreateDto createDto) {
         ResponseDto responseDto = categoryService.updateCategory(boardCategoryNo, createDto);
         return ResponseEntity.ok(responseDto);
@@ -100,7 +100,7 @@ public class CategoryController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{boardCategoryNo}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long boardCategoryNo) {
+    public ResponseEntity<Void> deleteCategory(@PathVariable("boardCategoryNo") Long boardCategoryNo) {
        categoryService.deleteCategory(boardCategoryNo);
        return ResponseEntity.accepted().build();
     }

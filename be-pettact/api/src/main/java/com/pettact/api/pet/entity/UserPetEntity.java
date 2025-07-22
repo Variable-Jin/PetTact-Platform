@@ -52,5 +52,7 @@ public class UserPetEntity extends BaseEntity{
 	    private Float petWeight; // 몸무게
 
 	    private String petImageUrl; // 반려동물 사진 (일단은 url 저장.)
+	    
+	    private String specialNotes; // 특이사항
 
 }
