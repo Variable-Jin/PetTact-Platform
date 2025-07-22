@@ -1,5 +1,17 @@
 <template>
   <div class="animal-search-page">
+    <section class="sub-nav-section">
+  <div class="sub-nav-container">
+    <div class="sub-nav-menu two-items">
+      <router-link to="/shelter" class="sub-nav-item" :class="{active: $route.path.includes('/shelter')}">
+        보호소 정보
+      </router-link>
+      <router-link to="/facility" class="sub-nav-item" :class="{active: $route.path.includes('/facility')}">
+        시설 정보
+      </router-link>
+    </div>
+  </div>
+</section>
     <!-- 히어로 섹션 -->
     <section class="hero-section">
       <div class="hero-content">
@@ -186,49 +198,57 @@
 
     <!-- 마감 임박 리스트 (기본 표시) -->
     <section
-      class="adoption-section"
-      v-if="!searched && defaultPets.length > 0"
-    >
-      <div class="adoption-container">
-        <div class="adoption-header">
-          <h2 class="adoption-title">입양 마감 임박 동물들</h2>
-          <p class="adoption-subtitle">
-            입양 마감일이 가까운 아이들을 소개해요.
-          </p>
-        </div>
-        <div class="adoption-content">
-          <div
-            v-for="(row, rowIndex) in chunkedDefaultPets"
-            :key="rowIndex"
-            class="adoption-row"
-          >
-            <div v-for="a in row" :key="a.desertionNo" class="pet-card">
-              <div class="pet-image">
-                <img :src="a.popfile1 || '/image/no-image.png'" alt="사진" />
-              </div>
-              <div class="pet-info">
-                <div class="pet-tags">
-                  <span class="tag tag-dark">{{ a.sexCd }} / {{ a.age }}</span>
-                  <span class="tag tag-light">{{ a.kindCd }}</span>
-                </div>
-                <div class="pet-details">
-                  <div class="pet-details-content">
-                    <div class="pet-name">No. {{ a.desertionNo }}</div>
-                    <div class="pet-location">{{ a.happenPlace }}</div>
-                    <div class="pet-description">
-                      {{ a.noticeSdt }} ~ {{ a.noticeEdt }}
-                    </div>
-                  </div>
-                  <button @click="DetailView(a.desertionNo)" class="pet-button">
-                    상세보기
-                  </button>
+  class="adoption-section"
+  v-if="!searched && defaultPets.length > 0"
+>
+  <div class="adoption-container">
+    <div class="adoption-header">
+      <h2 class="adoption-title">입양 마감 임박 동물들</h2>
+      <p class="adoption-subtitle">
+        입양 마감일이 가까운 아이들을 소개해요.
+      </p>
+    </div>
+    <div class="adoption-content">
+      <div
+        v-for="(row, rowIndex) in chunkedDefaultPets"
+        :key="rowIndex"
+        class="adoption-row"
+      >
+        <div v-for="a in row" :key="a.desertionNo" class="pet-card">
+          <div class="pet-image">
+            <img :src="a.popfile1 || '/image/no-image.png'" alt="사진" />
+          </div>
+          <div class="pet-info">
+            <div class="pet-tags">
+              <span class="tag tag-dark">{{ a.sexCd }} / {{ a.age }}</span>
+              <span class="tag tag-light">{{ a.kindCd }}</span>
+            </div>
+            <div class="pet-details">
+              <div class="pet-details-content">
+                <div class="pet-name">No. {{ a.desertionNo }}</div>
+                <div class="pet-location">{{ a.happenPlace }}</div>
+                <div class="pet-description">
+                  {{ a.noticeSdt }} ~ {{ a.noticeEdt }}
                 </div>
               </div>
+              <button @click="DetailView(a.desertionNo)" class="pet-button">
+                상세보기
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+    
+    <!-- 페이지네이션 추가 -->
+    <Pagination
+  v-if="defaultTotalPages > 1"
+  :current-page="defaultPage"
+  :total-pages="defaultTotalPages"
+  @change="goDefaultPage"
+/>
+  </div>
+</section>
   </div>
 </template>
 
@@ -316,21 +336,27 @@ export default {
     toggleFAQ(index) {
       this.openIndex = this.openIndex === index ? null : index;
     },
-    fetchEndingSoonPets(page = 1) {
-      axios
-        .get("v1/pet/abandonment/ending-soon", {
-          params: { page, size: 9 },
-        })
-        .then((res) => {
-          console.log("🐶 마감 임박 동물 응답:", res.data);
-          this.defaultPets = res.data.content;
-          this.defaultTotalPages = res.data.totalPages;
-          this.defaultPage = page;
-        })
-        .catch((err) => {
-          console.error("마감 임박 동물 조회 실패:", err);
-        });
-    },
+fetchEndingSoonPets(page = 1) {
+  console.log("🚀 fetchEndingSoonPets 함수 시작!");
+  
+  axios.get("v1/pet/abandonment/ending-soon", {
+    params: { page, size: 9 },
+  })
+  .then((res) => {
+    // 🔥 이 부분 추가
+    console.log("🐶 마감 임박 API 전체 응답:", res.data);
+    console.log("🐶 마감 임박 totalElements:", res.data.totalElements);
+    console.log("🐶 마감 임박 totalPages:", res.data.totalPages);
+    console.log("🐶 마감 임박 content 길이:", res.data.content?.length);
+    
+    this.defaultPets = res.data.content;
+    this.defaultTotalPages = res.data.totalPages;
+    this.defaultPage = page;
+  })
+  .catch((err) => {
+    console.error("❌ 마감 임박 API 실패:", err);
+  });
+},
     goDefaultPage(page) {
       this.fetchEndingSoonPets(page);
     },
@@ -384,6 +410,13 @@ export default {
         .then((res) => (this.shelterList = res.data.items));
     },
     goPage(page) {
+      // 검색 상태가 아니면 마감 임박 동물들 페이지 변경
+      if (!this.searched) {
+        this.goDefaultPage(page);
+        return;
+      }
+      
+      // 기존 검색 결과 페이지 변경 로직
       if (!this.selectedKindCd) {
         alert("품종을 선택해주세요.");
         return;
@@ -406,6 +439,12 @@ export default {
       axios
         .get("v1/pet/abandonment", { params })
         .then((res) => {
+    console.log("🔍 API 전체 응답:", res.data);
+    console.log("🔍 totalElements:", res.data.totalElements);  // 950개?
+    console.log("🔍 totalPages:", res.data.totalPages);        // 106페이지?
+    console.log("🔍 현재 content 길이:", res.data.content.length);
+    
+  
           this.abandonments = res.data.content;
           this.totalPages = res.data.totalPages;
           this.totalElements = res.data.totalElements;
@@ -420,11 +459,90 @@ export default {
 };
 </script>
 
+
 <style scoped>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+.sub-nav-section {
+  background: white;
+  padding: 20px 0 40px 0;
+  border-bottom: 1px solid 
+#e0e0e0;
+}
+
+.sub-nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.sub-nav-title {
+  font-size: 15px;
+  font-weight: 400;
+  color: #333;
+  font-family: 'Pretendard', sans-serif;
+  margin: 0;
+  text-align: center;
+}
+
+.sub-nav-menu {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px 83px;
+  width: 1049px;
+  margin: 28px auto 0;
+  padding: 30px 40px;
+  border: 1px solid 
+#e2e2e2;
+  border-radius: 8px;
+  background: white;
+}
+
+.sub-nav-item {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #333;
+  position: relative;
+  text-align: center;
+}
+
+.sub-nav-item:hover {
+  color: #008BE6;
+  font-weight: bold;
+  transform: translateY(-2px);
+}
+
+.sub-nav-item.active {
+  background: #008BE6;
+  color: white;
+}
+
+.sub-nav-menu.two-items {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 600px;
+  gap: 40px;
+}
+
+.sub-nav-menu.two-items .sub-nav-item {
+  height: 60px;
+  min-width: 200px;
 }
 
 body {
@@ -478,7 +596,7 @@ body {
   justify-content: center;
   align-items: center;
   gap: 48px;
-  padding: 250px 0;
+  padding: 100px 0;
 }
 
 .hero-content {
@@ -1095,48 +1213,5 @@ body {
 
 .faq-item.open .faq-icon {
   transform: rotate(45deg);
-}
-
-/* 페이지네이션 */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin: 40px 0;
-}
-
-.pagination-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  border: 1px solid #dfe3e8;
-  background: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 700;
-  transition: all 0.3s ease;
-}
-
-.pagination-btn:hover {
-  background: #008be6;
-  color: white;
-  border-color: #008be6;
-}
-
-.pagination-btn.active {
-  background: white;
-  color: #4200ff;
-  border-color: #4200ff;
-}
-
-.pagination-btn.disabled {
-  background: #919eab;
-  color: #c4cdd5;
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>

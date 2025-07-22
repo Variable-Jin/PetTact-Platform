@@ -11,28 +11,46 @@
         <div class="filter-row">
           <div class="filter-group">
             <label class="filter-label">시도</label>
-            <select v-model="selectedSido" class="select-field" @change="fetchSigungu">
+            <select
+              v-model="selectedSido"
+              class="select-field"
+              @change="fetchSigungu"
+            >
               <option value="">시도 선택</option>
-              <option v-for="s in sidoList" :key="s.orgCd" :value="s.orgCd">{{ s.orgdownNm }}</option>
+              <option v-for="s in sidoList" :key="s.orgCd" :value="s.orgCd">
+                {{ s.orgdownNm }}
+              </option>
             </select>
           </div>
           <div class="filter-group">
             <label class="filter-label">시군구</label>
-            <select v-model="selectedSigungu" class="select-field" :disabled="!sigunguList.length">
+            <select
+              v-model="selectedSigungu"
+              class="select-field"
+              :disabled="!sigunguList.length"
+            >
               <option value="">시군구 선택</option>
-              <option v-for="g in sigunguList" :key="g.orgCd" :value="g.orgCd">{{ g.orgdownNm }}</option>
+              <option v-for="g in sigunguList" :key="g.orgCd" :value="g.orgCd">
+                {{ g.orgdownNm }}
+              </option>
             </select>
           </div>
           <div class="filter-group">
             <label class="filter-label">시설명 검색</label>
-            <input v-model="facilityName" class="search-input" placeholder="시설명을 입력하세요" @keyup.enter="goPage(1)"/>
+            <input
+              v-model="facilityName"
+              class="search-input"
+              placeholder="시설명을 입력하세요"
+              @keyup.enter="goPage(1)"
+            />
           </div>
           <button class="search-btn" @click="goPage(1)">조회</button>
         </div>
 
         <div class="action-row">
           <p v-if="searched" class="total-count">
-            총 <strong>{{ totalElements.toLocaleString() }}</strong>건
+            총 <strong>{{ totalElements.toLocaleString() }}</strong
+            >건
           </p>
           <router-link to="facility/register" class="register-btn">
             + 시설 등록
@@ -42,21 +60,21 @@
 
       <!-- 리스트 컨텐츠 -->
       <div class="list-content">
-        <div 
-          v-for="facility in facilityList" 
+        <div
+          v-for="facility in facilityList"
           :key="facility.facilityNo"
           class="list-item"
         >
           <div class="item-content">
             <div class="item-main">
               <!-- <h3 class="item-title">{{ facility.facilityName }}</h3> -->
-              <router-link 
-  :to="`/facility/${facility.facilityNo}`"
-  class="item-title" 
-  style="text-decoration: none; color: inherit;"
->
-  {{ facility.facilityName }}
-</router-link>
+              <router-link
+                :to="`/facility/${facility.facilityNo}`"
+                class="item-title"
+                style="text-decoration: none; color: inherit"
+              >
+                {{ facility.facilityName }}
+              </router-link>
               <p class="item-subtitle">{{ facility.roadAddress }}</p>
               <div class="item-info">
                 <div class="info-item">
@@ -71,9 +89,9 @@
             </div>
           </div>
           <div class="action-buttons">
-            <router-link 
+            <router-link
               :to="`/facility/${facility.facilityNo}`"
-              class="action-btn detail-btn" 
+              class="action-btn detail-btn"
               title="보기"
             >
               상세보기
@@ -94,65 +112,70 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import Pagination from '@/components/common/Paginations.vue'
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import Pagination from "@/components/common/Paginations.vue";
 
-const facilityList = ref([])
-const sidoList = ref([])
-const sigunguList = ref([])
+const facilityList = ref([]);
+const sidoList = ref([]);
+const sigunguList = ref([]);
 
-const selectedSido = ref('')
-const selectedSigungu = ref('')
-const facilityName = ref('')
+const selectedSido = ref("");
+const selectedSigungu = ref("");
+const facilityName = ref("");
 
-const page = ref(1)
-const totalPages = ref(1)
-const totalElements = ref(0)
-const searched = ref(false)
+const page = ref(1);
+const totalPages = ref(1);
+const totalElements = ref(0);
+const searched = ref(false);
 
 const fetchSido = () => {
-  axios.get('/v1/pet/sido').then(res => {
-    sidoList.value = res.data.items
-  })
-}
+  axios.get("/v1/pet/sido").then((res) => {
+    sidoList.value = res.data.items;
+  });
+};
 
 const fetchSigungu = () => {
-  sigunguList.value = []
-  selectedSigungu.value = ''
-  if (!selectedSido.value) return
+  sigunguList.value = [];
+  selectedSigungu.value = "";
+  if (!selectedSido.value) return;
 
-  axios.get('/v1/pet/sigungu', { params: { uprCd: selectedSido.value } }).then(res => {
-    sigunguList.value = res.data.items
-  })
-}
+  axios
+    .get("/v1/pet/sigungu", { params: { uprCd: selectedSido.value } })
+    .then((res) => {
+      sigunguList.value = res.data.items;
+    });
+};
 
 const goPage = (targetPage) => {
   const params = {
     page: targetPage,
-    size: 10
-  }
+    size: 10,
+  };
 
-  if (selectedSido.value) params.sidoCode = selectedSido.value
-  if (selectedSigungu.value) params.sigunguCode = selectedSigungu.value
-  if (facilityName.value) params.facilityName = facilityName.value
+  if (selectedSido.value) params.sidoCode = selectedSido.value;
+  if (selectedSigungu.value) params.sigunguCode = selectedSigungu.value;
+  if (facilityName.value) params.facilityName = facilityName.value;
 
-  axios.get('/v1/pet/facility', { params }).then(res => {
-    facilityList.value = res.data.content
-    totalPages.value = res.data.totalPages
-    totalElements.value = res.data.totalElements
-    page.value = targetPage
-    searched.value = true
-    console.log(res.data);
-  }).catch(err => {
-    console.error('시설 목록 조회 실패:', err)
-  })
-}
+  axios
+    .get("/v1/pet/facility", { params })
+    .then((res) => {
+      facilityList.value = res.data.content;
+      totalPages.value = res.data.totalPages;
+      totalElements.value = res.data.totalElements;
+      page.value = targetPage;
+      searched.value = true;
+      console.log(res.data);
+    })
+    .catch((err) => {
+      console.error("시설 목록 조회 실패:", err);
+    });
+};
 
 onMounted(() => {
-  fetchSido()
-  goPage(1)
-})
+  fetchSido();
+  goPage(1);
+});
 </script>
 
 <style scoped>
