@@ -55,4 +55,8 @@ public class UserPetEntity extends BaseEntity{
 	    
 	    private String specialNotes; // 특이사항
 
+		private String OwnerRelation;
+
+
+
 }
