@@ -114,12 +114,16 @@ public class PetDataService {
         List<PetAbandonmentDto> pagedList = PageUtil.getPagedList(all, page, size);
         return new PageResponseDto<>(pagedList, total, page, size);
     }
-    
+
     public List<PetAbandonmentDto> getEndingSoonAbandonmentsForMain(int count) {
         List<PetAbandonmentDto> all = getEndingSoonListFromCache();
-        
+
         if (all.isEmpty()) return List.of();
-        all.sort(Comparator.comparingLong(PetAbandonmentDto::getPetViewCnt));
+
+        // null 체크 필수
+        all.sort(Comparator.comparingInt(dto ->
+                dto.getPetViewCnt() != null ? dto.getPetViewCnt() : 0
+        ));
 
         int excludeCount = (int) Math.ceil(all.size() * 0.2);
         List<PetAbandonmentDto> filtered = all.subList(excludeCount, all.size());
