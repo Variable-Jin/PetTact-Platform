@@ -1,4 +1,4 @@
-# Node.js 일반 이미지
+# Node.js 베이스 이미지
 FROM node:20 AS build
 
 # 작업 디렉토리 생성
@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package.json ./
 COPY package-lock.json ./
 
-# 의존성 설치
-RUN npm ci
+# 의존성 설치 (optional dependencies 포함)
+RUN npm install --include=optional
 
 # 소스 코드 복사
 COPY . .
