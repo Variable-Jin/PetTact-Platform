@@ -7,8 +7,8 @@ WORKDIR /app
 # 네이티브 모듈 빌드를 위한 도구 설치
 RUN apk add --no-cache python3 make g++
 
-# package.json과 package-lock.json 복사
-COPY package*.json ./
+# package.json만 복사
+COPY package.json ./
 
 # 의존성 설치
 RUN npm install
