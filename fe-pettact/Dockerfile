@@ -1,7 +1,11 @@
 FROM node:20-alpine AS build
 WORKDIR /app
+
+# Python 추가 (네이티브 모듈 빌드용)
+RUN apk add --no-cache python3 make g++
+
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
 RUN npm run build
 
