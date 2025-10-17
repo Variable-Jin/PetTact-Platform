@@ -10,8 +10,8 @@ RUN apk add --no-cache python3 make g++
 # package.json만 복사
 COPY package.json ./
 
-# 의존성 설치
-RUN npm install
+# 의존성 설치 (강제 새로 설치)
+RUN npm cache clean --force && npm install
 
 # 소스 코드 복사
 COPY . .
