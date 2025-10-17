@@ -4,12 +4,11 @@ FROM node:20 AS build
 # 작업 디렉토리 생성
 WORKDIR /app
 
-# package.json 복사
+# package.json만 복사 (package-lock.json 제외)
 COPY package.json ./
-COPY package-lock.json ./
 
-# 의존성 설치 (optional dependencies 포함)
-RUN npm install --include=optional
+# package-lock.json 없이 새로 설치
+RUN npm install
 
 # 소스 코드 복사
 COPY . .
