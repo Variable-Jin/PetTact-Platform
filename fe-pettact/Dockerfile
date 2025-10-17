@@ -1,8 +1,11 @@
-# Node.js 베이스 이미지
+# Node.js 베이스 이미지 (Alpine)
 FROM node:20-alpine AS build
 
 # 작업 디렉토리 생성
 WORKDIR /app
+
+# 네이티브 모듈 빌드를 위한 도구 설치
+RUN apk add --no-cache python3 make g++
 
 # package.json과 package-lock.json 복사
 COPY package*.json ./
