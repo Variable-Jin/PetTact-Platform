@@ -16,23 +16,19 @@ RUN npm cache clean --force && npm install
 # 소스 코드 복사
 COPY . .
 
-# 프로덕션 환경 설정
-ENV NODE_ENV=production
+# Rollup 네이티브 바이너리 수동 설치 (ARM용)
+#RUN npm install @rollup/rollup-linux-arm64-gnu --save-dev
 
-# 프로젝트 빌드 (Vue + Vite)
+# 애플리케이션 빌드
 RUN npm run build
 
-# Nginx 웹서버 설정
+# 최종 이미지 설정
 FROM nginx:alpine
 
-# 빌드된 파일 복사
+# 애플리케이션 파일 복사
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Nginx 설정 파일 복사 (Vue Router용)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# 컨테이너가 사용할 포트 노출
 EXPOSE 80
 
-# Nginx 실행
+# 컨테이너 실행 시 실행할 명령 정의
 CMD ["nginx", "-g", "daemon off;"]

@@ -2,6 +2,7 @@ package com.pettact.api.mongo;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -9,6 +10,7 @@ import org.springframework.data.mongodb.core.index.Index;
 
 @Configuration
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = "spring.data.mongodb.enabled", havingValue = "true", matchIfMissing = false)
 public class MongoTTLConfig {
 
     private final MongoTemplate mongoTemplate;

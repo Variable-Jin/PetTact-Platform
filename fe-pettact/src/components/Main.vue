@@ -147,7 +147,7 @@ export default {
       banners: [
         {
           id: 1,
-          image: '/image/jorgen-haland-fu0z-_iPa4M-unsplash (1).jpg',
+          image: '/image/main2.png',
           alt: '펫 거래 안전',
           title: 'How Can We Make Pet Trading Safer?',
           subtitle: '검증된 판매자와 함께하는 안심 거래',
@@ -156,7 +156,7 @@ export default {
         },
         {
           id: 2,
-          image: '/image/niklas-liniger-eyGyeByOjig-unsplash.jpg',
+          image: '/image/main1.png',
           alt: '반려동물 찾기',
           title: 'Find Your Perfect Pet Companion',
           subtitle: '나에게 맞는 반려동물을 찾아보세요',
@@ -165,7 +165,7 @@ export default {
         },
         {
           id: 3,
-          image: '/image/rachel-kelli-0-X_N654aw4-unsplash.jpg',
+          image: '/image/jorgen-haland-fu0z-_iPa4M-unsplash (1).jpg',
           alt: '펫 케어 커뮤니티',
           title: 'Pet Care Tips & Community',
           subtitle: '반려동물 케어 팁과 커뮤니티',

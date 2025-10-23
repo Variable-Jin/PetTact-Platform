@@ -3,8 +3,10 @@ on:
   push:
     branches: [ main, test ]
 jobs:
-  build:
+  backend-build:
+    name: Build & Push Backend
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
       
@@ -15,14 +17,18 @@ jobs:
           java-version: '17'
           cache: gradle
       
-      # 백엔드 빌드
+      # 백엔드 permission 부여
       - name: Grant execute permission for gradlew
         run: chmod +x be-pettact/api/gradlew
-      
-      - name: Build with Gradle
+
+      # 빌드 시간 측정
+      - name: Build Backend with Gradle
         run: |
           cd be-pettact/api
+          START=$(date +%s)
           ./gradlew clean build -x test
+          END=$(date +%s)
+          echo "Backend build time: $((END - START)) seconds"
       
       # Docker Hub 로그인
       - name: Login to Docker Hub
@@ -37,10 +43,25 @@ jobs:
           cd be-pettact/api
           docker build -t ${{ secrets.DOCKER_USERNAME }}/pettact-backend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/pettact-backend:latest
-      
+
+      ## image size 측정
+      - name: Log Backend Image Size
+        run: |
+          SIZE=$(docker image inspect ${{ secrets.DOCKER_USERNAME }}/pettact-backend:latest --format='{{.Size}}')
+          echo "Backend image size: $((SIZE / 1024 / 1024)) MB"
+
       # FE image
       - name: Build and Push Frontend Image
         run: |
           cd fe-pettact
+          START=$(date +%s)
           docker build -t ${{ secrets.DOCKER_USERNAME }}/pettact-frontend:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/pettact-frontend:latest
+          END=$(date +%s)
+          echo "Frontend build time: $((END - START)) seconds"
+
+      # FE image size 측정
+      - name: Log Frontend Image Size
+        run: |
+          SIZE=$(docker image inspect ${{ secrets.DOCKER_USERNAME }}/pettact-frontend:latest --format='{{.Size}}')
+          echo "Frontend image size: $((SIZE / 1024 / 1024)) MB"
