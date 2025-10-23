@@ -1,14 +1,19 @@
-# node 베이스 이미지
-FROM node:20 AS build
+# Node.js 베이스 이미지 (Alpine)
+FROM node:20-alpine AS build
 
 # 작업 디렉토리 생성
 WORKDIR /app
 
-# package.json 의존성 주입 및 설치
-COPY package*.json ./
-RUN npm install
+# 네이티브 모듈 빌드를 위한 도구 설치
+RUN apk add --no-cache python3 make g++
 
-# 소스코드 복사
+# package.json만 복사
+COPY package.json ./
+
+# 의존성 설치 (강제 새로 설치)
+RUN npm cache clean --force && npm install
+
+# 소스 코드 복사
 COPY . .
 
 # Rollup 네이티브 바이너리 수동 설치 (ARM용)
