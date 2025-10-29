@@ -113,6 +113,29 @@ public class PetDataController {
         ));
     }
 
+
+    /**
+     * Hugging Space api 데이터 json export -> rag 적용
+     */
+    @GetMapping("/export-facilities")
+    public ResponseEntity<List<PetOriginFacilityDto>> exportFacilities() {
+        Pageable pageable = PageRequest.of(0, 25000); // 충분히 큰 사이즈
+        Page<PetOriginFacilityDto> result = petDataService.getFacilityList(null, null, null, pageable);
+        return ResponseEntity.ok(result.getContent());
+    }
+
+    @GetMapping("/export-shelters")
+    public ResponseEntity<List<PetShelterDto>> exportShelters() {
+        Page<PetShelterDto> result = petDataService.getShelterList(null, 1, 500);
+        return ResponseEntity.ok(result.getContent());
+    }
+
+    @GetMapping("/export-abandonment")
+    public ResponseEntity<List<PetAbandonmentDto>> exportAbandonment() {
+        Page<PetAbandonmentDto> result = petDataService.getAbandonmentList(null, null, null, 1, 8000);
+        return ResponseEntity.ok(result.getContent());
+    }
+
     @GetMapping("/abandonment/ending-soon")
     public PageResponseDto<PetAbandonmentDto> getEndingSoonAbandonments(
             @RequestParam(value = "page", defaultValue = "1") int page,

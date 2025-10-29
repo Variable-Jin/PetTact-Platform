@@ -4,13 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.pettact.api.pet.dto.assistanceDto;
+import com.pettact.api.pet.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import com.pettact.api.pet.dto.PetDiaryDto;
 import com.pettact.api.pet.entity.PetDiaryEntity;
 import com.pettact.api.pet.service.PetDiaryService;
 import com.pettact.api.security.vo.CustomUserDetails;
@@ -26,25 +25,25 @@ public class PetDiaryController {
 
 	private final PetDiaryService diaryService;
 
-	@PostMapping("/create")
-	public ResponseEntity<Map<String, Object>> createDiary(@RequestBody PetDiaryDto dto, @AuthenticationPrincipal CustomUserDetails user) {
-		// 1단계: FastAPI로 일기 + 이미지 생성 (Map으로 받음)
-		Map<String, Object> generatedContent = diaryService.generatePetDiary(dto.getPrompt(), dto.getPetId());
-
-		String diaryContent = (String) generatedContent.get("diaryContent");
-		String imageUrl = (String) generatedContent.get("imageUrl");
-
-		// 2단계: 생성된 일기를 DB에 저장
-		diaryService.saveDiary(dto.getPetId(), diaryContent, user.getUserEntity(), dto.getPrompt());
-
-		// ✅ 생성된 일기 내용과 이미지 URL 모두 반환
-		Map<String, Object> response = new HashMap<>();
-		response.put("status", "saved");
-		response.put("diaryContent", diaryContent);
-		response.put("imageUrl", imageUrl);
-
-		return ResponseEntity.ok(response);
-	}
+//	@PostMapping("/create")
+//	public ResponseEntity<Map<String, Object>> createDiary(@RequestBody PetDiaryDto dto, @AuthenticationPrincipal CustomUserDetails user) {
+//		// 1단계: FastAPI로 일기 + 이미지 생성 (Map으로 받음)
+//		Map<String, Object> generatedContent = diaryService.generatePetDiary(dto.getPrompt(), dto.getPetId());
+//
+//		String diaryContent = (String) generatedContent.get("diaryContent");
+//		String imageUrl = (String) generatedContent.get("imageUrl");
+//
+//		// 2단계: 생성된 일기를 DB에 저장
+//		diaryService.saveDiary(dto.getPetId(), diaryContent, user.getUserEntity(), dto.getPrompt());
+//
+//		// ✅ 생성된 일기 내용과 이미지 URL 모두 반환
+//		Map<String, Object> response = new HashMap<>();
+//		response.put("status", "saved");
+//		response.put("diaryContent", diaryContent);
+//		response.put("imageUrl", imageUrl);
+//
+//		return ResponseEntity.ok(response);
+//	}
 
 	@GetMapping("/{petId}")
 	public ResponseEntity<List<PetDiaryDto>> diaryList(@PathVariable("petId") Long petId) {
