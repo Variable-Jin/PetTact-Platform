@@ -15,6 +15,7 @@ import com.pettact.api.product.dto.ProductDTO;
 import com.pettact.api.product.entity.ProductEntity;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.web.multipart.MultipartFile;
 import com.pettact.api.recommend.boardRecommend.repository.BoardRecommendRepository;
 import com.pettact.api.reply.dto.ReplyResponseDto;
@@ -69,10 +70,35 @@ public class BoardService implements ViewCountSyncable<Long> {
         Board savedBoard = boardRepository.save(board);
         return BoardResponseDto.fromEntity(savedBoard);
     }
-    public List<BoardResponseDto> getAllBoard() {
-        List<Board> boards = boardRepository.findAll();
+
+    @Transactional(readOnly = true)
+    public List<BoardResponseDto> getAllBoard(Long categoryNo) {  // 파라미터 추가
+        List<Board> boards;
+
+        if (categoryNo != null) {
+            // 카테고리별 조회
+            boards = boardRepository.findByBoardCategoryNo(categoryNo);
+        } else {
+            // 전체 조회
+            boards = boardRepository.findAll();
+        }
+
         return boards.stream()
-                .map(BoardResponseDto::getAllBoard)
+                .map(board -> {
+                    BoardResponseDto dto = BoardResponseDto.getAllBoard(board);
+
+                    // Redis 조회수
+                    String viewKey = "board:views:" + board.getBoardNo();
+                    Object viewObj = redisTemplate.opsForValue().get(viewKey);
+                    Long views = (viewObj != null) ? Long.valueOf(viewObj.toString()) : 0L;
+                    dto.setBoardViewCnt(views);
+
+                    // 댓글 수
+                    List<ReplyResponseDto> replies = replyService.getAllReplies(board.getBoardNo());
+                    dto.setReplies(replies);
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
     public BoardResponseDto getBoardByNo(Long boardNo, String sessionId) {
@@ -80,6 +106,8 @@ public class BoardService implements ViewCountSyncable<Long> {
                 .orElseThrow(() -> new IllegalArgumentException("게시글 정보를 찾을 수 없습니다. No: " + boardNo));
 
         String preventKey = "board:viewed:" + sessionId + ":" + boardNo;
+        log.info("preventKey: {}", preventKey);
+        log.info("hasKey: {}", redisTemplate.hasKey(preventKey));
 
         if (Boolean.FALSE.equals(redisTemplate.hasKey(preventKey))) {
             viewCountService.increaseViewCount("board", boardNo, 120);
@@ -87,37 +115,34 @@ public class BoardService implements ViewCountSyncable<Long> {
             String today = LocalDate.now().toString();
             Long categoryId = board.getBoardCategory().getBoardCategoryNo();
 
-            // 전체 인기 ZSet
             String globalKey = "board:popular:" + today;
             redisTemplate.opsForZSet().incrementScore(globalKey, boardNo.toString(), 1);
             redisTemplate.expire(globalKey, Duration.ofDays(8));
 
-            // 카테고리별 인기 ZSet
             String categoryKey = "board:popular:" + categoryId + ":" + today;
             redisTemplate.opsForZSet().incrementScore(categoryKey, boardNo.toString(), 1);
             redisTemplate.expire(categoryKey, Duration.ofDays(8));
 
             redisTemplate.opsForValue().set(preventKey, "1", Duration.ofMinutes(60));
         }
-        
+
+        // Redis에서 조회수 가져오기
+        String viewKey = "board:views:" + boardNo;
+        Object viewObj = redisTemplate.opsForValue().get(viewKey);
+        Long currentViews = (viewObj != null) ? Long.valueOf(viewObj.toString()) : 0L;
+
         List<ReplyResponseDto> replyList = replyService.getAllReplies(boardNo);
         int recommendCount = boardRecommendRepository.countByBoardNo(boardNo);
+        List<FileDto> files = multiFileService.getFilesByReference(File.ReferenceTable.BOARD, boardNo);
+
         BoardResponseDto boardResponseDto = BoardResponseDto.fromEntity(board);
         boardResponseDto.setReplies(replyList);
         boardResponseDto.setRecommendCount(recommendCount);
+        boardResponseDto.setBoardViewCnt(currentViews);
+        boardResponseDto.setFiles(files);
+
         return boardResponseDto;
     }
-//    @Transactional
-//    public BoardResponseDto updateBoard(Long boardNo, BoardCreateDto boardCreateDto, Long userNo) {
-//        Board board = boardRepository.findById(boardNo)
-//                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다. No: " + boardNo));
-//        if (!board.getUser().getUserNo().equals(userNo)) {
-//            throw new IllegalArgumentException("수정 권한이 없습니다. 작성자만 수정할 수 있습니다.");
-//        }
-//        board.updateBoard(boardCreateDto);
-//        Board updated = boardRepository.save(board);
-//        return BoardResponseDto.fromEntity(updated);
-//    }
 
     @Transactional
     public BoardResponseDto updateBoard(
@@ -184,25 +209,55 @@ public class BoardService implements ViewCountSyncable<Long> {
     @Override
     @Transactional
     public void updateViewCount(Long boardNo, int count) {
-    	boardRepository.updateViewCount(boardNo, count);
+        // 1. DB 업데이트
+        boardRepository.updateViewCount(boardNo, count);
+
+        // 2. Redis에서 현재 조회수 가져오기
+        String viewKey = "board:views:" + boardNo;
+        Object viewObj = redisTemplate.opsForValue().get(viewKey);
+        Long currentViews = (viewObj != null) ? Long.valueOf(viewObj.toString()) : 0L;
+
+        // 3. 현재 Redis 조회수로 Sorted Set 업데이트
+        Board board = boardRepository.findById(boardNo)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+
+        String today = LocalDate.now().toString();
+        Long categoryNo = board.getBoardCategory().getBoardCategoryNo();
+
+        redisTemplate.opsForZSet().add(
+                "board:popular:" + today,
+                boardNo.toString(),
+                currentViews.doubleValue()  // Redis의 실제 조회수 사용!
+        );
+
+        redisTemplate.opsForZSet().add(
+                "board:popular:" + categoryNo + ":" + today,
+                boardNo.toString(),
+                currentViews.doubleValue()
+        );
     }
-    
-    // ------------------ 인기 게시글 TOP 10 ------------------    
-    public List<BoardResponseDto> getPopularBoards(Long categoryNo, int count) {
+     // ------------------ 인기 게시글 TOP 10 ------------------
+     public List<BoardResponseDto> getPopularBoards(Long categoryNo, int count) {
         List<String> dateKeys = IntStream.rangeClosed(0, 6)
-            .mapToObj(i -> {
-                String date = LocalDate.now().minusDays(i).toString();
-                return (categoryNo == null)
-                    ? "board:popular:" + date
-                    : "board:popular:" + categoryNo + ":" + date;
-            })
-            .toList();
+                .mapToObj(i -> {
+                    String date = LocalDate.now().minusDays(i).toString();
+                    return (categoryNo == null)
+                            ? "board:popular:" + date
+                            : "board:popular:" + categoryNo + ":" + date;
+                })
+                .toList();
 
         String tempKey = "board:popular:temp:" + UUID.randomUUID();
         redisTemplate.opsForZSet().unionAndStore(dateKeys.get(0), dateKeys.subList(1, dateKeys.size()), tempKey);
 
-        Set<String> boardNos = redisTemplate.opsForZSet()
-            .reverseRange(tempKey, 0, count - 1);
+        Set<String> boardNos = redisTemplate.opsForZSet().reverseRange(tempKey, 0, count - 1);
+
+        // 삭제 전에 score 저장
+        Map<Long, Double> weeklyViewsMap = boardNos.stream()
+                .collect(Collectors.toMap(
+                        Long::parseLong,
+                        id -> redisTemplate.opsForZSet().score(tempKey, id)
+                ));
 
         redisTemplate.delete(tempKey);
 
@@ -212,13 +267,22 @@ public class BoardService implements ViewCountSyncable<Long> {
         List<Board> boards = boardRepository.findAllById(ids);
 
         Map<Long, Board> boardMap = boards.stream()
-            .collect(Collectors.toMap(Board::getBoardNo, Function.identity()));
+                .collect(Collectors.toMap(Board::getBoardNo, Function.identity()));
 
         return ids.stream()
-            .map(boardMap::get)
-            .filter(Objects::nonNull)
-            .map(BoardResponseDto::fromEntity)
-            .toList();
-    }
+                .map(boardMap::get)
+                .filter(Objects::nonNull)
+                .map(board -> {
+                    BoardResponseDto dto = BoardResponseDto.fromEntity(board);
 
+                    // 최근 7일 조회수 표시
+                    dto.setBoardViewCnt(weeklyViewsMap.get(board.getBoardNo()).longValue());
+
+                    List<ReplyResponseDto> replies = replyService.getAllReplies(board.getBoardNo());
+                    dto.setReplies(replies);
+
+                    return dto;
+                })
+                .toList();
+    }
 }

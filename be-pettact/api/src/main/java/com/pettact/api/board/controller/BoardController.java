@@ -38,14 +38,6 @@ public class BoardController {
      * POST /v1/board
      * 게시글 생성
      */
-//
-//    @PostMapping
-//    public ResponseEntity<BoardResponseDto> createBoard(@RequestBody BoardCreateDto boardCreateDto,
-//                                                        @AuthenticationPrincipal CustomUserDetails userDetails) {
-//        Long userNo = userDetails.getUserEntity().getUserNo();
-//        BoardResponseDto boardResponseDto = boardService.createBoard(boardCreateDto, userNo);
-//        return ResponseEntity.ok(boardResponseDto);
-//    }
 
     @PostMapping
     public ResponseEntity<BoardResponseDto> createBoard(
@@ -74,12 +66,13 @@ public class BoardController {
 
     /*
      * GET /v1/board
-     * 게시긒 목록 조회
+     * 게시글 목록 조회
      */
 
     @GetMapping
-    public ResponseEntity<List<BoardResponseDto>> getAllBoard() {
-        List<BoardResponseDto> boards = boardService.getAllBoard();
+    public ResponseEntity<List<BoardResponseDto>> getAllBoard(
+            @RequestParam(required = false) Long categoryNo) {
+        List<BoardResponseDto> boards = boardService.getAllBoard(categoryNo);
         return ResponseEntity.ok(boards);
     }
 
