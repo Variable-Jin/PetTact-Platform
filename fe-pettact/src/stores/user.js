@@ -8,6 +8,11 @@ export const useUserStore = defineStore('user', {
     user: ref(null),
     accessToken: ref(localStorage.getItem('accessToken')),
   }),
+  getters: {
+    isLoggedIn: (state) => {
+      return !!state.accessToken && !!state.user;
+    }
+  },
   actions: {
     async login(email, password) {
       const res = await axios.post('/v1/user/login', {

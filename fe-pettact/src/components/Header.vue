@@ -94,8 +94,13 @@ const toggleProfileDropdown = () => {
 };
 
 const goToBoardCategoryList = () => {
-  // 관리자든 사용자든 모두 게시판 목록 페이지로 이동
-  router.push('/boardCategoryList')
+  const userStore = useUserStore()
+  
+  if (userStore.user?.userRole === 'ROLE_ADMIN') {
+    router.push('/boardCategoryList')  // 관리자는 카테고리 관리
+  } else {
+    router.push('/board/1')  // 일반 사용자는 기본 게시판
+  }
 }
 
 
@@ -148,9 +153,10 @@ const logout = () => {
 @import url('https://fonts.googleapis.com/css2?family=Paytone+One&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css');
 .logo-img {
-  width: 200px;
+  /* width: 200px; */
   object-fit: contain;
   cursor: pointer;
+  width: clamp(100px, 15vw, 200px);
 }
 .navbar {
   width: 100%;
@@ -175,15 +181,17 @@ const logout = () => {
 
 .menu {
   display: flex;
-  gap: 36px;
+  /* gap: 36px; */
+  gap: clamp(12px, 2vw, 36px); 
 }
 
 .menu-item {
-  width: 195px;
+  width: auto;
+  padding: 0 clamp(10px, 1.5vw, 20px);  /* 여백도 자동 조절 */
+  font-size: clamp(14px, 1.2vw, 18px);  /* 폰트도 자동 조절 */
   height: 76px;
   font-family: 'Pretendard', sans-serif;
   /* font-size: 22px; */
-  font-size: 18px;
   color: #111;
   display: flex;
   align-items: center;
