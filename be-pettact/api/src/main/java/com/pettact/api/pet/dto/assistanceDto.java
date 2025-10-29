@@ -14,4 +14,6 @@ public class assistanceDto {
     private String message;
     private Long userNo;
     private Long sessionNo;
+    private String petType;
+    private Long petId;
 }

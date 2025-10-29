@@ -101,12 +101,12 @@
 
         <!-- 오른쪽 버튼들 -->
         <div class="features-buttons">
-          <div class="matching-button" @click="goToMatching">
-            <div class="matching-button-content">
-              <div class="matching-button-title">🎯 운명의 반려동물 매칭하기</div>
-              <div class="matching-button-description">성격과 라이프스타일을 분석해서<br />완벽한 파트너를 찾아보세요.</div>
+          <div class="assistance-button" @click="goToPetAssistance">
+            <div class="assistance-button-content">
+              <div class="assistance-button-title">🤖 반려동물 케어 어시스턴트</div>
+              <div class="assistance-button-description">반려동물 케어 데이터 기반<br />맞춤형 솔루션을 제공합니다.</div>
             </div>
-            <div class="matching-button-arrow"></div>
+            <div class="assistance-button-arrow"></div>
           </div>
 
           <div class="diary-button" @click="goToDiary">
@@ -173,67 +173,6 @@ export default {
           link: '/community'
         }
       ],
-
-      // 커뮤니티 관련 데이터
-      // popularBoards: [
-      //   {
-      //     boardNo: 1523,
-      //     boardTitle: '귀여운 실키테리어 모리 안뇽하세용✌️',
-      //     boardCategory: { id: 1, name: '입양후기 게시판' },
-      //     user: { nickname: 'user123' },
-      //     stats: { likes: 52, views: 2500 },
-      //     createdAt: '2025-07-09T10:30:00Z'
-      //   },
-      //   {
-      //     boardNo: 1524,
-      //     boardTitle: '화이트 테리어 입양 고민되네여,,',
-      //     boardCategory: { id: 2, name: '자유 게시판' },
-      //     user: { nickname: 'petlover' },
-      //     stats: { likes: 41, views: 2200 },
-      //     createdAt: '2025-07-09T09:15:00Z'
-      //   },
-      //   {
-      //     boardNo: 1525,
-      //     boardTitle: '❗급해요 ️6개월 슈나우저 이갈이 관련 조언요!!',
-      //     boardCategory: { id: 3, name: '육아 Q&A 게시판' },
-      //     user: { nickname: 'dogmom' },
-      //     stats: { likes: 22, views: 1800 },
-      //     createdAt: '2025-07-09T08:45:00Z'
-      //   },
-      //   {
-      //     boardNo: 1526,
-      //     boardTitle: 'OO 선글라스 구입 후기 😎 (*강아지 사진 매우많음)',
-      //     boardCategory: { id: 4, name: '쇼핑몰 후기 게시판' },
-      //     user: { nickname: 'shoppingking' },
-      //     stats: { likes: 25, views: 2300 },
-      //     createdAt: '2025-07-09T07:20:00Z'
-      //   },
-      //   {
-      //     boardNo: 1527,
-      //     boardTitle: '저희 렉돌 자랑합니당',
-      //     boardCategory: { id: 2, name: '자유 게시판' },
-      //     user: { nickname: 'catlover' },
-      //     stats: { likes: 15, views: 1200 },
-      //     createdAt: '2025-07-09T06:10:00Z'
-      //   },
-      //   {
-      //     boardNo: 1528,
-      //     boardTitle: '반려동물 일기 관련 v 1.0 patch 후기',
-      //     boardCategory: { id: 5, name: '공지사항 게시판' },
-      //     user: { nickname: 'admin' },
-      //     stats: { likes: 0, views: 3200 },
-      //     createdAt: '2025-07-08T15:30:00Z'
-      //   },
-      //   {
-      //     boardNo: 1529,
-      //     boardTitle: '송파 지역 동물병원 추천 받아요!!!',
-      //     boardCategory: { id: 2, name: '자유 게시판' },
-      //     user: { nickname: 'seoul_pet' },
-      //     stats: { likes: 13, views: 721 },
-      //     createdAt: '2025-07-08T14:45:00Z'
-      //   }
-      // ],
-
       popularPhotos: [
         {
           boardNo: 1601,
@@ -458,10 +397,9 @@ export default {
     },
 
     // Features Section 버튼 클릭 메서드들
-    goToMatching() {
-      this.$router.push('/matching')
-    },
-
+    goToPetAssistance() {
+  this.$router.push('/userPet/assistance')
+},
     goToDiary() {
       this.$router.push('/diary')
     }
@@ -906,30 +844,27 @@ export default {
   position: relative;
   display: flex;
   gap: 40px;
-  /* 좌우 섹션 간격 */
 }
 
 .features-grid {
   display: flex;
   flex-direction: column;
-  gap: 55px;
+  gap: 40px;
   flex: 1;
-  /* 왼쪽 영역 */
 }
 
 /* 오른쪽 버튼 컨테이너 */
 .features-buttons {
   width: 360px;
-  /* 오른쪽 버튼 영역 고정 너비 */
   display: flex;
   flex-direction: column;
   gap: 20px;
   flex-shrink: 0;
 }
 
-/* 매칭 버튼 */
-.matching-button {
-  width: 100%;
+/* assistance 버튼 */
+.assistance-button {
+  width: 357px;
   height: 280px;
   background: linear-gradient(180deg, #E3F2FD 0%, #008BE6 100%);
   border: 1px solid #BFE6FF;
@@ -944,17 +879,17 @@ export default {
   margin-bottom: 60px;
 }
 
-.matching-button:hover {
+.assistance-button:hover {
   transform: translateY(-2px);
 }
 
-.matching-button-content {
+.assistance-button-content {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.matching-button-title {
+.assistance-button-title {
   font-size: 22px;
   font-weight: 500;
   color: #333;
@@ -962,7 +897,7 @@ export default {
   font-family: 'Pretendard', sans-serif;
 }
 
-.matching-button-description {
+.assistance-button-description {
   font-size: 15px;
   font-weight: 500;
   color: #3D393A;
@@ -970,33 +905,39 @@ export default {
   font-family: 'Pretendard', sans-serif;
 }
 
-.matching-button-arrow {
+/* 예쁜 화살표 */
+.assistance-button-arrow {
   position: absolute;
-  bottom: 20px;
-  left: 49px;
-  width: 24px;
-  height: 22px;
-  background: rgba(211, 211, 211, 0.8);
-  border-radius: 3px;
+  bottom: 25px;
+  left: 30px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s;
 }
 
-.matching-button-arrow::after {
-  content: '';
-  width: 12px;
-  height: 12px;
-  background: #111111;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+.assistance-button:hover .assistance-button-arrow {
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateX(5px);
+}
+
+.assistance-button-arrow::after {
+  content: '→';
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
 }
 
 /* 시선으로 보는 하루 버튼 */
 .diary-button {
-  width: 100%;
+  width: 357px;
   height: 280px;
   background: linear-gradient(180deg, #FFE5E5 0%, #FFB3B3 100%);
-  border: 1px solid #BFE6FF;
+  border: 1px solid #FFD0D0;
   border-radius: 12px;
   padding: 30px 25px;
   position: relative;
@@ -1036,33 +977,39 @@ export default {
 
 .diary-button-arrow {
   position: absolute;
-  bottom: 20px;
-  left: 49px;
-  width: 24px;
-  height: 22px;
-  background: rgba(211, 211, 211, 0.8);
-  border-radius: 3px;
+  bottom: 25px;
+  left: 30px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s;
+}
+
+.diary-button:hover .diary-button-arrow {
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateX(5px);
 }
 
 .diary-button-arrow::after {
-  content: '';
-  width: 12px;
-  height: 12px;
-  background: #111111;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  content: '→';
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
 }
 
 .features-row {
   display: flex;
-  gap: 82px;
+  gap: 40px;
   justify-content: center;
 }
 
 .feature-card {
-  width: 357px;
+  width: 100%;
+  max-width: 357px;
   background: white;
   border-radius: 16px;
   padding: 40px 32px;
@@ -1109,5 +1056,51 @@ export default {
   font-family: 'Tahoma', sans-serif;
   line-height: 1.4;
   margin: 0;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .features-container {
+    flex-direction: column;
+  }
+
+  .features-buttons {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .assistance-button,
+  .diary-button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .features-row {
+    gap: 40px;
+  }
+
+  .feature-card {
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .features-buttons {
+    flex-direction: column;
+  }
+
+  .assistance-button,
+  .diary-button {
+    height: 220px;
+  }
+
+  .features-row {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .feature-card {
+    width: 100%;
+  }
 }
 </style>

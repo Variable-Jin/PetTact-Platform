@@ -51,7 +51,7 @@ public class ViewCountScheduler {
             int count = (countStr != null) ? Integer.parseInt(countStr) : 0;
 
             service.updateViewCount(id, count);
-            redisTemplate.delete(key);
+//            redisTemplate.delete(key);
         }
 
         log.info("[{}] 조회수 {}건 DB 반영 완료", domainPrefix, keys.size());

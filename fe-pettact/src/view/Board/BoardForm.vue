@@ -133,206 +133,170 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
+import { useUserStore } from "@/stores/user";
 
-const route = useRoute()
-const router = useRouter()
+const userStore = useUserStore();
+const route = useRoute();
+const router = useRouter();
 
-const imageInput = ref(null)
-const fileInput = ref(null)
+const imageInput = ref(null);
+const fileInput = ref(null);
 
 const categoryInfo = ref({
-  title: '',
+  title: "",
   allowImages: false,
   allowAttachments: false,
   maxImageCount: 5,
-  maxFileSize: 50
-})
+  maxFileSize: 50,
+});
 
 const formData = ref({
-  boardTitle: '',
-  boardContent: ''
-})
+  boardTitle: "",
+  boardContent: "",
+});
 
-const selectedImages = ref([])
-const selectedFiles = ref([])
-const isSubmitting = ref(false)
+const selectedImages = ref([]);
+const selectedFiles = ref([]);
+const isSubmitting = ref(false);
 
 const isFormValid = computed(() => {
-  return formData.value.boardTitle.trim().length > 0 && 
-         formData.value.boardContent.trim().length > 0
-})
-
-
-// const handleImageUpload = (event) => {
-//   const files = Array.from(event.target.files)
-//   const maxCount = boardConfig.value.boardMaxImageCount
-
-//   if (selectedImages.value.length + files.length > maxCount) {
-//     alert(`이미지는 최대 ${maxCount}장까지만 업로드할 수 있습니다.`)
-//     return
-//   }
-
-//   files.forEach(file => {
-//     if (file.type.startsWith('image/')) {
-//       const url = URL.createObjectURL(file)
-//       selectedImages.value.push({ file, url })
-//     }
-//   })
-//   event.target.value = ''
-// }
+  return (
+    formData.value.boardTitle.trim().length > 0 &&
+    formData.value.boardContent.trim().length > 0
+  );
+});
 
 const handleImageUpload = (event) => {
-  const files = Array.from(event.target.files)
-  const maxCount = categoryInfo.value.maxImageCount
+  const files = Array.from(event.target.files);
+  const maxCount = categoryInfo.value.maxImageCount;
 
   for (const file of files) {
-    if (!file.type.startsWith('image/')) continue
+    if (!file.type.startsWith("image/")) continue;
     if (selectedImages.value.length >= maxCount) {
-      alert(`이미지는 최대 ${maxCount}장까지만 업로드할 수 있습니다.`)
-      break
+      alert(`이미지는 최대 ${maxCount}장까지만 업로드할 수 있습니다.`);
+      break;
     }
 
-    const url = URL.createObjectURL(file)
-    selectedImages.value.push({ file, url })
+    const url = URL.createObjectURL(file);
+    selectedImages.value.push({ file, url });
   }
 
-  // 파일 input 초기화 (같은 파일 다시 업로드 허용)
-  event.target.value = ''
-}
+  event.target.value = "";
+};
 
 const handleFileUpload = (event) => {
-  const files = Array.from(event.target.files)
-  files.forEach(file => {
-    selectedFiles.value.push(file)
-  })
-  event.target.value = ''
-}
+  const files = Array.from(event.target.files);
+  files.forEach((file) => selectedFiles.value.push(file));
+  event.target.value = "";
+};
 
 const removeImage = (index) => {
-  URL.revokeObjectURL(selectedImages.value[index].url)
-  selectedImages.value.splice(index, 1)
-}
+  URL.revokeObjectURL(selectedImages.value[index].url);
+  selectedImages.value.splice(index, 1);
+};
 
-const removeFile = (index) => {
-  selectedFiles.value.splice(index, 1)
-}
+const removeFile = (index) => selectedFiles.value.splice(index, 1);
 
-// 전체 이미지 삭제
 const removeAllImages = () => {
-  selectedImages.value = []
-  if (imageInput.value) {
-    imageInput.value.value = null
-  }
-}
+  selectedImages.value = [];
+  if (imageInput.value) imageInput.value.value = null;
+};
 
-// 전체 파일 삭제
 const removeAllFiles = () => {
-  selectedFiles.value = []
-  if (fileInput.value) {
-    fileInput.value.value = null
-  }
-}
+  selectedFiles.value = [];
+  if (fileInput.value) fileInput.value.value = null;
+};
 
 const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 
+// 게시글 등록
 const submitForm = async () => {
-  if (!isFormValid.value || isSubmitting.value) return
-  
+  if (!isFormValid.value || isSubmitting.value) return;
+
   try {
-    isSubmitting.value = true
-    
-    // ✅ categoryNo 변수 선언
-    const categoryNo = route.params.categoryNo
-    
-    const submitData = new FormData()
-    
+    isSubmitting.value = true;
+    const categoryNo = route.params.categoryNo;
+    const submitData = new FormData();
+
     const boardData = {
       boardTitle: formData.value.boardTitle.trim(),
       boardContent: formData.value.boardContent.trim(),
-      boardCategoryNo: parseInt(categoryNo)
-    }
-    
-    submitData.append('data', new Blob([JSON.stringify(boardData)], {
-      type: 'application/json'
-    }))
-    
-    // 파일 처리...
-    if (selectedImages.value && selectedImages.value.length > 0) {
-      selectedImages.value.forEach((image) => {
-        submitData.append('files', image.file)
-      })
-    }
-    
-    if (selectedFiles.value && selectedFiles.value.length > 0) {
-      selectedFiles.value.forEach((file) => {
-        submitData.append('files', file)
-      })
-    }
-    
-    const response = await axios.post('/v1/board', submitData)
-    
-    alert('게시글이 성공적으로 등록되었습니다.')
-    router.push(`/board/${categoryNo}`)
-    
-  } catch (error) {
-    console.error('게시글 등록 실패:', error)
-    alert('게시글 등록에 실패했습니다.')
-  } finally {
-    isSubmitting.value = false
-  }
-}
+      boardCategoryNo: parseInt(categoryNo),
+    };
 
+    submitData.append(
+      "data",
+      new Blob([JSON.stringify(boardData)], { type: "application/json" })
+    );
+
+    selectedImages.value.forEach((img) => submitData.append("files", img.file));
+    selectedFiles.value.forEach((file) => submitData.append("files", file));
+
+    const headers = userStore.accessToken
+      ? { Authorization: `Bearer ${userStore.accessToken}` }
+      : {};
+
+    const response = await axios.post("/v1/board", submitData, { headers });
+
+    alert("게시글이 성공적으로 등록되었습니다.");
+    router.push(`/board/${categoryNo}`);
+  } catch (err) {
+    console.error("게시글 등록 실패:", err);
+    console.error("서버 응답:", err.response?.data);
+    let message = "게시글 등록에 실패했습니다.";
+    if (err.response?.status === 401) message = "로그인이 필요합니다.";
+    else if (err.response?.status === 400) message = "잘못된 요청입니다. 입력을 확인해주세요.";
+    alert(message);
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+// 게시판 정보 가져오기
 const loadCategoryInfo = async () => {
   try {
-    const categoryNo = route.params.categoryNo
-    const response = await axios.get(`/v1/board-categories/${categoryNo}`)
-    
+    const categoryNo = route.params.categoryNo;
+    const response = await axios.get(`/v1/board-categories/${categoryNo}`);
+
     categoryInfo.value = {
-      title: response.data.boardCategoryTitle || '게시판',
-      allowImages: response.data.boardAllowImage,         
+      title: response.data.boardCategoryTitle || "게시판",
+      allowImages: response.data.boardAllowImage,
       allowAttachments: response.data.boardAllowAttachment,
       maxImageCount: response.data.boardMaxImageCount,
-      maxFileSize: response.data.boardMaxFileSize
-    }
+      maxFileSize: response.data.boardMaxFileSize,
+    };
 
-    console.log('백엔드에서 받은 값:', {
-    boardMaxImageCount: response.data.boardMaxImageCount,
-    boardMaxFileCount: response.data.boardMaxFileCount
-})
-
-  } catch (error) {
-    console.error('에러:', error)
+    console.log("백엔드에서 받은 값:", {
+      boardMaxImageCount: response.data.boardMaxImageCount,
+      boardMaxFileCount: response.data.boardMaxFileCount,
+    });
+  } catch (err) {
+    console.error("게시판 정보 로드 실패:", err);
     categoryInfo.value = {
-      title: '게시판',
+      title: "게시판",
       allowImages: true,
       allowAttachments: true,
       maxImageCount: 5,
-      maxFileSize: 50
-    }
+      maxFileSize: 50,
+    };
   }
-}
+};
 
-const goBack = () => {
-  router.push('/board')
-}
+const goBack = () => router.push("/board");
+const goToBoard = () => router.push("/board");
 
-const goToBoard = () => {
-  router.push('/board')
-}
-
-onMounted(() => {
-  loadCategoryInfo()
-})
+onMounted(() => loadCategoryInfo());
 </script>
+
 
 <style scoped>
 .board-form {

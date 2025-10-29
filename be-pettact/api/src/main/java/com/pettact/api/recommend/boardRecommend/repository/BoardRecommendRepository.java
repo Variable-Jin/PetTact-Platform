@@ -22,4 +22,8 @@ public interface BoardRecommendRepository extends JpaRepository<BoardRecommend, 
 
     @Query("SELECT COUNT(br) FROM BoardRecommend br WHERE br.board.boardNo = :boardNo")
     int countByBoardNo(@Param("boardNo") Long boardNo);
+
+    long countByBoard_BoardNo(Long boardNo);
+
+    boolean existsByBoard_BoardNoAndUsers_UserNo(Long boardNo, Long userNo);
 }

@@ -30,6 +30,7 @@ public class BoardResponseDto {
     private List<ReplyResponseDto> replies = new ArrayList<>();
     private int recommendCount;
     private List<FileDto> files;
+    private Long boardViewCnt;
 
 
     public static BoardResponseDto fromEntity(Board savedBoard) {
@@ -46,7 +47,8 @@ public class BoardResponseDto {
                 savedBoard.getDeletedAt(),
                 new ArrayList<>(),
                 0,
-                new ArrayList<>()
+                new ArrayList<>(),
+                0L
         );
     }
 
@@ -64,7 +66,8 @@ public class BoardResponseDto {
                 board.getDeletedAt(),
                 null,
                 0,
-                new ArrayList<>()
+                new ArrayList<>(),
+                null
         );
     }
 }

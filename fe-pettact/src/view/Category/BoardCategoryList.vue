@@ -1,12 +1,17 @@
-
 <template>
   <div class="community-page">
-    <section class="sub-nav-section">
-      <div class="sub-nav-container">
-        <h2 class="sub-nav-title">커뮤니티</h2>
+    <section class="admin-category-section">
+      <div class="admin-container">
+        <div class="header-area">
+          <h2 class="page-title">커뮤니티 게시판 관리</h2>
+          <button v-if="isAdmin" @click="goToCreateCategory" class="create-btn">
+            + 새 게시판 만들기
+          </button>
+        </div>
         
         <!-- 로딩 상태 -->
         <div v-if="loading" class="loading-state">
+          <div class="loading-spinner"></div>
           <p>게시판 목록을 불러오는 중...</p>
         </div>
 
@@ -17,62 +22,59 @@
         </div>
 
         <!-- 게시판 목록 -->
-        <div v-else class="sub-nav-menu">
+        <div v-else class="category-grid">
           <div 
             v-for="category in boardCategories" 
             :key="category.boardCategoryNo"
-            class="sub-nav-item-container"
+            class="category-card"
           >
-            <!-- 게시판 제목 (클릭 시 게시판으로 이동) -->
-            <div 
-              class="sub-nav-item" 
-              @click="goToBoard(category.boardCategoryNo)"
-            >
-              <span class="board-title">{{ category.boardCategoryTitle }}</span>
+            <!-- 게시판 정보 -->
+            <div class="category-info" @click="goToBoard(category.boardCategoryNo)">
+              <h3 class="category-title">{{ category.boardCategoryTitle }}</h3>
+              <p v-if="category.boardCategoryDescription" class="category-desc">
+                {{ category.boardCategoryDescription }}
+              </p>
             </div>
 
-            <!-- 관리자 버튼들 (관리자만 표시) -->
-            <div v-if="isAdmin" class="admin-buttons">
+            <!-- 관리 버튼들 -->
+            <div v-if="isAdmin" class="category-actions">
               <button 
                 @click.stop="viewCategoryDetail(category)" 
-                class="admin-btn detail-btn"
+                class="action-btn detail"
                 title="상세정보"
               >
-                📄
+                상세
               </button>
               <button 
                 @click.stop="editCategory(category)" 
-                class="admin-btn edit-btn"
+                class="action-btn edit"
                 title="수정하기"
               >
-                ✏️
+                수정
               </button>
               <button 
                 @click.stop="deleteCategory(category)" 
-                class="admin-btn delete-btn"
+                class="action-btn delete"
                 title="삭제하기"
               >
-                🗑️
+                삭제
               </button>
             </div>
           </div>
 
           <!-- 게시판이 없을 때 -->
-          <div v-if="boardCategories.length === 0 && !loading" class="empty-boards">
+          <div v-if="boardCategories.length === 0" class="empty-state">
             <p>등록된 게시판이 없습니다.</p>
+            <button v-if="isAdmin" @click="goToCreateCategory" class="create-btn-empty">
+              첫 게시판 만들기
+            </button>
           </div>
         </div>
       </div>
     </section>
-
-    <!-- 게시판 생성 버튼 (관리자만) -->
-    <div v-if="isAdmin" class="category-actions">
-      <button @click="goToCreateCategory" class="create-btn">
-        + 새 게시판 만들기
-      </button>
-    </div>
   </div>
 </template>
+
 
 <script>
 import { ref, computed, onMounted } from 'vue'
@@ -169,204 +171,234 @@ export default {
 </script>
 
 
+
 <style scoped>
-.sub-nav-section {
-  background: white;
+.community-page {
+  min-height: 100vh;
+  background: #f5f6f8;
   padding: 40px 0;
-  border-bottom: 1px solid #e0e0e0;
 }
 
-.sub-nav-container {
+.admin-category-section {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
 }
 
-.sub-nav-title {
-  font-size: 15px;
-  font-weight: 400;
-  color: #333;
-  font-family: 'Pretendard', sans-serif;
+.admin-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+}
+
+/* 헤더 영역 */
+.header-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
-  text-align: center;
 }
-
-.sub-nav-menu {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px 83px;
-  width: 1049px;
-  margin: 28px auto 0;
-  padding: 30px 40px;
-  border: 1px solid #e2e2e2;
-  border-radius: 8px;
-  background: white;
-}
-
-.sub-nav-item {
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 400;
-  color: #333;
-  position: relative;
-  text-align: center;
-}
-
-.sub-nav-item:hover {
-  color: #008BE6;
-  font-weight: bold;
-  transform: translateY(-2px);
-}
-
-.sub-nav-item.active {
-  background: #008BE6;
-  color: white;
-}
-
-.modern-dropdown {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  border: 1px solid #e5e7eb;
-  min-width: 200px;
-  z-index: 10000;
-  overflow: hidden;
-}
-
-/* 배경 오버레이 */
-.dropdown-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.3);  /* 반투명 검은 배경 */
-  z-index: 9999;
-  backdrop-filter: blur(2px);      /* 배경 블러 효과 */
-}
-
-.dropdown-item-modern {
-  padding: 12px 20px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #f3f4f6;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dropdown-item-modern:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item-modern:hover {
-  background: #f9fafb;
-  color: #111827;
-}
-
-.delete-item {
-  color: #ef4444;
-}
-
-.delete-item:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-/* .modern-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  border: 1px solid #e5e7eb;
-  min-width: 160px;
-  z-index: 1000;
-  overflow: hidden;
-  margin-top: 8px;
-}
-
-.dropdown-item-modern {
-  padding: 12px 16px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #f3f4f6;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dropdown-item-modern:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item-modern:hover {
-  background: #f9fafb;
-  color: #111827;
-}
-
-.delete-item {
-  color: #ef4444;
-}
-
-.delete-item:hover {
-  background: #fef2f2;
-  color: #dc2626;
-} */
 
 .create-btn {
-  /* 기본 모양 */
   padding: 12px 24px;
+  background: #4a90e2;
+  color: white;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s ease;
-  
-  /* 색상 - 관리자 전용이므로 눈에 띄는 색 */
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
-  
-  /* 아이콘 여백 (아이콘 추가 시) */
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .create-btn:hover {
-  background: linear-gradient(135deg, #0056b3, #004085);
-  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
+  background: #357abd;
   transform: translateY(-1px);
 }
 
-.create-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+/* 로딩/에러 상태 */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top: 3px solid #4a90e2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.retry-btn {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.retry-btn:hover {
+  background: #5a6268;
+}
+
+/* 카테고리 그리드 */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.category-card {
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 24px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.category-card:hover {
+  border-color: #4a90e2;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.1);
+}
+
+/* 카테고리 정보 */
+.category-info {
+  cursor: pointer;
+  flex: 1;
+}
+
+.category-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.category-desc {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* 액션 버튼들 */
+.category-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn.detail {
+  color: #4a90e2;
+}
+
+.action-btn.detail:hover {
+  background: #f0f7ff;
+  border-color: #4a90e2;
+}
+
+.action-btn.edit {
+  color: #10b981;
+}
+
+.action-btn.edit:hover {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+
+.action-btn.delete {
+  color: #ef4444;
+}
+
+.action-btn.delete:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+/* 빈 상태 */
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 20px;
+}
+
+.empty-state p {
+  color: #999;
+  font-size: 14px;
+}
+
+.create-btn-empty {
+  padding: 12px 24px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-btn-empty:hover {
+  background: #357abd;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 24px 20px;
+  }
+
+  .header-area {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -7,13 +7,15 @@ import com.pettact.api.recommend.boardRecommend.entity.BoardRecommend;
 import com.pettact.api.recommend.boardRecommend.repository.BoardRecommendRepository;
 import com.pettact.api.user.entity.Users;
 import com.pettact.api.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -45,6 +47,17 @@ public class BoardRecommendService {
         );
 
         boardRecommendRepository.save(boardRecommend);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getRecommendStatus(Long boardNo, Long userNo) {
+        long count = boardRecommendRepository.countByBoard_BoardNo(boardNo);
+        boolean isRecommended = boardRecommendRepository.existsByBoard_BoardNoAndUsers_UserNo(boardNo, userNo);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("count", count);
+        result.put("recommended", isRecommended);
+        return result;
     }
 
     @Transactional

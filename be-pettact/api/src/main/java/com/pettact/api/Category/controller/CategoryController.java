@@ -6,6 +6,7 @@ import com.pettact.api.Category.dto.ResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class CategoryController {
      */
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseDto> createCategory(@RequestBody CreateDto createDto) {
         ResponseDto responseDto = categoryService.createCategory(createDto);
         // return ResponseEntity.ok(responseDto);
@@ -57,6 +59,7 @@ public class CategoryController {
      */
 
     @PatchMapping("/{boardCategoryNo}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseDto> updatedCategory(@PathVariable Long boardCategoryNo,
                                                        @RequestBody CreateDto createDto) {
         ResponseDto responseDto = categoryService.updateCategory(boardCategoryNo, createDto);
@@ -69,6 +72,7 @@ public class CategoryController {
      */
 
     @DeleteMapping("/{boardCategoryNo}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long boardCategoryNo) {
        categoryService.deleteCategory(boardCategoryNo);
        return ResponseEntity.accepted().build();

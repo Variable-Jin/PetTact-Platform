@@ -2,21 +2,33 @@
   <div class="community-card">
     <div class="card-header">
       <h3 class="card-title">인기글</h3>
-      <router-link to="/board/popular" class="more-link">더보기 <span>⟩</span></router-link>
+      <router-link to="/board/popular" class="more-link"
+        >더보기 <span>⟩</span></router-link
+      >
     </div>
 
     <div v-if="loading">로딩 중...</div>
     <div v-else-if="boards.length === 0">표시할 게시글이 없습니다.</div>
     <ul v-else class="board-list">
-      <li v-for="board in boards" :key="board.boardNo" class="board-item"
-        @click="goToBoard(board.boardNo)">
+      <li
+        v-for="board in boards"
+        :key="board.boardNo"
+        class="board-item"
+        @click="goToBoard(board.boardNo)"
+      >
         <div class="board-content">
-          <span class="board-category">{{ board.responseDto.boardCategoryTitle }}</span>
+          <span class="board-category">{{
+            board.responseDto.boardCategoryTitle
+          }}</span>
           <span class="board-title">{{ board.boardTitle }}</span>
         </div>
         <div class="board-stats">
-          <div class="like-count">❤️ {{ board.boardRecommendCount }}</div>
-          <div class="view-count">👁 {{ formatViewCount(board.boardViewCnt) }}</div>
+          <div class="like-count">{{ board.boardRecommendCount }}</div>
+          <div class="like-count">
+            <span class="icon">♥</span>
+            <span>{{ board.boardRecommendCount }}</span>
+          </div>
+          <div class="view-count">조회 {{ board.boardViewCnt }}</div>
         </div>
       </li>
     </ul>
@@ -24,38 +36,38 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import { useRouter } from "vue-router";
 
-const boards = ref([])
-const loading = ref(true)
-const router = useRouter()
+const boards = ref([]);
+const loading = ref(true);
+const router = useRouter();
 
 const fetchPopularBoards = async () => {
   try {
-    const { data } = await axios.get('/v1/board/popular', {
-      params: { categoryNo: null, count: 7 }
-    })
-    console.log('🔥 인기글 응답', data)
-    boards.value = data
+    const { data } = await axios.get("/v1/board/popular", {
+      params: { categoryNo: null, count: 7 },
+    });
+    console.log("🔥 인기글 응답", data);
+    boards.value = data;
   } catch (err) {
-    console.error('🔥 인기글 API 실패', err)
+    console.error("🔥 인기글 API 실패", err);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const goToBoard = (boardNo) => {
-  router.push({ name: 'BoardDetail', params: { boardNo: boardNo } })
-}
+  router.push({ name: "BoardDetail", params: { boardNo: boardNo } });
+};
 
 const formatViewCount = (views) => {
-  if (views >= 1000) return (views / 1000).toFixed(1) + 'K'
-  return views.toString()
-}
+  if (views >= 1000) return (views / 1000).toFixed(1) + "K";
+  return views.toString();
+};
 
-onMounted(fetchPopularBoards)
+onMounted(fetchPopularBoards);
 </script>
 
 <style scoped>

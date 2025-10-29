@@ -44,17 +44,6 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    public ResponseDto getCategoryDetail(Long boardCategoryNo) {
-        BoardCategory category = categoryRepository.findById(boardCategoryNo)
-                .orElseThrow(()-> new IllegalArgumentException("카테고리 찾을 수 없습니다."));
-
-        int totalBoards = boardRepository.countByCategoryNo(boardCategoryNo);
-        ResponseDto responseDto = ResponseDto.fromEntity(category);
-        responseDto.setTotalBoards(totalBoards);
-        return responseDto;
-    }
-
-    // 수정 예정
     public ResponseDto getCategoryByNo(Long boardCategoryNo) {
         BoardCategory category = categoryRepository.findById(boardCategoryNo)
                 .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다. No: " + boardCategoryNo));
