@@ -89,7 +89,8 @@ SSE 기반으로 관리자 및 판매자와의 1:1 실시간 문의가 가능합
 ### ERD 설계
 > 프로젝트 전체 데이터베이스 구조 설계 및 관계 정의
 
-![erd.png](attachment:9593e380-a112-4d4f-9740-44e9d7b17ddd:image.png)
+<img width="750" alt="ERD 다이어그램" src="https://github.com/user-attachments/assets/73de7969-72af-4495-9417-96d6979582af" />
+
 
 #### 주요 설계 포인트
 - **27개의 관계형 테이블** 설계
@@ -97,7 +98,7 @@ SSE 기반으로 관리자 및 판매자와의 1:1 실시간 문의가 가능합
   - `ANIMAL_SHELTER` ↔ 공공 데이터 API 연동: 유기동물 정보 동기화
   - `USERS` ↔ `PRODUCT`: 쇼핑몰 구매 프로세스
   - `BOARD` ↔ `REPLY`: 생성형 게시판 구조
-- MongoDB를 활용한 AI 채팅 로그 및 비정형 데이터 저장
+- MongoDB를 활용한 로그 데이터 수집
 - Redis 기반 세션 관리 및 캐싱 전략
 
 <br>
