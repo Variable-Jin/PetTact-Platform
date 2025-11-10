@@ -16,7 +16,7 @@ RUN chmod +x ./gradlew
 RUN ./gradlew clean bootJar --no-daemon
 
 # 실행 스테이지
-FROM openjdk:17-jdk-slim
+FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 
