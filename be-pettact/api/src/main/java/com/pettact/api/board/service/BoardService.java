@@ -15,6 +15,10 @@ import com.pettact.api.product.dto.ProductDTO;
 import com.pettact.api.product.entity.ProductEntity;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.web.multipart.MultipartFile;
 import com.pettact.api.recommend.boardRecommend.repository.BoardRecommendRepository;
@@ -284,5 +288,12 @@ public class BoardService implements ViewCountSyncable<Long> {
                     return dto;
                 })
                 .toList();
+    }
+
+    // mypage 조회
+    public Page<BoardResponseDto> getMyBoardsUserNo(Long userNo, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Board> boardPage = boardRepository.findByMyBoards(userNo, pageable);
+        return boardPage.map(BoardResponseDto::fromEntity);
     }
 }
