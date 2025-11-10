@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.pettact.api.board.dto.BoardResponseDto;
+import com.pettact.api.board.service.BoardService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -49,6 +51,7 @@ public class UserController {
     private final VerificationCodeStore verificationCodeStore;
     private final ReportService reportService;
     private final ProductService productService;
+    private final BoardService boardService;
 
     /* 회원가입 */
     @PostMapping("/join")
@@ -266,6 +269,19 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    /* board 조회 */
+    @GetMapping("/mypage/my-board")
+    public ResponseEntity<?> getMyBoard(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size
+    ) {
+        Long userNo = userDetails.getUserEntity().getUserNo();
+        Page<BoardResponseDto> boards = boardService.getMyBoardsUserNo(userNo, page, size);
+
+        return ResponseEntity.ok(boards);
     }
     
     /* seller 권한 */

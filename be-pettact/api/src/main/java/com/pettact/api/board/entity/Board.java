@@ -18,6 +18,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Table(
+        name = "board",
+        indexes = {
+                @Index(name = "idx_board_user_created", columnList = "user_no, created_at DESC")
+        }
+)
 public class Board extends BaseEntity {
 
     @Id

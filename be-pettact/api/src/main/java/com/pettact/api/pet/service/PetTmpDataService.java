@@ -60,7 +60,14 @@ public class PetTmpDataService {
 
             if (body == null || body.getData() == null || body.getData().isEmpty()) break;
 
+            // facility_key 중복 체크
             for (PetFacilityDto dto : body.getData()) {
+                String checkKey = (dto.getFacilityName() == null ? "" : dto.getFacilityName().trim()) + "-" +
+                        (dto.getLotAddress() == null ? "" : dto.getLotAddress().trim());
+                if (petFacilityTmpRepository.existsByFacilityKey(checkKey)) {
+                    continue;
+                }
+
                 PetFacilityTmpEntity entity = PetFacilityTmpEntity.builder()
                         .buildingNumber(dto.getBuildingNumber())
                         .longitude(dto.getLongitude())

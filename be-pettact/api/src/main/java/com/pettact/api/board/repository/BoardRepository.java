@@ -74,4 +74,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     @Query("SELECT b FROM Board b WHERE b.boardCategory.boardCategoryNo = :categoryNo")
     List<Board> findByBoardCategoryNo(@Param("categoryNo") Long categoryNo);
+
+    @Query("SELECT b FROM Board b WHERE b.user.userNo = :userNo ORDER BY b.createdAt DESC")
+    Page<Board> findByMyBoards(@Param("userNo") Long userNo, Pageable pageable);
 }
